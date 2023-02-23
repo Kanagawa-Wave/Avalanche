@@ -1,0 +1,15 @@
+[submodule "Avalanche/ThirdParty/glm"]
+	path = Avalanche/ThirdParty/glm
+	url = https://github.com/g-truc/glm.git
+[submodule "Avalanche/ThirdParty/spdlog"]
+	path = Avalanche/ThirdParty/spdlog
+	url = https://github.com/gabime/spdlog.git
+[submodule "Avalanche/ThirdParty/glfw"]
+	path = Avalanche/ThirdParty/glfw
+	url = https://github.com/TheCherno/glfw.git
+[submodule "Avalanche/ThirdParty/imgui"]
+	path = Avalanche/ThirdParty/imgui
+	url = https://github.com/TheCherno/imgui.git
+[submodule "Avalanche/ThirdParty/vk-bootstrap"]
+	path = Avalanche/ThirdParty/vk-bootstrap
+	url = https://github.com/Kanagawa-Wave/vk-bootstrap.git

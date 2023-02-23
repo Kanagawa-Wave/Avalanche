@@ -1,0 +1,14 @@
+bin/
+obj/
+/packages/
+riderModule.iml
+/_ReSharper.Caches/
+
+*.sln
+*.vcxproj
+*.vcxproj.user
+*.vcxproj.filters
+/Intermediates
+/Rules
+/Binaries
+/.idea
