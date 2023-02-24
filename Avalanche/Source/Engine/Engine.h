@@ -43,9 +43,9 @@ private:
 
     vk::SurfaceKHR m_Surface;
     vk::SwapchainKHR m_Swapchain;
-    VkFormat m_SwapchainImageFormat = VK_FORMAT_UNDEFINED;
+    vk::Format m_SwapchainImageFormat = vk::Format::eUndefined;
 
     std::vector<vk::Framebuffer> m_Framebuffers;
-    std::vector<VkImage> m_SwapchainImages;
-    std::vector<VkImageView> m_SwapchainImageViews;
+    std::vector<vk::Image> m_SwapchainImages;
+    std::vector<vk::ImageView> m_SwapchainImageViews;
 };

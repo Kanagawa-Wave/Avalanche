@@ -34,12 +34,17 @@ void Engine::Destroy()
 {
     if (m_bInitialized)
     {
-        vkDestroySwapchainKHR(m_Device, m_Swapchain, nullptr);
-        for (const auto& m_SwapchainImageView : m_SwapchainImageViews)
-            vkDestroyImageView(m_Device, m_SwapchainImageView, nullptr);
+        m_Device.destroyCommandPool(m_CommandPool);
+        m_Device.destroySwapchainKHR(m_Swapchain);
+        m_Device.destroyRenderPass(m_RenderPass);
+        for (uint32_t i = 0; i < m_Framebuffers.size(); i++)
+        {
+            m_Device.destroyFramebuffer(m_Framebuffers[i]);
+            m_Device.destroyImageView(m_SwapchainImageViews[i]);
+        }
 
         m_Device.destroy();
-        vkDestroySurfaceKHR(m_Instance, m_Surface, nullptr);
+        m_Instance.destroySurfaceKHR(m_Surface);
         vkb::destroy_debug_utils_messenger(m_Instance, m_DebugMessenger);
         m_Instance.destroy();
         glfwDestroyWindow(m_Window);
@@ -100,35 +105,82 @@ void Engine::InitSwapchain()
                                                .value();
 
     m_Swapchain = swapchain.swapchain;
-    m_SwapchainImages = swapchain.get_images().value();
-    m_SwapchainImageViews = swapchain.get_image_views().value();
-    m_SwapchainImageFormat = swapchain.image_format;
+    m_SwapchainImages.resize(swapchain.image_count);
+    for (uint32_t i = 0; i < swapchain.image_count; i++)
+        m_SwapchainImages[i] = swapchain.get_images().value()[i];
+
+    m_SwapchainImageViews.resize(swapchain.image_count);
+    for (uint32_t i = 0; i < swapchain.image_count; i++)
+        m_SwapchainImageViews[i] = swapchain.get_image_views().value()[i];
+    
+    m_SwapchainImageFormat = (vk::Format)swapchain.image_format;
 }
 
 void Engine::InitDefaultRenderPass()
 {
+    vk::AttachmentDescription attachmentInfo;
+    attachmentInfo.setFormat(m_SwapchainImageFormat)
+                  .setSamples(vk::SampleCountFlagBits::e1)
+                  .setLoadOp(vk::AttachmentLoadOp::eClear)
+                  .setStoreOp(vk::AttachmentStoreOp::eStore)
+                  .setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)
+                  .setStencilStoreOp(vk::AttachmentStoreOp::eDontCare)
+                  .setInitialLayout(vk::ImageLayout::eUndefined)
+                  .setFinalLayout(vk::ImageLayout::ePresentSrcKHR);
+
+    vk::AttachmentReference attachmentRef;
+    attachmentRef.setAttachment(0)
+                 .setLayout(vk::ImageLayout::eColorAttachmentOptimal);
+
+    vk::SubpassDescription subpassInfo;
+    subpassInfo.setColorAttachments(attachmentRef)
+               .setColorAttachmentCount(1)
+               .setPipelineBindPoint(vk::PipelineBindPoint::eGraphics);
+
+    vk::RenderPassCreateInfo renderPassInfo;
+    renderPassInfo.setAttachments(attachmentInfo)
+                  .setAttachmentCount(1)
+                  .setSubpasses(subpassInfo)
+                  .setSubpassCount(1);
+
+    m_RenderPass = m_Device.createRenderPass(renderPassInfo);
 }
 
 void Engine::InitFramebuffers()
 {
+    vk::FramebufferCreateInfo framebufferInfo;
+    framebufferInfo.setRenderPass(m_RenderPass)
+                   .setAttachmentCount(1)
+                   .setWidth(m_Extent.width)
+                   .setHeight(m_Extent.height)
+                   .setLayers(1);
+
+    m_Framebuffers.resize(m_SwapchainImages.size());
+
+    for (uint32_t i = 0; i < m_SwapchainImages.size(); i++)
+    {
+        framebufferInfo.setAttachments(m_SwapchainImageViews[i]);
+        m_Framebuffers[i] = m_Device.createFramebuffer(framebufferInfo);
+    }
+    
 }
 
 void Engine::InitCommands()
 {
-    vk::CommandPoolCreateInfo commandPoolInfo;
-    commandPoolInfo.setQueueFamilyIndex(m_GraphicsQueueFamily)
-                   .setFlags(vk::CommandPoolCreateFlagBits::eResetCommandBuffer);
+    m_CommandPool = m_Device.createCommandPool(
+        Initializer::CommandPool(m_GraphicsQueueFamily, vk::CommandPoolCreateFlagBits::eResetCommandBuffer));
 
-    m_CommandPool = m_Device.createCommandPool(commandPoolInfo);
-
-    vk::CommandBufferAllocateInfo commandBufferInfo;
-    commandBufferInfo.setCommandPool(m_CommandPool)
-                     .setCommandBufferCount(1)
-                     .setLevel(vk::CommandBufferLevel::ePrimary);
-
-    m_MainCommandBuffer = m_Device.allocateCommandBuffers(commandBufferInfo).front();
+    m_MainCommandBuffer = m_Device.allocateCommandBuffers(Initializer::CommandBuffer(m_CommandPool)).front();
 }
 
 void Engine::InitSyncStructs()
 {
+    vk::FenceCreateInfo fenceInfo;
+    fenceInfo.setFlags(vk::FenceCreateFlagBits::eSignaled);
+
+    m_RenderFence = m_Device.createFence(fenceInfo);
+
+    vk::SemaphoreCreateInfo semaphoreInfo;
+    m_RenderSemaphore = m_Device.createSemaphore(semaphoreInfo);
+    m_PresentSemaphore = m_Device.createSemaphore(semaphoreInfo);
 }
