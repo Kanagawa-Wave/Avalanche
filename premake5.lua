@@ -13,7 +13,7 @@ rule "CompileShaders"
     }
     
     buildmessage "Compiling %(Filename) with GLSL-SPV"
-    buildcommands "glslangValidator -G -o $(OutDir)/%(Identity).spv %(Identity)"
+    buildcommands "glslangValidator -V -o $(OutDir)/%(Identity).spv %(Identity)"
     buildoutputs "$(OutDir)/%(Identity).spv"
 
 workspace "Avalanche"

@@ -18,6 +18,15 @@ private:
     void InitFramebuffers();
     void InitCommands();
     void InitSyncStructs();
+    void InitPipelines();
+
+    enum class ShaderType
+    {
+        eVertex,
+        eFragment,
+        eCompute,
+    };
+    void LoadShaderModule(std::string path, ShaderType type, vk::ShaderModule& shaderModule) const;
     
     struct GLFWwindow* m_Window = nullptr;
     VkExtent2D m_Extent{800, 600};

@@ -29,6 +29,7 @@ void Engine::Init()
     InitFramebuffers();
     InitCommands();
     InitSyncStructs();
+    InitPipelines();
 
     m_bInitialized = true;
 }
@@ -122,7 +123,7 @@ void Engine::InitVulkan()
     auto instRet = builder.set_app_name("Vulkan App")
                           .request_validation_layers(bEnableValidation)
                           .use_default_debug_messenger()
-                          .require_api_version(1, 2, 0)
+                          .require_api_version(1, 3, 0)
                           .build();
 
     vkb::Instance instance = instRet.value();
@@ -236,4 +237,43 @@ void Engine::InitSyncStructs()
     const vk::SemaphoreCreateInfo semaphoreInfo = Initializer::SemaphoreCreate();
     m_RenderSemaphore = m_Device.createSemaphore(semaphoreInfo);
     m_PresentSemaphore = m_Device.createSemaphore(semaphoreInfo);
+}
+
+void Engine::InitPipelines()
+{
+    vk::ShaderModule triangleVert, triangleFrag;
+    LoadShaderModule("Shaders/Triangle", ShaderType::eVertex, triangleVert);
+    LoadShaderModule("Shaders/Triangle", ShaderType::eFragment, triangleFrag);
+}
+
+void Engine::LoadShaderModule(std::string path, ShaderType type, vk::ShaderModule& shaderModule) const
+{
+    switch (type)
+    {
+    case ShaderType::eVertex:
+        path.append(".vert.spv");
+        break;
+    case ShaderType::eFragment:
+        path.append(".frag.spv");
+        break;
+    case ShaderType::eCompute:
+        path.append(".comp.spv");
+        break;
+    }
+    std::ifstream file(path, std::ios::ate | std::ios::binary);
+
+    ASSERT(file.is_open(), "Failed to open shader file at {}", path)
+
+    const long long fileSize = file.tellg();
+    std::vector<char> buffer(fileSize);
+
+    file.seekg(0);
+    file.read(buffer.data(), fileSize);
+    file.close();
+
+    vk::ShaderModuleCreateInfo shaderInfo;
+    shaderInfo.setPCode(reinterpret_cast<const uint32_t*>(buffer.data()))
+              .setCodeSize(buffer.size());
+
+    shaderModule = m_Device.createShaderModule(shaderInfo);
 }
