@@ -7,6 +7,8 @@
 #include "Vulkan/Types.h"
 #include "Vulkan/Initializer.h"
 
+#include "Log/Log.h"
+
 #ifdef _DEBUG
 constexpr bool bEnableValidation = true;
 #else
@@ -15,6 +17,7 @@ constexpr bool bEnableValidation = false;
 
 void Engine::Init()
 {
+    Log::Init();
     glfwInit();
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -34,7 +37,12 @@ void Engine::Destroy()
 {
     if (m_bInitialized)
     {
+        m_Device.waitIdle();
+
         m_Device.destroyCommandPool(m_CommandPool);
+        m_Device.destroyFence(m_RenderFence);
+        m_Device.destroySemaphore(m_RenderSemaphore);
+        m_Device.destroySemaphore(m_PresentSemaphore);
         m_Device.destroySwapchainKHR(m_Swapchain);
         m_Device.destroyRenderPass(m_RenderPass);
         for (uint32_t i = 0; i < m_Framebuffers.size(); i++)
@@ -53,6 +61,50 @@ void Engine::Destroy()
 
 void Engine::Draw()
 {
+    CHECK(m_Device.waitForFences(m_RenderFence, true, 1000000000));
+    m_Device.resetFences(m_RenderFence);
+
+    m_MainCommandBuffer.reset();
+
+    uint32_t swapchainImageIndex =
+        m_Device.acquireNextImageKHR(m_Swapchain, 1000000000, m_PresentSemaphore, nullptr).value;
+
+    const vk::CommandBufferBeginInfo commandBufferInfo =
+        Initializer::CommandBufferBegin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+    m_MainCommandBuffer.begin(commandBufferInfo);
+
+    vk::ClearValue clearValue;
+    const float flash = abs(sin((float)m_FrameNumber / 120.f));
+    clearValue.setColor({0.0f, 0.0f, flash, 1.0f});
+
+    vk::RenderPassBeginInfo renderPassInfo = Initializer::RenderpassBegin(
+        m_RenderPass, m_Extent, m_Framebuffers[swapchainImageIndex]);
+    renderPassInfo.setClearValues(clearValue);
+
+    m_MainCommandBuffer.beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
+
+    /////////////////////////////Rendering/////////////////////////////
+
+    m_MainCommandBuffer.endRenderPass();
+    m_MainCommandBuffer.end();
+
+    // Submit queue
+    vk::SubmitInfo submitInfo = Initializer::SubmitInfo(m_MainCommandBuffer);
+    vk::PipelineStageFlags waitStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+    submitInfo.setWaitDstStageMask(waitStage)
+              .setWaitSemaphores(m_PresentSemaphore)
+              .setSignalSemaphores(m_RenderSemaphore);
+
+    m_GraphicsQueue.submit(submitInfo, m_RenderFence);
+
+    vk::PresentInfoKHR presentInfo = Initializer::PresentInfo();
+    presentInfo.setSwapchains(m_Swapchain);
+    presentInfo.setWaitSemaphores(m_RenderSemaphore);
+    presentInfo.setImageIndices(swapchainImageIndex);
+
+    CHECK(m_GraphicsQueue.presentKHR(presentInfo));
+
+    m_FrameNumber++;
 }
 
 void Engine::Run()
@@ -60,6 +112,7 @@ void Engine::Run()
     while (!glfwWindowShouldClose(m_Window))
     {
         glfwPollEvents();
+        Draw();
     }
 }
 
@@ -112,7 +165,7 @@ void Engine::InitSwapchain()
     m_SwapchainImageViews.resize(swapchain.image_count);
     for (uint32_t i = 0; i < swapchain.image_count; i++)
         m_SwapchainImageViews[i] = swapchain.get_image_views().value()[i];
-    
+
     m_SwapchainImageFormat = (vk::Format)swapchain.image_format;
 }
 
@@ -134,26 +187,27 @@ void Engine::InitDefaultRenderPass()
 
     vk::SubpassDescription subpassInfo;
     subpassInfo.setColorAttachments(attachmentRef)
-               .setColorAttachmentCount(1)
                .setPipelineBindPoint(vk::PipelineBindPoint::eGraphics);
+
+    vk::SubpassDependency dependency;
+    dependency.setSrcSubpass(VK_SUBPASS_EXTERNAL)
+              .setDstSubpass(0)
+              .setSrcStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput)
+              .setSrcAccessMask(vk::AccessFlagBits::eNone)
+              .setDstStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput)
+              .setDstAccessMask(vk::AccessFlagBits::eColorAttachmentWrite);
 
     vk::RenderPassCreateInfo renderPassInfo;
     renderPassInfo.setAttachments(attachmentInfo)
-                  .setAttachmentCount(1)
                   .setSubpasses(subpassInfo)
-                  .setSubpassCount(1);
+                  .setDependencies(dependency);
 
     m_RenderPass = m_Device.createRenderPass(renderPassInfo);
 }
 
 void Engine::InitFramebuffers()
 {
-    vk::FramebufferCreateInfo framebufferInfo;
-    framebufferInfo.setRenderPass(m_RenderPass)
-                   .setAttachmentCount(1)
-                   .setWidth(m_Extent.width)
-                   .setHeight(m_Extent.height)
-                   .setLayers(1);
+    vk::FramebufferCreateInfo framebufferInfo = Initializer::FramebufferCreate(m_RenderPass, m_Extent);
 
     m_Framebuffers.resize(m_SwapchainImages.size());
 
@@ -162,25 +216,24 @@ void Engine::InitFramebuffers()
         framebufferInfo.setAttachments(m_SwapchainImageViews[i]);
         m_Framebuffers[i] = m_Device.createFramebuffer(framebufferInfo);
     }
-    
 }
 
 void Engine::InitCommands()
 {
-    m_CommandPool = m_Device.createCommandPool(
-        Initializer::CommandPool(m_GraphicsQueueFamily, vk::CommandPoolCreateFlagBits::eResetCommandBuffer));
+    const vk::CommandPoolCreateInfo commandPoolInfo = Initializer::CommandPoolCreate(
+        m_GraphicsQueueFamily, vk::CommandPoolCreateFlagBits::eResetCommandBuffer);
+    m_CommandPool = m_Device.createCommandPool(commandPoolInfo);
 
-    m_MainCommandBuffer = m_Device.allocateCommandBuffers(Initializer::CommandBuffer(m_CommandPool)).front();
+    const vk::CommandBufferAllocateInfo commandBufferInfo = Initializer::CommandBufferAllocate(m_CommandPool);
+    m_MainCommandBuffer = m_Device.allocateCommandBuffers(commandBufferInfo).front();
 }
 
 void Engine::InitSyncStructs()
 {
-    vk::FenceCreateInfo fenceInfo;
-    fenceInfo.setFlags(vk::FenceCreateFlagBits::eSignaled);
-
+    const vk::FenceCreateInfo fenceInfo = Initializer::FenceCreate(vk::FenceCreateFlagBits::eSignaled);
     m_RenderFence = m_Device.createFence(fenceInfo);
 
-    vk::SemaphoreCreateInfo semaphoreInfo;
+    const vk::SemaphoreCreateInfo semaphoreInfo = Initializer::SemaphoreCreate();
     m_RenderSemaphore = m_Device.createSemaphore(semaphoreInfo);
     m_PresentSemaphore = m_Device.createSemaphore(semaphoreInfo);
 }
