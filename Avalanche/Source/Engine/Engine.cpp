@@ -271,9 +271,11 @@ void Engine::LoadShaderModule(std::string path, ShaderType type, vk::ShaderModul
     file.read(buffer.data(), fileSize);
     file.close();
 
+    std::vector<uint32_t> code(buffer.begin(), buffer.end());
+
     vk::ShaderModuleCreateInfo shaderInfo;
-    shaderInfo.setPCode(reinterpret_cast<const uint32_t*>(buffer.data()))
-              .setCodeSize(buffer.size());
+    // shaderInfo.setCode(code);
+    shaderInfo.setPCode(reinterpret_cast<const uint32_t*>(buffer.data())).setCodeSize(buffer.size());
 
     shaderModule = m_Device.createShaderModule(shaderInfo);
 }
