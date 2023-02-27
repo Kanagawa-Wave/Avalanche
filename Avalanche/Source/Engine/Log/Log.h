@@ -51,7 +51,7 @@ do                                                              \
     vk::Result res = x;                                         \
     if (res != vk::Result::eSuccess)                            \
     {                                                           \
-        LOG_E("Vulkan Check Failed: {0}", res);                 \
+        LOG_E("Vulkan Check Failed: {0}", (uint32_t)res);       \
         __debugbreak();                                         \
     }                                                           \
 } while (0)

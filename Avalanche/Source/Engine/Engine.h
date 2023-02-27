@@ -57,4 +57,7 @@ private:
     std::vector<vk::Framebuffer> m_Framebuffers;
     std::vector<vk::Image> m_SwapchainImages;
     std::vector<vk::ImageView> m_SwapchainImageViews;
+
+    vk::PipelineLayout m_PipelineLayout;
+    vk::Pipeline m_Pipeline;
 };

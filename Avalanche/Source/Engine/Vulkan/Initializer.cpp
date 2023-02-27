@@ -1,6 +1,6 @@
 ﻿#include "Initializer.h"
 
-vk::CommandPoolCreateInfo Initializer::CommandPoolCreate(uint32_t queueFamilyIndex, vk::CommandPoolCreateFlagBits flags)
+vk::CommandPoolCreateInfo Initializer::CommandPool(uint32_t queueFamilyIndex, vk::CommandPoolCreateFlagBits flags)
 {
     vk::CommandPoolCreateInfo commandPoolInfo;
     commandPoolInfo.setQueueFamilyIndex(queueFamilyIndex)
@@ -28,7 +28,7 @@ vk::CommandBufferBeginInfo Initializer::CommandBufferBegin(vk::CommandBufferUsag
     return commandBufferInfo;
 }
 
-vk::FramebufferCreateInfo Initializer::FramebufferCreate(vk::RenderPass renderPass, vk::Extent2D extent)
+vk::FramebufferCreateInfo Initializer::Framebuffer(vk::RenderPass renderPass, vk::Extent2D extent)
 {
     vk::FramebufferCreateInfo framebufferInfo;
     framebufferInfo.setRenderPass(renderPass)
@@ -40,7 +40,7 @@ vk::FramebufferCreateInfo Initializer::FramebufferCreate(vk::RenderPass renderPa
     return framebufferInfo;
 }
 
-vk::FenceCreateInfo Initializer::FenceCreate(vk::FenceCreateFlagBits flags)
+vk::FenceCreateInfo Initializer::Fence(vk::FenceCreateFlagBits flags)
 {
     vk::FenceCreateInfo fenceInfo;
     fenceInfo.setFlags(flags);
@@ -48,7 +48,7 @@ vk::FenceCreateInfo Initializer::FenceCreate(vk::FenceCreateFlagBits flags)
     return fenceInfo;
 }
 
-vk::SemaphoreCreateInfo Initializer::SemaphoreCreate(vk::SemaphoreCreateFlagBits flags)
+vk::SemaphoreCreateInfo Initializer::Semaphore(vk::SemaphoreCreateFlagBits flags)
 {
     vk::SemaphoreCreateInfo semaphoreInfo;
     semaphoreInfo.setFlags(flags);
@@ -56,7 +56,7 @@ vk::SemaphoreCreateInfo Initializer::SemaphoreCreate(vk::SemaphoreCreateFlagBits
     return semaphoreInfo;
 }
 
-vk::SubmitInfo Initializer::SubmitInfo(vk::CommandBuffer& commandBuffer)
+vk::SubmitInfo Initializer::Submit(vk::CommandBuffer& commandBuffer)
 {
     vk::SubmitInfo submitInfo;
     submitInfo.setCommandBuffers(commandBuffer)
@@ -66,7 +66,7 @@ vk::SubmitInfo Initializer::SubmitInfo(vk::CommandBuffer& commandBuffer)
     return submitInfo;
 }
 
-vk::PresentInfoKHR Initializer::PresentInfo()
+vk::PresentInfoKHR Initializer::Present()
 {
     vk::PresentInfoKHR presentInfo;
     presentInfo.setSwapchains(nullptr)
@@ -89,12 +89,72 @@ vk::RenderPassBeginInfo Initializer::RenderpassBegin(vk::RenderPass renderPass, 
 }
 
 vk::PipelineShaderStageCreateInfo Initializer::PipelineShaderStage(vk::ShaderStageFlagBits stage,
-	vk::ShaderModule shaderModule)
+                                                                   vk::ShaderModule shaderModule)
 {
     vk::PipelineShaderStageCreateInfo pipelineShaderInfo;
     pipelineShaderInfo.setStage(stage)
-					  .setModule(shaderModule)
-					  .setPName("main");
+                      .setModule(shaderModule)
+                      .setPName("main");
 
     return pipelineShaderInfo;
+}
+
+vk::PipelineVertexInputStateCreateInfo Initializer::PipelineVertexInput()
+{
+    vk::PipelineVertexInputStateCreateInfo pipelineVertexInfo;
+
+    return pipelineVertexInfo;
+}
+
+vk::PipelineInputAssemblyStateCreateInfo Initializer::PipelineInputAssembly(vk::PrimitiveTopology topology)
+{
+    vk::PipelineInputAssemblyStateCreateInfo pipelineAssemblyInfo;
+    pipelineAssemblyInfo.setTopology(topology)
+                        .setPrimitiveRestartEnable(false);
+
+    return pipelineAssemblyInfo;
+}
+
+vk::PipelineRasterizationStateCreateInfo Initializer::PipelineRasterization(vk::PolygonMode polygonMode)
+{
+    vk::PipelineRasterizationStateCreateInfo pipelineRasterizationInfo;
+    pipelineRasterizationInfo.setDepthClampEnable(false)
+                             .setRasterizerDiscardEnable(false)
+                             .setPolygonMode(polygonMode)
+                             .setLineWidth(1.f)
+                             .setCullMode(vk::CullModeFlagBits::eNone)
+                             .setFrontFace(vk::FrontFace::eClockwise)
+                             .setDepthBiasEnable(false)
+                             .setDepthBiasConstantFactor(0.f)
+                             .setDepthBiasClamp(0.f)
+                             .setDepthBiasSlopeFactor(0.f);
+
+    return pipelineRasterizationInfo;
+}
+
+vk::PipelineMultisampleStateCreateInfo Initializer::PipelineMultisample()
+{
+    vk::PipelineMultisampleStateCreateInfo pipelineMultisampleInfo;
+    pipelineMultisampleInfo.setSampleShadingEnable(false);
+
+    return pipelineMultisampleInfo;
+}
+
+vk::PipelineColorBlendAttachmentState Initializer::PipelineColorBlendAttachment()
+{
+    vk::PipelineColorBlendAttachmentState pipelineColorBlendAttachment;
+    pipelineColorBlendAttachment.setColorWriteMask(
+                                    vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
+                                    vk::ColorComponentFlagBits::eB |
+                                    vk::ColorComponentFlagBits::eA)
+                                .setBlendEnable(false);
+
+    return pipelineColorBlendAttachment;
+}
+
+vk::PipelineLayoutCreateInfo Initializer::PipelineLayout()
+{
+    vk::PipelineLayoutCreateInfo pipelineLayoutInfo;
+
+    return pipelineLayoutInfo;
 }

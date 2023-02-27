@@ -8,6 +8,7 @@
 #include "Vulkan/Initializer.h"
 
 #include "Log/Log.h"
+#include "Vulkan/PipelineBuilder.h"
 
 #ifdef _DEBUG
 constexpr bool bEnableValidation = true;
@@ -76,7 +77,7 @@ void Engine::Draw()
 
     vk::ClearValue clearValue;
     const float flash = abs(sin((float)m_FrameNumber / 120.f));
-    clearValue.setColor({0.0f, 0.0f, flash, 1.0f});
+    clearValue.setColor({0.2f, 0.2f, 0.2f, flash});
 
     vk::RenderPassBeginInfo renderPassInfo = Initializer::RenderpassBegin(
         m_RenderPass, m_Extent, m_Framebuffers[swapchainImageIndex]);
@@ -85,12 +86,14 @@ void Engine::Draw()
     m_MainCommandBuffer.beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
 
     /////////////////////////////Rendering/////////////////////////////
+    m_MainCommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_Pipeline);
+    m_MainCommandBuffer.draw(3, 1, 0, 0);
 
     m_MainCommandBuffer.endRenderPass();
     m_MainCommandBuffer.end();
 
     // Submit queue
-    vk::SubmitInfo submitInfo = Initializer::SubmitInfo(m_MainCommandBuffer);
+    vk::SubmitInfo submitInfo = Initializer::Submit(m_MainCommandBuffer);
     vk::PipelineStageFlags waitStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
     submitInfo.setWaitDstStageMask(waitStage)
               .setWaitSemaphores(m_PresentSemaphore)
@@ -98,7 +101,7 @@ void Engine::Draw()
 
     m_GraphicsQueue.submit(submitInfo, m_RenderFence);
 
-    vk::PresentInfoKHR presentInfo = Initializer::PresentInfo();
+    vk::PresentInfoKHR presentInfo = Initializer::Present();
     presentInfo.setSwapchains(m_Swapchain);
     presentInfo.setWaitSemaphores(m_RenderSemaphore);
     presentInfo.setImageIndices(swapchainImageIndex);
@@ -208,7 +211,7 @@ void Engine::InitDefaultRenderPass()
 
 void Engine::InitFramebuffers()
 {
-    vk::FramebufferCreateInfo framebufferInfo = Initializer::FramebufferCreate(m_RenderPass, m_Extent);
+    vk::FramebufferCreateInfo framebufferInfo = Initializer::Framebuffer(m_RenderPass, m_Extent);
 
     m_Framebuffers.resize(m_SwapchainImages.size());
 
@@ -221,7 +224,7 @@ void Engine::InitFramebuffers()
 
 void Engine::InitCommands()
 {
-    const vk::CommandPoolCreateInfo commandPoolInfo = Initializer::CommandPoolCreate(
+    const vk::CommandPoolCreateInfo commandPoolInfo = Initializer::CommandPool(
         m_GraphicsQueueFamily, vk::CommandPoolCreateFlagBits::eResetCommandBuffer);
     m_CommandPool = m_Device.createCommandPool(commandPoolInfo);
 
@@ -231,10 +234,10 @@ void Engine::InitCommands()
 
 void Engine::InitSyncStructs()
 {
-    const vk::FenceCreateInfo fenceInfo = Initializer::FenceCreate(vk::FenceCreateFlagBits::eSignaled);
+    const vk::FenceCreateInfo fenceInfo = Initializer::Fence(vk::FenceCreateFlagBits::eSignaled);
     m_RenderFence = m_Device.createFence(fenceInfo);
 
-    const vk::SemaphoreCreateInfo semaphoreInfo = Initializer::SemaphoreCreate();
+    const vk::SemaphoreCreateInfo semaphoreInfo = Initializer::Semaphore();
     m_RenderSemaphore = m_Device.createSemaphore(semaphoreInfo);
     m_PresentSemaphore = m_Device.createSemaphore(semaphoreInfo);
 }
@@ -244,6 +247,31 @@ void Engine::InitPipelines()
     vk::ShaderModule triangleVert, triangleFrag;
     LoadShaderModule("Shaders/Triangle", ShaderType::eVertex, triangleVert);
     LoadShaderModule("Shaders/Triangle", ShaderType::eFragment, triangleFrag);
+
+    vk::PipelineLayoutCreateInfo pipelineLayoutInfo = Initializer::PipelineLayout();
+    m_PipelineLayout = m_Device.createPipelineLayout(pipelineLayoutInfo);
+
+    PipelineBuilder pipelineBuilder;
+    pipelineBuilder.ShaderStages.push_back(
+        Initializer::PipelineShaderStage(vk::ShaderStageFlagBits::eVertex, triangleVert));
+    pipelineBuilder.ShaderStages.push_back(
+        Initializer::PipelineShaderStage(vk::ShaderStageFlagBits::eFragment, triangleFrag));
+    pipelineBuilder.VertexInputInfo = Initializer::PipelineVertexInput();
+    pipelineBuilder.InputAssembly = Initializer::PipelineInputAssembly(vk::PrimitiveTopology::eTriangleList);
+    pipelineBuilder.Viewport.setX(0.f)
+                   .setY(0.f)
+                   .setWidth((float)m_Extent.width)
+                   .setHeight((float)m_Extent.height)
+                   .setMinDepth(0.f)
+                   .setMaxDepth(1.f);
+    pipelineBuilder.Scissor.setExtent(m_Extent)
+                   .setOffset({0, 0});
+    pipelineBuilder.Rasterizer = Initializer::PipelineRasterization(vk::PolygonMode::eFill);
+    pipelineBuilder.Multisampling = Initializer::PipelineMultisample();
+    pipelineBuilder.ColorBlendAttachment = Initializer::PipelineColorBlendAttachment();
+    pipelineBuilder.PipelineLayout = m_PipelineLayout;
+
+    m_Pipeline = pipelineBuilder.Build(m_Device, m_RenderPass);
 }
 
 void Engine::LoadShaderModule(std::string path, ShaderType type, vk::ShaderModule& shaderModule) const
