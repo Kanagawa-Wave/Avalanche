@@ -153,7 +153,7 @@ void Engine::InitSwapchain()
 {
     vkb::SwapchainBuilder swapchainBuilder(m_PhysicalDevice, m_Device, m_Surface);
     vkb::Swapchain swapchain = swapchainBuilder.use_default_format_selection()
-                                               .set_desired_present_mode(VK_PRESENT_MODE_IMMEDIATE_KHR)
+                                               .set_desired_present_mode(VK_PRESENT_MODE_FIFO_KHR)
                                                .set_desired_extent(m_Extent.width, m_Extent.height)
                                                .build()
                                                .value();

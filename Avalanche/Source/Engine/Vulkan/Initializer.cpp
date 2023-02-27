@@ -87,3 +87,14 @@ vk::RenderPassBeginInfo Initializer::RenderpassBegin(vk::RenderPass renderPass, 
 
     return renderPassInfo;
 }
+
+vk::PipelineShaderStageCreateInfo Initializer::PipelineShaderStage(vk::ShaderStageFlagBits stage,
+	vk::ShaderModule shaderModule)
+{
+    vk::PipelineShaderStageCreateInfo pipelineShaderInfo;
+    pipelineShaderInfo.setStage(stage)
+					  .setModule(shaderModule)
+					  .setPName("main");
+
+    return pipelineShaderInfo;
+}

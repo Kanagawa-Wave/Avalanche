@@ -15,4 +15,5 @@ public:
     static vk::SubmitInfo SubmitInfo(vk::CommandBuffer& commandBuffer);
     static vk::PresentInfoKHR PresentInfo();
     static vk::RenderPassBeginInfo RenderpassBegin(vk::RenderPass renderPass, vk::Extent2D extent, vk::Framebuffer framebuffer);
+    static vk::PipelineShaderStageCreateInfo PipelineShaderStage(vk::ShaderStageFlagBits stage, vk::ShaderModule shaderModule);
 };
