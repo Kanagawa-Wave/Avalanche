@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "Types.h"
+#include <vulkan/vulkan.hpp>
 
 class Initializer
 {
