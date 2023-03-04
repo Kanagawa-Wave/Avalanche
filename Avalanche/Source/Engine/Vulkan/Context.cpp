@@ -1,5 +1,6 @@
 ﻿#include "Context.h"
 
+#include <GLFW/glfw3.h>
 #include <VkBootstrap.h>
 
 #include "Initializer.h"
@@ -59,6 +60,14 @@ Context::Context(GLFWwindow* window)
 
     const vk::SemaphoreCreateInfo semaphoreInfo = Initializer::Semaphore();
     m_RenderSemaphore = m_Device.createSemaphore(semaphoreInfo);
+
+    // VMA
+    VmaAllocatorCreateInfo allocatorInfo{};
+    allocatorInfo.physicalDevice = m_PhysicalDevice;
+    allocatorInfo.device = m_Device;
+    allocatorInfo.instance = m_Instance;
+
+    vmaCreateAllocator(&allocatorInfo, &m_Allocator);
 }
 
 Context::~Context()

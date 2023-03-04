@@ -1,12 +1,12 @@
 ﻿#pragma once
 
 #include <vulkan/vulkan.hpp>
-
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
+#include <vk_mem_alloc.h>
 
 #include "Swapchain.h"
 #include "Pipeline.h"
+
+struct GLFWwindow;
 
 class Context
 {
@@ -44,6 +44,8 @@ private:
 
     vk::CommandPool m_CommandPool;
     vk::CommandBuffer m_MainCommandBuffer;
+
+    VmaAllocator m_Allocator = VK_NULL_HANDLE;
 
 #ifdef _DEBUG
     const bool bEnableValidation = true;

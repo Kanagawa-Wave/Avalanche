@@ -1,8 +1,8 @@
 ﻿#pragma once
 
-#define GLFW_INCUDE_VULKAN
 #include <string>
-#include <GLFW/glfw3.h>
+
+struct GLFWwindow;
 
 class Window
 {
@@ -11,6 +11,7 @@ public:
     ~Window();
 
     bool Running() const;
+    void PollEvents() const;
     GLFWwindow* GetGLFWWindow() const;
     std::pair<uint32_t, uint32_t> GetExtent() const;
     uint32_t GetWidth() const;

@@ -1,11 +1,6 @@
 ﻿#include "Engine.h"
 
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-
 #include "Log/Log.h"
-
-
 
 void Engine::Init()
 {
@@ -36,7 +31,7 @@ void Engine::Run()
 {
     while (m_Window->Running())
     {
-        glfwPollEvents();
+        m_Window->PollEvents();
         Draw();
     }
 }

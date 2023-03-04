@@ -48,6 +48,7 @@ IncludeDir["STB_IMAGE"] = "Avalanche/ThirdParty/stb"
 IncludeDir["TINYOBJLOADER"] = "Avalanche/ThirdParty/tinyobjloader"
 IncludeDir["ENTT"] = "Avalanche/ThirdParty/entt"
 IncludeDir["VKBOOTSTRAP"] = "Avalanche/ThirdParty/vk-bootstrap/src"
+IncludeDir["VMA"] = "Avalanche/ThirdParty/VulkanMemoryAllocator/include"
 
 LibraryDir = {}
 LibraryDir["VulkanSDK"] = "%{VULKAN_SDK}/Lib"
@@ -88,6 +89,7 @@ project "Avalanche"
         "%{IncludeDir.SPDLOG}",
         -- "%{IncludeDir.IMGUI}",
         "%{IncludeDir.VKBOOTSTRAP}",
+        "%{IncludeDir.VMA}",
     }
     
     links

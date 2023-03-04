@@ -13,3 +13,6 @@
 [submodule "Avalanche/ThirdParty/vk-bootstrap"]
 	path = Avalanche/ThirdParty/vk-bootstrap
 	url = https://github.com/Kanagawa-Wave/vk-bootstrap.git
+[submodule "Avalanche/ThirdParty/VulkanMemoryAllocator"]
+	path = Avalanche/ThirdParty/VulkanMemoryAllocator
+	url = https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git

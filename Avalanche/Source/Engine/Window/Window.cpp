@@ -1,5 +1,7 @@
 ﻿#include "Window.h"
 
+#include <GLFW/glfw3.h>
+
 Window::Window(uint32_t width, uint32_t height, const std::string& name)
     : m_Width(width), m_Height(height), m_Name(name)
 {
@@ -17,6 +19,11 @@ Window::~Window()
 bool Window::Running() const
 {
     return !glfwWindowShouldClose(m_Window);
+}
+
+void Window::PollEvents() const
+{
+    glfwPollEvents();
 }
 
 GLFWwindow* Window::GetGLFWWindow() const
