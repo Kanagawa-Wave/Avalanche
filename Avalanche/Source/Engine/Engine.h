@@ -14,5 +14,4 @@ public:
 
 private:
     std::unique_ptr<Window> m_Window;
-    std::unique_ptr<Context> m_Context;
 };

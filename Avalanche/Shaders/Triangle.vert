@@ -1,11 +1,12 @@
 #version 450
 
-const vec3 positions[3] = vec3[3](
-    vec3(0.5f, 0.5f, 0.0f),
-    vec3(-0.5f, 0.5f, 0.0f),
-    vec3(0.f, -0.5f, 0.0f)
-);
+layout (location = 0) in vec3 vPosition;
+layout (location = 1) in vec3 vNormal;
+layout (location = 2) in vec3 vColor;
+
+layout (location = 0) out vec3 outColor;
 
 void main() {
-    gl_Position = vec4(positions[gl_VertexIndex], 1.f);
+    gl_Position = vec4(vPosition, 1.f);
+    outColor = vColor;
 }

@@ -1,96 +1,76 @@
 ﻿#include "Swapchain.h"
 
-#include "Initializer.h"
-#include <VkBootstrap.h>
+#include "Context.h"
 
-#include "Engine/Log/Log.h"
-
-Swapchain::Swapchain(vk::PhysicalDevice physicalDevice, vk::Device device, vk::SurfaceKHR surface, uint32_t width,
-                     uint32_t height)
-    : m_Extent(width, height)
+Swapchain::Swapchain(uint32_t width, uint32_t height)
 {
-    // Swapchain
-    vkb::SwapchainBuilder swapchainBuilder(physicalDevice, device, surface);
-    vkb::Swapchain swapchain = swapchainBuilder.use_default_format_selection()
-                                               .set_desired_present_mode(VK_PRESENT_MODE_FIFO_KHR)
-                                               .set_desired_extent(width, height)
-                                               .build()
-                                               .value();
+    QueryInfo(width, height);
 
-    m_Swapchain = swapchain.swapchain;
-    m_SwapchainImages.resize(swapchain.image_count);
-    for (uint32_t i = 0; i < swapchain.image_count; i++)
-        m_SwapchainImages[i] = swapchain.get_images().value()[i];
+    vk::SwapchainCreateInfoKHR swapchainInfo;
+    swapchainInfo.setClipped(true)
+                 .setImageArrayLayers(1)
+                 .setImageUsage(vk::ImageUsageFlagBits::eColorAttachment)
+                 .setCompositeAlpha(vk::CompositeAlphaFlagBitsKHR::eOpaque)
+                 .setSurface(Context::GetInstance().GetSurface())
+                 .setImageExtent(m_SwapchainInfo.Extent)
+                 .setImageColorSpace(m_SwapchainInfo.Format.colorSpace)
+                 .setImageFormat(m_SwapchainInfo.Format.format)
+                 .setMinImageCount(m_SwapchainInfo.Count)
+                 .setPresentMode(m_SwapchainInfo.PresentMode);
 
-    m_SwapchainImageViews.resize(swapchain.image_count);
-    for (uint32_t i = 0; i < swapchain.image_count; i++)
-        m_SwapchainImageViews[i] = swapchain.get_image_views().value()[i];
-
-    m_SwapchainImageFormat = (vk::Format)swapchain.image_format;
-
-    // Sync
-    const vk::SemaphoreCreateInfo semaphoreInfo = Initializer::Semaphore();
-    m_PresentSemaphore = device.createSemaphore(semaphoreInfo);
-}
-
-void Swapchain::CreateFramebuffers(vk::Device device)
-{
-    // Framebuffers
-    vk::FramebufferCreateInfo framebufferInfo = Initializer::Framebuffer(m_RenderPass, m_Extent);
-
-    m_Framebuffers.resize(m_SwapchainImages.size());
-
-    for (uint32_t i = 0; i < m_SwapchainImages.size(); i++)
+    uint32_t graphicsFamilyIndex = Context::GetInstance().GetGraphicsQueueFamilyIndex();
+    uint32_t presentFamilyIndex = Context::GetInstance().GetPresentQueueFamilyIndex();
+    if (graphicsFamilyIndex == presentFamilyIndex)
     {
-        framebufferInfo.setAttachments(m_SwapchainImageViews[i]);
-        m_Framebuffers[i] = device.createFramebuffer(framebufferInfo);
+        swapchainInfo.setQueueFamilyIndices(graphicsFamilyIndex)
+                     .setImageSharingMode(vk::SharingMode::eExclusive);
     }
+    else
+    {
+        std::array indices = {graphicsFamilyIndex, presentFamilyIndex};
+        swapchainInfo.setQueueFamilyIndices(indices)
+                     .setImageSharingMode(vk::SharingMode::eConcurrent);
+    }
+
+    m_Swapchain = Context::GetInstance().GetDevice().createSwapchainKHR(swapchainInfo);
 }
 
-void Swapchain::CreateRenderpass(vk::Device device)
+Swapchain::~Swapchain()
 {
-    // Renderpass
-    vk::AttachmentDescription attachmentInfo;
-    attachmentInfo.setFormat(m_SwapchainImageFormat)
-                  .setSamples(vk::SampleCountFlagBits::e1)
-                  .setLoadOp(vk::AttachmentLoadOp::eClear)
-                  .setStoreOp(vk::AttachmentStoreOp::eStore)
-                  .setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)
-                  .setStencilStoreOp(vk::AttachmentStoreOp::eDontCare)
-                  .setInitialLayout(vk::ImageLayout::eUndefined)
-                  .setFinalLayout(vk::ImageLayout::ePresentSrcKHR);
-
-    vk::AttachmentReference attachmentRef;
-    attachmentRef.setAttachment(0)
-                 .setLayout(vk::ImageLayout::eColorAttachmentOptimal);
-
-    vk::SubpassDescription subpassInfo;
-    subpassInfo.setColorAttachments(attachmentRef)
-               .setPipelineBindPoint(vk::PipelineBindPoint::eGraphics);
-
-    vk::SubpassDependency dependency;
-    dependency.setSrcSubpass(VK_SUBPASS_EXTERNAL)
-              .setDstSubpass(0)
-              .setSrcStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput)
-              .setSrcAccessMask(vk::AccessFlagBits::eNone)
-              .setDstStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput)
-              .setDstAccessMask(vk::AccessFlagBits::eColorAttachmentWrite);
-
-    vk::RenderPassCreateInfo renderPassInfo;
-    renderPassInfo.setAttachments(attachmentInfo)
-                  .setSubpasses(subpassInfo)
-                  .setDependencies(dependency);
-
-    m_RenderPass = device.createRenderPass(renderPassInfo);
+    Context::GetInstance().GetDevice().destroySwapchainKHR(m_Swapchain);
 }
 
-void Swapchain::Begin(vk::Device device, vk::ClearValue clearValue, vk::CommandBuffer commandBuffer)
+void Swapchain::QueryInfo(uint32_t width, uint32_t height)
 {
-    m_SwapchainImageIndex = device.acquireNextImageKHR(m_Swapchain, 1000000000, m_PresentSemaphore, nullptr).value;
+    auto device = Context::GetInstance().GetPhysicalDevice();
+    auto surface = Context::GetInstance().GetSurface();
+    auto formats = device.getSurfaceFormatsKHR(surface);
+    m_SwapchainInfo.Format = formats[0];
+    for (auto format : formats)
+    {
+        if (format.format == vk::Format::eR8G8B8A8Srgb &&
+            format.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear)
+        {
+            m_SwapchainInfo.Format = format;
+            break;
+        }
+    }
 
-    vk::RenderPassBeginInfo renderPassInfo = Initializer::RenderpassBegin(
-        m_RenderPass, m_Extent, m_Framebuffers[m_SwapchainImageIndex]);
-    renderPassInfo.setClearValues(clearValue);
+    auto capabilities = device.getSurfaceCapabilitiesKHR(surface);
+    m_SwapchainInfo.Count = capabilities.minImageCount;
+    m_SwapchainInfo.Extent.width = std::clamp<uint32_t>(width, capabilities.minImageExtent.width,
+                                                        capabilities.maxImageExtent.width);
+    m_SwapchainInfo.Extent.height = std::clamp<uint32_t>(height, capabilities.minImageExtent.height,
+                                                         capabilities.maxImageExtent.height);
+    m_SwapchainInfo.Transform = capabilities.currentTransform;
 
-    commandBuffer.beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
+    auto presentModes = device.getSurfacePresentModesKHR(surface);
+    for (auto presentMode : presentModes)
+    {
+        if (presentMode == vk::PresentModeKHR::eMailbox)
+        {
+            m_SwapchainInfo.PresentMode = presentMode;
+            break;
+        }
+    }
 }

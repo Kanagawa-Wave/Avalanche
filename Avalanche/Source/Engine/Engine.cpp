@@ -7,24 +7,19 @@ void Engine::Init()
     Log::Init();
 
     m_Window = std::make_unique<Window>(800, 600, "Avalanche");
-    m_Context = std::make_unique<Context>(m_Window->GetGLFWWindow());
 
-    m_Context->CreateSwapchain(m_Window->GetWidth(), m_Window->GetHeight());
-    m_Context->CreatePipeline("Shaders/Triangle");
+    Context::Init(m_Window->GetGLFWWindow());
+    Context::GetInstance().CreateSwapchain(m_Window->GetGLFWWindow());
 }
 
 void Engine::Destroy()
 {
+    Context::GetInstance().Destroy();
 }
 
 void Engine::Draw()
 {
-    m_Context->Begin({{0.2f, 0.2f, 0.8f, 1.0f}});
 
-    m_Context->Draw(3);
-    
-    m_Context->End();
-    m_Context->Submit();
 }
 
 void Engine::Run()
