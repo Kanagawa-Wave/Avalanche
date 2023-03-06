@@ -33,20 +33,27 @@ Swapchain::Swapchain(uint32_t width, uint32_t height)
     }
 
     m_Swapchain = Context::GetInstance().GetDevice().createSwapchainKHR(swapchainInfo);
+
+    GetImages();
+    CreateImageViews();
 }
 
 Swapchain::~Swapchain()
 {
+    for (const auto view : m_ImageViews)
+    {
+        Context::GetInstance().GetDevice().destroyImageView(view);
+    }
     Context::GetInstance().GetDevice().destroySwapchainKHR(m_Swapchain);
 }
 
 void Swapchain::QueryInfo(uint32_t width, uint32_t height)
 {
-    auto device = Context::GetInstance().GetPhysicalDevice();
-    auto surface = Context::GetInstance().GetSurface();
-    auto formats = device.getSurfaceFormatsKHR(surface);
+    const auto device = Context::GetInstance().GetPhysicalDevice();
+    const auto surface = Context::GetInstance().GetSurface();
+    const auto formats = device.getSurfaceFormatsKHR(surface);
     m_SwapchainInfo.Format = formats[0];
-    for (auto format : formats)
+    for (const auto format : formats)
     {
         if (format.format == vk::Format::eR8G8B8A8Srgb &&
             format.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear)
@@ -56,7 +63,7 @@ void Swapchain::QueryInfo(uint32_t width, uint32_t height)
         }
     }
 
-    auto capabilities = device.getSurfaceCapabilitiesKHR(surface);
+    const auto capabilities = device.getSurfaceCapabilitiesKHR(surface);
     m_SwapchainInfo.Count = capabilities.minImageCount;
     m_SwapchainInfo.Extent.width = std::clamp<uint32_t>(width, capabilities.minImageExtent.width,
                                                         capabilities.maxImageExtent.width);
@@ -64,13 +71,41 @@ void Swapchain::QueryInfo(uint32_t width, uint32_t height)
                                                          capabilities.maxImageExtent.height);
     m_SwapchainInfo.Transform = capabilities.currentTransform;
 
-    auto presentModes = device.getSurfacePresentModesKHR(surface);
-    for (auto presentMode : presentModes)
+    const auto presentModes = device.getSurfacePresentModesKHR(surface);
+    for (const auto presentMode : presentModes)
     {
         if (presentMode == vk::PresentModeKHR::eMailbox)
         {
             m_SwapchainInfo.PresentMode = presentMode;
             break;
         }
+    }
+}
+
+void Swapchain::GetImages()
+{
+    m_Images = Context::GetInstance().GetDevice().getSwapchainImagesKHR(m_Swapchain);
+}
+
+void Swapchain::CreateImageViews()
+{
+    m_ImageViews.resize(m_Images.size());
+
+    for (uint32_t i = 0; i < m_ImageViews.size(); i++)
+    {
+        vk::ImageViewCreateInfo viewInfo;
+        vk::ComponentMapping mapping;
+        vk::ImageSubresourceRange range;
+        range.setBaseMipLevel(0)
+             .setLevelCount(1)
+             .setBaseArrayLayer(0)
+             .setLayerCount(1)
+             .setAspectMask(vk::ImageAspectFlagBits::eColor);
+        viewInfo.setImage(m_Images[i])
+                .setViewType(vk::ImageViewType::e2D)
+                .setComponents(mapping)
+                .setFormat(m_SwapchainInfo.Format.format)
+                .setSubresourceRange(range);
+        m_ImageViews[i] = Context::GetInstance().GetDevice().createImageView(viewInfo);
     }
 }

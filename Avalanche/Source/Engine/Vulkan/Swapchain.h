@@ -10,6 +10,8 @@ public:
 
 private:
     void QueryInfo(uint32_t width, uint32_t height);
+    void GetImages();
+    void CreateImageViews();
 
 private:
     struct SwapchainInfo
@@ -21,5 +23,7 @@ private:
         vk::PresentModeKHR PresentMode = vk::PresentModeKHR::eFifo;
     };
     vk::SwapchainKHR m_Swapchain;
+    std::vector<vk::Image> m_Images;
+    std::vector<vk::ImageView> m_ImageViews;
     SwapchainInfo m_SwapchainInfo;
 };

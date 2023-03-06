@@ -108,8 +108,8 @@ void Context::CreateDevice()
 
 void Context::QueryQueueFamilyIndices()
 {
-    auto properties = m_PhysicalDevice.getQueueFamilyProperties();
-    for (int i = 0; i < properties.size(); i++)
+    const auto properties = m_PhysicalDevice.getQueueFamilyProperties();
+    for (uint32_t i = 0; i < properties.size(); i++)
     {
         if (properties[i].queueFlags | vk::QueueFlagBits::eGraphics)
         {
