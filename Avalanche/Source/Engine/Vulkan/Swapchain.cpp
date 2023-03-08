@@ -40,6 +40,10 @@ Swapchain::Swapchain(uint32_t width, uint32_t height)
 
 Swapchain::~Swapchain()
 {
+    for (const auto framebuffer : m_Framebuffers)
+    {
+        Context::GetInstance().GetDevice().destroyFramebuffer(framebuffer);
+    }
     for (const auto view : m_ImageViews)
     {
         Context::GetInstance().GetDevice().destroyImageView(view);
@@ -107,5 +111,20 @@ void Swapchain::CreateImageViews()
                 .setFormat(m_SwapchainInfo.Format.format)
                 .setSubresourceRange(range);
         m_ImageViews[i] = Context::GetInstance().GetDevice().createImageView(viewInfo);
+    }
+}
+
+void Swapchain::CreateFramebuffers(uint32_t width, uint32_t height)
+{
+    m_Framebuffers.resize(m_Images.size());
+    for (uint32_t i = 0; i < m_Framebuffers.size(); i++)
+    {
+        vk::FramebufferCreateInfo framebufferInfo;
+        framebufferInfo.setAttachments(m_ImageViews[i])
+                       .setWidth(width)
+                       .setHeight(height)
+                       .setRenderPass(Context::GetInstance().GetPipeline()->GetRenderPass())
+                       .setLayers(1);
+        m_Framebuffers[i] = Context::GetInstance().GetDevice().createFramebuffer(framebufferInfo);
     }
 }

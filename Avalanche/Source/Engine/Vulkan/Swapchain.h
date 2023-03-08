@@ -8,6 +8,9 @@ public:
     Swapchain(uint32_t width, uint32_t height);
     ~Swapchain();
 
+    vk::Format GetFormat() const { return m_SwapchainInfo.Format.format; }
+    void CreateFramebuffers(uint32_t width, uint32_t height);
+
 private:
     void QueryInfo(uint32_t width, uint32_t height);
     void GetImages();
@@ -25,5 +28,6 @@ private:
     vk::SwapchainKHR m_Swapchain;
     std::vector<vk::Image> m_Images;
     std::vector<vk::ImageView> m_ImageViews;
+    std::vector<vk::Framebuffer> m_Framebuffers;
     SwapchainInfo m_SwapchainInfo;
 };

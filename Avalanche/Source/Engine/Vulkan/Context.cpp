@@ -13,6 +13,7 @@ void Context::Init(GLFWwindow* window)
 
 void Context::Destroy()
 {
+    m_Pipeline.reset();
     m_Swapchain.reset();
     m_Instance.destroySurfaceKHR(m_Surface);
     m_Device.destroy();
@@ -137,11 +138,14 @@ void Context::CreateSurface(GLFWwindow* window)
     glfwCreateWindowSurface(m_Instance, window, nullptr, (VkSurfaceKHR*)&m_Surface);
 }
 
-void Context::CreateSwapchain(GLFWwindow* window)
+void Context::CreateSwapchain(uint32_t width, uint32_t height)
 {
-    int width, height;
-    glfwGetWindowSize(window, &width, &height);
-    m_Swapchain.reset(new Swapchain(width, height));
+    m_Swapchain = std::make_unique<Swapchain>(width, height);
+}
+
+void Context::CreatePipeline()
+{
+    m_Pipeline = std::make_unique<Pipeline>("Shaders/Triangle.vert.spv", "Shaders/Triangle.frag.spv");
 }
 
 Context::~Context()

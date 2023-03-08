@@ -4,6 +4,7 @@
 #include <vk_mem_alloc.h>
 #include <optional>
 
+#include "Pipeline.h"
 #include "Swapchain.h"
 
 struct GLFWwindow;
@@ -18,11 +19,14 @@ public:
     ~Context();
 
 public:
-    void CreateSwapchain(GLFWwindow* window);
+    void CreateSwapchain(uint32_t width, uint32_t height);
+    void CreatePipeline();
     
     vk::SurfaceKHR GetSurface() const { return m_Surface; }
     vk::PhysicalDevice GetPhysicalDevice() const { return m_PhysicalDevice; }
     vk::Device GetDevice() const { return m_Device; }
+    Swapchain* GetSwapchain() { return m_Swapchain.get(); }
+    Pipeline* GetPipeline() { return m_Pipeline.get(); }
     uint32_t GetGraphicsQueueFamilyIndex() const { return m_QueueFamilyIndices.GraphicsQueue.value(); }
     uint32_t GetPresentQueueFamilyIndex() const { return m_QueueFamilyIndices.PresentQueue.value(); }
         
@@ -56,7 +60,10 @@ private:
     vk::Queue m_GraphicsQueue, m_PresentQueue;
     vk::SurfaceKHR m_Surface;
     std::unique_ptr<Swapchain> m_Swapchain;
+    std::unique_ptr<Pipeline> m_Pipeline;
+    
     QueueFamilyIndices m_QueueFamilyIndices;
 };
+
 
 
