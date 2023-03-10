@@ -4,6 +4,7 @@
 
 #include <GLFW/glfw3.h>
 
+
 std::unique_ptr<Context> Context::s_Instance = nullptr;
 
 void Context::Init(GLFWwindow* window)
@@ -13,6 +14,8 @@ void Context::Init(GLFWwindow* window)
 
 void Context::Destroy()
 {
+    m_Device.waitIdle();
+    m_CommandManager.reset();
     m_Pipeline.reset();
     m_Swapchain.reset();
     m_Instance.destroySurfaceKHR(m_Surface);
@@ -21,7 +24,7 @@ void Context::Destroy()
     s_Instance.reset();
 }
 
-Context& Context::GetInstance()
+Context& Context::Instance()
 {
     return *s_Instance;
 }
@@ -138,14 +141,19 @@ void Context::CreateSurface(GLFWwindow* window)
     glfwCreateWindowSurface(m_Instance, window, nullptr, (VkSurfaceKHR*)&m_Surface);
 }
 
-void Context::CreateSwapchain(uint32_t width, uint32_t height)
+void Context::InitSwapchain(uint32_t width, uint32_t height)
 {
     m_Swapchain = std::make_unique<Swapchain>(width, height);
 }
 
-void Context::CreatePipeline()
+void Context::InitPipeline()
 {
     m_Pipeline = std::make_unique<Pipeline>("Shaders/Triangle.vert.spv", "Shaders/Triangle.frag.spv");
+}
+
+void Context::InitCommandManager()
+{
+    m_CommandManager = std::make_unique<CommandManager>();
 }
 
 Context::~Context()

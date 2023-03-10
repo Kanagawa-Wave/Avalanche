@@ -10,8 +10,9 @@ public:
     Pipeline(const std::string& vertPath, const std::string& fragPath);
     ~Pipeline();
 
+    vk::Pipeline GetPipeline() const { return m_Pipeline; }
     vk::RenderPass GetRenderPass() const { return m_RenderPass; }
-    
+
     void CreateLayout();
     void CreatePipeline(uint32_t width, uint32_t height);
     void CreateRenderPass();

@@ -11,19 +11,19 @@ Shader::Shader(const std::string& vertPath, const std::string& fragPath)
     vk::ShaderModuleCreateInfo shaderInfo;
     shaderInfo.setPCode(reinterpret_cast<const uint32_t*>(vertSource.data()))
               .setCodeSize(vertSource.size());
-    m_VertexShader = Context::GetInstance().GetDevice().createShaderModule(shaderInfo);
+    m_VertexShader = Context::Instance().GetDevice().createShaderModule(shaderInfo);
 
     shaderInfo.setPCode(reinterpret_cast<const uint32_t*>(fragSource.data()))
               .setCodeSize(fragSource.size());
-    m_FragmentShader = Context::GetInstance().GetDevice().createShaderModule(shaderInfo);
+    m_FragmentShader = Context::Instance().GetDevice().createShaderModule(shaderInfo);
 
     InitPipelineShaderStageCreateInfo();
 }
 
 Shader::~Shader()
 {
-    Context::GetInstance().GetDevice().destroyShaderModule(m_VertexShader);
-    Context::GetInstance().GetDevice().destroyShaderModule(m_FragmentShader);
+    Context::Instance().GetDevice().destroyShaderModule(m_VertexShader);
+    Context::Instance().GetDevice().destroyShaderModule(m_FragmentShader);
 }
 
 std::vector<char> Shader::LoadSPVFromFile(const std::string& path)

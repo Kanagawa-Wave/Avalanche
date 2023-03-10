@@ -9,22 +9,28 @@ void Engine::Init()
     m_Window = std::make_unique<Window>(800, 600, "Avalanche");
 
     Context::Init(m_Window->GetGLFWWindow());
-    Context::GetInstance().CreateSwapchain(m_Window->GetWidth(), m_Window->GetHeight());
-    Context::GetInstance().CreatePipeline();
-    Context::GetInstance().GetPipeline()->CreateRenderPass();
-    Context::GetInstance().GetPipeline()->CreateLayout();
-    Context::GetInstance().GetSwapchain()->CreateFramebuffers(m_Window->GetWidth(), m_Window->GetHeight());
-    Context::GetInstance().GetPipeline()->CreatePipeline(m_Window->GetWidth(), m_Window->GetHeight());
+    
+    auto& ctx = Context::Instance();
+    ctx.InitSwapchain(m_Window->GetWidth(), m_Window->GetHeight());
+    ctx.InitPipeline();
+    ctx.InitCommandManager();
+    ctx.GetPipeline().CreateRenderPass();
+    ctx.GetPipeline().CreateLayout();
+    ctx.GetSwapchain().CreateFramebuffers(m_Window->GetWidth(), m_Window->GetHeight());
+    ctx.GetPipeline().CreatePipeline(m_Window->GetWidth(), m_Window->GetHeight());
+
+    m_Renderer = std::make_unique<Renderer>();
 }
 
 void Engine::Destroy()
 {
-    Context::GetInstance().Destroy();
+    m_Renderer.reset();
+    Context::Instance().Destroy();
 }
 
 void Engine::Draw()
 {
-
+    m_Renderer->Render();
 }
 
 void Engine::Run()

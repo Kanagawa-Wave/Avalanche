@@ -10,16 +10,16 @@ Pipeline::Pipeline(const std::string& vertPath, const std::string& fragPath)
 
 Pipeline::~Pipeline()
 {
-    Context::GetInstance().GetDevice().destroyRenderPass(m_RenderPass);
-    Context::GetInstance().GetDevice().destroyPipelineLayout(m_Layout);
-    Context::GetInstance().GetDevice().destroyPipeline(m_Pipeline);
+    Context::Instance().GetDevice().destroyRenderPass(m_RenderPass);
+    Context::Instance().GetDevice().destroyPipelineLayout(m_Layout);
+    Context::Instance().GetDevice().destroyPipeline(m_Pipeline);
 }
 
 void Pipeline::CreateLayout()
 {
     vk::PipelineLayoutCreateInfo layoutInfo;
 
-    m_Layout = Context::GetInstance().GetDevice().createPipelineLayout(layoutInfo);
+    m_Layout = Context::Instance().GetDevice().createPipelineLayout(layoutInfo);
 }
 
 void Pipeline::CreatePipeline(uint32_t width, uint32_t height)
@@ -30,7 +30,7 @@ void Pipeline::CreatePipeline(uint32_t width, uint32_t height)
     pipelineInfo.setPVertexInputState(&inputState);
 
     vk::PipelineInputAssemblyStateCreateInfo inputAssembly;
-    inputAssembly.setPrimitiveRestartEnable(true)
+    inputAssembly.setPrimitiveRestartEnable(false)
                  .setTopology(vk::PrimitiveTopology::eTriangleList);
     pipelineInfo.setPInputAssemblyState(&inputAssembly);
 
@@ -46,7 +46,7 @@ void Pipeline::CreatePipeline(uint32_t width, uint32_t height)
     vk::PipelineRasterizationStateCreateInfo rasterizationState;
     rasterizationState.setRasterizerDiscardEnable(false)
                       .setCullMode(vk::CullModeFlagBits::eBack)
-                      .setFrontFace(vk::FrontFace::eCounterClockwise)
+                      .setFrontFace(vk::FrontFace::eClockwise)
                       .setPolygonMode(vk::PolygonMode::eFill)
                       .setLineWidth(1.f);
     pipelineInfo.setPRasterizationState(&rasterizationState);
@@ -71,7 +71,7 @@ void Pipeline::CreatePipeline(uint32_t width, uint32_t height)
     pipelineInfo.setRenderPass(m_RenderPass)
                 .setLayout(m_Layout);
 
-    auto result = Context::GetInstance().GetDevice().createGraphicsPipeline(nullptr, pipelineInfo);
+    auto result = Context::Instance().GetDevice().createGraphicsPipeline(nullptr, pipelineInfo);
     if (result.result != vk::Result::eSuccess)
     {
         ASSERT(0, "Failed to create pipeline")
@@ -84,9 +84,9 @@ void Pipeline::CreateRenderPass()
 {
     vk::RenderPassCreateInfo renderPassInfo;
     vk::AttachmentDescription attachment;
-    attachment.setFormat(Context::GetInstance().GetSwapchain()->GetFormat())
+    attachment.setFormat(Context::Instance().GetSwapchain().GetFormat())
               .setInitialLayout(vk::ImageLayout::eUndefined)
-              .setFinalLayout(vk::ImageLayout::eColorAttachmentOptimal)
+              .setFinalLayout(vk::ImageLayout::ePresentSrcKHR)
               .setLoadOp(vk::AttachmentLoadOp::eClear)
               .setStoreOp(vk::AttachmentStoreOp::eStore)
               .setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)
@@ -110,5 +110,5 @@ void Pipeline::CreateRenderPass()
               .setDstStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
     renderPassInfo.setDependencies(dependency);
 
-    m_RenderPass = Context::GetInstance().GetDevice().createRenderPass(renderPassInfo);
+    m_RenderPass = Context::Instance().GetDevice().createRenderPass(renderPassInfo);
 }

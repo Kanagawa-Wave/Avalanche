@@ -11,15 +11,15 @@ Swapchain::Swapchain(uint32_t width, uint32_t height)
                  .setImageArrayLayers(1)
                  .setImageUsage(vk::ImageUsageFlagBits::eColorAttachment)
                  .setCompositeAlpha(vk::CompositeAlphaFlagBitsKHR::eOpaque)
-                 .setSurface(Context::GetInstance().GetSurface())
+                 .setSurface(Context::Instance().GetSurface())
                  .setImageExtent(m_SwapchainInfo.Extent)
                  .setImageColorSpace(m_SwapchainInfo.Format.colorSpace)
                  .setImageFormat(m_SwapchainInfo.Format.format)
                  .setMinImageCount(m_SwapchainInfo.Count)
                  .setPresentMode(m_SwapchainInfo.PresentMode);
 
-    uint32_t graphicsFamilyIndex = Context::GetInstance().GetGraphicsQueueFamilyIndex();
-    uint32_t presentFamilyIndex = Context::GetInstance().GetPresentQueueFamilyIndex();
+    uint32_t graphicsFamilyIndex = Context::Instance().GetGraphicsQueueFamilyIndex();
+    uint32_t presentFamilyIndex = Context::Instance().GetPresentQueueFamilyIndex();
     if (graphicsFamilyIndex == presentFamilyIndex)
     {
         swapchainInfo.setQueueFamilyIndices(graphicsFamilyIndex)
@@ -32,7 +32,7 @@ Swapchain::Swapchain(uint32_t width, uint32_t height)
                      .setImageSharingMode(vk::SharingMode::eConcurrent);
     }
 
-    m_Swapchain = Context::GetInstance().GetDevice().createSwapchainKHR(swapchainInfo);
+    m_Swapchain = Context::Instance().GetDevice().createSwapchainKHR(swapchainInfo);
 
     GetImages();
     CreateImageViews();
@@ -42,19 +42,19 @@ Swapchain::~Swapchain()
 {
     for (const auto framebuffer : m_Framebuffers)
     {
-        Context::GetInstance().GetDevice().destroyFramebuffer(framebuffer);
+        Context::Instance().GetDevice().destroyFramebuffer(framebuffer);
     }
     for (const auto view : m_ImageViews)
     {
-        Context::GetInstance().GetDevice().destroyImageView(view);
+        Context::Instance().GetDevice().destroyImageView(view);
     }
-    Context::GetInstance().GetDevice().destroySwapchainKHR(m_Swapchain);
+    Context::Instance().GetDevice().destroySwapchainKHR(m_Swapchain);
 }
 
 void Swapchain::QueryInfo(uint32_t width, uint32_t height)
 {
-    const auto device = Context::GetInstance().GetPhysicalDevice();
-    const auto surface = Context::GetInstance().GetSurface();
+    const auto device = Context::Instance().GetPhysicalDevice();
+    const auto surface = Context::Instance().GetSurface();
     const auto formats = device.getSurfaceFormatsKHR(surface);
     m_SwapchainInfo.Format = formats[0];
     for (const auto format : formats)
@@ -88,7 +88,7 @@ void Swapchain::QueryInfo(uint32_t width, uint32_t height)
 
 void Swapchain::GetImages()
 {
-    m_Images = Context::GetInstance().GetDevice().getSwapchainImagesKHR(m_Swapchain);
+    m_Images = Context::Instance().GetDevice().getSwapchainImagesKHR(m_Swapchain);
 }
 
 void Swapchain::CreateImageViews()
@@ -110,7 +110,7 @@ void Swapchain::CreateImageViews()
                 .setComponents(mapping)
                 .setFormat(m_SwapchainInfo.Format.format)
                 .setSubresourceRange(range);
-        m_ImageViews[i] = Context::GetInstance().GetDevice().createImageView(viewInfo);
+        m_ImageViews[i] = Context::Instance().GetDevice().createImageView(viewInfo);
     }
 }
 
@@ -123,8 +123,8 @@ void Swapchain::CreateFramebuffers(uint32_t width, uint32_t height)
         framebufferInfo.setAttachments(m_ImageViews[i])
                        .setWidth(width)
                        .setHeight(height)
-                       .setRenderPass(Context::GetInstance().GetPipeline()->GetRenderPass())
+                       .setRenderPass(Context::Instance().GetPipeline().GetRenderPass())
                        .setLayers(1);
-        m_Framebuffers[i] = Context::GetInstance().GetDevice().createFramebuffer(framebufferInfo);
+        m_Framebuffers[i] = Context::Instance().GetDevice().createFramebuffer(framebufferInfo);
     }
 }

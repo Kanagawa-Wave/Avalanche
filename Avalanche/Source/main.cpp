@@ -2,11 +2,9 @@
 
 int main()
 {
-    Engine* engine = new Engine();
+    const std::unique_ptr<Engine> engine = std::make_unique<Engine>();
 
     engine->Init();
     engine->Run();
     engine->Destroy();
-
-    delete engine;
 }

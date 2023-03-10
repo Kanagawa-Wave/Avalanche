@@ -4,7 +4,9 @@
 #include <vk_mem_alloc.h>
 #include <optional>
 
+#include "CommandManager.h"
 #include "Pipeline.h"
+#include "Renderer.h"
 #include "Swapchain.h"
 
 struct GLFWwindow;
@@ -14,19 +16,23 @@ class Context final
 public:
     static void Init(GLFWwindow* window);
     void Destroy();
-    static Context& GetInstance();
+    static Context& Instance();
 
     ~Context();
 
 public:
-    void CreateSwapchain(uint32_t width, uint32_t height);
-    void CreatePipeline();
+    void InitSwapchain(uint32_t width, uint32_t height);
+    void InitPipeline();
+    void InitCommandManager();
     
-    vk::SurfaceKHR GetSurface() const { return m_Surface; }
-    vk::PhysicalDevice GetPhysicalDevice() const { return m_PhysicalDevice; }
-    vk::Device GetDevice() const { return m_Device; }
-    Swapchain* GetSwapchain() { return m_Swapchain.get(); }
-    Pipeline* GetPipeline() { return m_Pipeline.get(); }
+    const vk::SurfaceKHR& GetSurface() const { return m_Surface; }
+    const vk::PhysicalDevice& GetPhysicalDevice() const { return m_PhysicalDevice; }
+    const vk::Device& GetDevice() const { return m_Device; }
+    const vk::Queue& GetGraphicsQueue() const { return m_GraphicsQueue; }
+    const vk::Queue& GetPresentQueue() const { return m_PresentQueue; }
+    Swapchain& GetSwapchain() const { return *m_Swapchain; }
+    Pipeline& GetPipeline() const { return *m_Pipeline; }
+    CommandManager& GetCommandManager() const { return *m_CommandManager; }
     uint32_t GetGraphicsQueueFamilyIndex() const { return m_QueueFamilyIndices.GraphicsQueue.value(); }
     uint32_t GetPresentQueueFamilyIndex() const { return m_QueueFamilyIndices.PresentQueue.value(); }
         
@@ -61,6 +67,7 @@ private:
     vk::SurfaceKHR m_Surface;
     std::unique_ptr<Swapchain> m_Swapchain;
     std::unique_ptr<Pipeline> m_Pipeline;
+    std::unique_ptr<CommandManager> m_CommandManager;
     
     QueueFamilyIndices m_QueueFamilyIndices;
 };
