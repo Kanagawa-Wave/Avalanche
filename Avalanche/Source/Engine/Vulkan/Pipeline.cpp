@@ -22,12 +22,14 @@ void Pipeline::CreateLayout()
     m_Layout = Context::Instance().GetDevice().createPipelineLayout(layoutInfo);
 }
 
-void Pipeline::CreatePipeline(uint32_t width, uint32_t height)
+void Pipeline::CreatePipeline(uint32_t width, uint32_t height, const VertexInputInfo& vertexInputInfo)
 {
     vk::GraphicsPipelineCreateInfo pipelineInfo;
 
-    vk::PipelineVertexInputStateCreateInfo inputState;
-    pipelineInfo.setPVertexInputState(&inputState);
+    vk::PipelineVertexInputStateCreateInfo vertexInput;
+    vertexInput.setVertexBindingDescriptions(vertexInputInfo.BindingDescription)
+               .setVertexAttributeDescriptions(vertexInputInfo.AttributeDescriptions);
+    pipelineInfo.setPVertexInputState(&vertexInput);
 
     vk::PipelineInputAssemblyStateCreateInfo inputAssembly;
     inputAssembly.setPrimitiveRestartEnable(false)
@@ -37,7 +39,7 @@ void Pipeline::CreatePipeline(uint32_t width, uint32_t height)
     pipelineInfo.setStages(m_Shader->GetStageInfo());
 
     vk::PipelineViewportStateCreateInfo viewportState;
-    vk::Viewport viewport(0.f, 0.f, (float)width, (float)height, 0.f, 1.f);
+    vk::Viewport viewport(0.f, (float)height, (float)width, -(float)height, 0.f, 1.f);
     vk::Rect2D rect(vk::Offset2D(0, 0), vk::Extent2D(width, height));
     viewportState.setViewports(viewport)
                  .setScissors(rect);

@@ -2,13 +2,15 @@
 
 #include <vulkan/vulkan.hpp>
 
+#include "Engine/Scene/Components/Mesh.h"
+
 class Renderer
 {
 public:
     Renderer();
     ~Renderer();
 
-    void Render();
+    void Render(Mesh* mesh);
 
 private:
     void AllocateCommandBuffer();

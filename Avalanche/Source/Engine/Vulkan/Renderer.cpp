@@ -3,6 +3,8 @@
 #include "Context.h"
 #include "Engine/Log/Log.h"
 
+#include <glm/glm.hpp>
+
 Renderer::Renderer()
 {
     AllocateCommandBuffer();
@@ -19,7 +21,7 @@ Renderer::~Renderer()
     device.destroyFence(m_Fence);
 }
 
-void Renderer::Render()
+void Renderer::Render(Mesh* mesh)
 {
     const auto& device = Context::Instance().GetDevice();
     const auto& pass = Context::Instance().GetPipeline();
@@ -47,6 +49,7 @@ void Renderer::Render()
     m_CommandBuffer.begin(commandBufferBegin);
     {
         m_CommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pass.GetPipeline());
+        m_CommandBuffer.bindVertexBuffers(0, mesh->GetVertexBuffer().GetBuffer(), {0});
         vk::RenderPassBeginInfo renderPassBegin;
         vk::Rect2D area;
         vk::ClearValue clearValue;

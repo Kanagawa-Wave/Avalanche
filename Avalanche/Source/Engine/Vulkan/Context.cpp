@@ -19,6 +19,7 @@ void Context::Destroy()
     m_Pipeline.reset();
     m_Swapchain.reset();
     m_Instance.destroySurfaceKHR(m_Surface);
+    vmaDestroyAllocator(m_Allocator);
     m_Device.destroy();
     m_Instance.destroy();
     s_Instance.reset();
@@ -37,6 +38,7 @@ Context::Context(GLFWwindow* window)
     QueryQueueFamilyIndices();
     CreateDevice();
     GetQueue();
+    InitAllocator();
 }
 
 void Context::CreateInstance(GLFWwindow* window)
@@ -139,6 +141,15 @@ void Context::GetQueue()
 void Context::CreateSurface(GLFWwindow* window)
 {
     glfwCreateWindowSurface(m_Instance, window, nullptr, (VkSurfaceKHR*)&m_Surface);
+}
+
+void Context::InitAllocator()
+{
+    VmaAllocatorCreateInfo vmaInfo{};
+    vmaInfo.device = m_Device;
+    vmaInfo.instance = m_Instance;
+    vmaInfo.physicalDevice = m_PhysicalDevice;
+    vmaCreateAllocator(&vmaInfo, &m_Allocator);
 }
 
 void Context::InitSwapchain(uint32_t width, uint32_t height)

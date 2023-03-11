@@ -17,20 +17,25 @@ void Engine::Init()
     ctx.GetPipeline().CreateRenderPass();
     ctx.GetPipeline().CreateLayout();
     ctx.GetSwapchain().CreateFramebuffers(m_Window->GetWidth(), m_Window->GetHeight());
-    ctx.GetPipeline().CreatePipeline(m_Window->GetWidth(), m_Window->GetHeight());
+
+    m_Triangle = std::make_unique<Mesh>("");
+    ctx.GetPipeline().CreatePipeline(m_Window->GetWidth(), m_Window->GetHeight(), m_Triangle->GetVertexBuffer().GetLayout().GetVertexInputInfo());
 
     m_Renderer = std::make_unique<Renderer>();
+
 }
 
 void Engine::Destroy()
 {
+    Context::Instance().GetDevice().waitIdle();
+    m_Triangle.reset();
     m_Renderer.reset();
     Context::Instance().Destroy();
 }
 
 void Engine::Draw()
 {
-    m_Renderer->Render();
+    m_Renderer->Render(m_Triangle.get());
 }
 
 void Engine::Run()

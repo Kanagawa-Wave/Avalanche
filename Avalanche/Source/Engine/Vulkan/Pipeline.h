@@ -2,11 +2,14 @@
 
 #include <vulkan/vulkan.hpp>
 
+#include "Buffer.h"
 #include "Shader.h"
 
 class Pipeline
 {
 public:
+
+    
     Pipeline(const std::string& vertPath, const std::string& fragPath);
     ~Pipeline();
 
@@ -14,7 +17,7 @@ public:
     vk::RenderPass GetRenderPass() const { return m_RenderPass; }
 
     void CreateLayout();
-    void CreatePipeline(uint32_t width, uint32_t height);
+    void CreatePipeline(uint32_t width, uint32_t height, const VertexInputInfo& vertexInputInfo);
     void CreateRenderPass();
 
 private:
