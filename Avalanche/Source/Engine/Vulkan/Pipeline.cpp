@@ -15,9 +15,14 @@ Pipeline::~Pipeline()
     Context::Instance().GetDevice().destroyPipeline(m_Pipeline);
 }
 
-void Pipeline::CreateLayout()
+void Pipeline::CreateLayout(uint32_t pushConstantSize)
 {
     vk::PipelineLayoutCreateInfo layoutInfo;
+    vk::PushConstantRange pushConstantRange;
+    pushConstantRange.setOffset(0)
+                     .setSize(pushConstantSize)
+                     .setStageFlags(vk::ShaderStageFlagBits::eVertex);
+    layoutInfo.setPushConstantRanges(pushConstantRange);
 
     m_Layout = Context::Instance().GetDevice().createPipelineLayout(layoutInfo);
 }

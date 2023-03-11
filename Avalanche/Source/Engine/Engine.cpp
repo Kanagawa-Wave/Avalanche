@@ -14,15 +14,13 @@ void Engine::Init()
     ctx.InitSwapchain(m_Window->GetWidth(), m_Window->GetHeight());
     ctx.InitPipeline();
     ctx.InitCommandManager();
+    m_Renderer = std::make_unique<Renderer>();
     ctx.GetPipeline().CreateRenderPass();
-    ctx.GetPipeline().CreateLayout();
+    ctx.GetPipeline().CreateLayout(Renderer::PushConstantSize());
     ctx.GetSwapchain().CreateFramebuffers(m_Window->GetWidth(), m_Window->GetHeight());
 
     m_Triangle = std::make_unique<Mesh>("");
     ctx.GetPipeline().CreatePipeline(m_Window->GetWidth(), m_Window->GetHeight(), m_Triangle->GetVertexBuffer().GetLayout().GetVertexInputInfo());
-
-    m_Renderer = std::make_unique<Renderer>();
-
 }
 
 void Engine::Destroy()

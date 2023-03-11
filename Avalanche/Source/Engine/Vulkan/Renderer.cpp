@@ -5,6 +5,8 @@
 
 #include <glm/glm.hpp>
 
+#include "glm/gtx/transform.hpp"
+
 Renderer::Renderer()
 {
     AllocateCommandBuffer();
@@ -23,8 +25,19 @@ Renderer::~Renderer()
 
 void Renderer::Render(Mesh* mesh)
 {
+    // TODO: remove
+    glm::vec3 camPos = { 0.f,0.f,-2.f };
+
+    glm::mat4 view = glm::translate(glm::mat4(1.f), camPos);
+    glm::mat4 projection = glm::perspective(glm::radians(70.f), 800.f / 600.f, 0.1f, 200.0f);
+    //projection[1][1] *= -1;
+    glm::mat4 model = glm::mat4(1.f);
+
+    PushConstant pushConstant;
+    pushConstant.transform = projection * view * model;
+    
     const auto& device = Context::Instance().GetDevice();
-    const auto& pass = Context::Instance().GetPipeline();
+    const auto& pipeline = Context::Instance().GetPipeline();
     const auto& swapchain = Context::Instance().GetSwapchain();
 
     if (device.waitForFences(m_Fence, true, std::numeric_limits<std::uint64_t>::max()) != vk::Result::eSuccess)
@@ -48,20 +61,21 @@ void Renderer::Render(Mesh* mesh)
     commandBufferBegin.setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
     m_CommandBuffer.begin(commandBufferBegin);
     {
-        m_CommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pass.GetPipeline());
-        m_CommandBuffer.bindVertexBuffers(0, mesh->GetVertexBuffer().GetBuffer(), {0});
+        m_CommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline.GetPipeline());
+        mesh->Bind(m_CommandBuffer);
         vk::RenderPassBeginInfo renderPassBegin;
         vk::Rect2D area;
         vk::ClearValue clearValue;
         area.setOffset({0, 0})
             .setExtent(swapchain.GetExtent());
         clearValue.setColor({0.1f, 0.1f, 0.1f, 1.0f});
-        renderPassBegin.setRenderPass(pass.GetRenderPass())
+        renderPassBegin.setRenderPass(pipeline.GetRenderPass())
                        .setRenderArea(area)
                        .setFramebuffer(swapchain.GetFramebuffer(imageIndex))
                        .setClearValues(clearValue);
         m_CommandBuffer.beginRenderPass(renderPassBegin, {});
-        m_CommandBuffer.draw(3, 1, 0, 0);
+        m_CommandBuffer.pushConstants(pipeline.GetLayout(), vk::ShaderStageFlagBits::eVertex, 0, PushConstantSize(), &pushConstant);
+        mesh->Draw(m_CommandBuffer);
         m_CommandBuffer.endRenderPass();
     }
     m_CommandBuffer.end();

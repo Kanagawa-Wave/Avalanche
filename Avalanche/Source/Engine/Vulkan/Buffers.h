@@ -4,6 +4,7 @@
 #include <vulkan/vulkan.hpp>
 
 #include "Engine/Log/Log.h"
+#include "BufferBase.h"
 
 enum class ShaderDataType : uint8_t
 {
@@ -161,19 +162,27 @@ private:
     uint32_t m_Stride = 0;
 };
 
-class Buffer
+class VertexBuffer final : public Buffer
 {
 public:
-    Buffer(void* bufferData, uint32_t size);
-    ~Buffer();
+    VertexBuffer(const void* vertices, uint32_t size);
+    ~VertexBuffer() = default;
 
     const BufferLayout& GetLayout() const { return m_Layout; }
-    const vk::Buffer& GetBuffer() const { return m_Buffer; }
     void SetLayout(const BufferLayout& layout) { m_Layout = layout; }
 
 private:
-    vk::Buffer m_Buffer;
-    VmaAllocation m_Allocation = VK_NULL_HANDLE;
-
     BufferLayout m_Layout;
+};
+
+class IndexBuffer final : public Buffer
+{
+public:
+    IndexBuffer(const uint32_t* indices, uint32_t count);
+    ~IndexBuffer() = default;
+
+    uint32_t GetCount() const { return m_Count; }
+    
+private:
+    uint32_t m_Count = 0;
 };

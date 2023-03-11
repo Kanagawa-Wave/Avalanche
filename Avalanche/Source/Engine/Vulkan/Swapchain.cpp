@@ -78,7 +78,7 @@ void Swapchain::QueryInfo(uint32_t width, uint32_t height)
     const auto presentModes = device.getSurfacePresentModesKHR(surface);
     for (const auto presentMode : presentModes)
     {
-        if (presentMode == vk::PresentModeKHR::eMailbox)
+        if (presentMode == vk::PresentModeKHR::eFifoRelaxed)
         {
             m_SwapchainInfo.PresentMode = presentMode;
             break;
