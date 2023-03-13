@@ -2,7 +2,7 @@
 
 #include "Context.h"
 
-Buffer::Buffer(vk::BufferUsageFlags usage, const void* bufferData, uint32_t size)
+Buffer::Buffer(vk::BufferUsageFlags usage, const void* bufferData, size_t size)
 {
     const auto& allocator = Context::Instance().GetAllocator();
 
@@ -31,7 +31,7 @@ Buffer::~Buffer()
     vmaDestroyBuffer(allocator, m_Buffer, m_Allocation);
 }
 
-VertexBuffer::VertexBuffer(const void* vertices, uint32_t size)
+VertexBuffer::VertexBuffer(const void* vertices, size_t size)
     : Buffer(vk::BufferUsageFlagBits::eVertexBuffer, vertices, size)
 {
 }

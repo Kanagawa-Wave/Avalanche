@@ -165,7 +165,7 @@ private:
 class VertexBuffer final : public Buffer
 {
 public:
-    VertexBuffer(const void* vertices, uint32_t size);
+    VertexBuffer(const void* vertices, size_t size);
     ~VertexBuffer() = default;
 
     const BufferLayout& GetLayout() const { return m_Layout; }

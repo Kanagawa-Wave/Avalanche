@@ -16,3 +16,6 @@
 [submodule "Avalanche/ThirdParty/VulkanMemoryAllocator"]
 	path = Avalanche/ThirdParty/VulkanMemoryAllocator
 	url = https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git
+[submodule "Avalanche/ThirdParty/tinyobjloader"]
+	path = Avalanche/ThirdParty/tinyobjloader
+	url = https://github.com/tinyobjloader/tinyobjloader.git

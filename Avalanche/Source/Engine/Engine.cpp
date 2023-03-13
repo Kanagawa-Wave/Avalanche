@@ -19,7 +19,7 @@ void Engine::Init()
     ctx.GetPipeline().CreateLayout(Renderer::PushConstantSize());
     ctx.GetSwapchain().CreateFramebuffers(m_Window->GetWidth(), m_Window->GetHeight());
 
-    m_Triangle = std::make_unique<Mesh>("");
+    m_Triangle = std::make_unique<Mesh>("Content/smooth_vase.obj");
     ctx.GetPipeline().CreatePipeline(m_Window->GetWidth(), m_Window->GetHeight(), m_Triangle->GetVertexBuffer().GetLayout().GetVertexInputInfo());
 }
 

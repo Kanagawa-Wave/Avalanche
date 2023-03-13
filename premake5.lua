@@ -90,6 +90,7 @@ project "Avalanche"
         -- "%{IncludeDir.IMGUI}",
         "%{IncludeDir.VKBOOTSTRAP}",
         "%{IncludeDir.VMA}",
+        "%{IncludeDir.TINYOBJLOADER}",
     }
     
     links
