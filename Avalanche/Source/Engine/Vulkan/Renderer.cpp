@@ -26,7 +26,7 @@ Renderer::~Renderer()
 void Renderer::Render(Mesh* mesh)
 {
     // TODO: remove
-    glm::vec3 camPos = { 0.f,0.f,-2.f };
+    glm::vec3 camPos = {0.f, 0.f, -2.f};
 
     glm::mat4 view = glm::translate(glm::mat4(1.f), camPos);
     glm::mat4 projection = glm::perspective(glm::radians(70.f), 800.f / 600.f, 0.1f, 200.0f);
@@ -35,7 +35,7 @@ void Renderer::Render(Mesh* mesh)
 
     PushConstant pushConstant;
     pushConstant.transform = projection * view * model;
-    
+
     const auto& device = Context::Instance().GetDevice();
     const auto& pipeline = Context::Instance().GetPipeline();
     const auto& swapchain = Context::Instance().GetSwapchain();
@@ -65,16 +65,19 @@ void Renderer::Render(Mesh* mesh)
         mesh->Bind(m_CommandBuffer);
         vk::RenderPassBeginInfo renderPassBegin;
         vk::Rect2D area;
-        vk::ClearValue clearValue;
+        vk::ClearValue color, depth;
         area.setOffset({0, 0})
             .setExtent(swapchain.GetExtent());
-        clearValue.setColor({0.1f, 0.1f, 0.1f, 1.0f});
+        color.setColor({0.1f, 0.1f, 0.1f, 1.0f});
+        depth.setDepthStencil(1.0f);
+        std::array clearValues = {color, depth};
         renderPassBegin.setRenderPass(pipeline.GetRenderPass())
                        .setRenderArea(area)
                        .setFramebuffer(swapchain.GetFramebuffer(imageIndex))
-                       .setClearValues(clearValue);
+                       .setClearValues(clearValues);
         m_CommandBuffer.beginRenderPass(renderPassBegin, {});
-        m_CommandBuffer.pushConstants(pipeline.GetLayout(), vk::ShaderStageFlagBits::eVertex, 0, PushConstantSize(), &pushConstant);
+        m_CommandBuffer.pushConstants(pipeline.GetLayout(), vk::ShaderStageFlagBits::eVertex, 0, PushConstantSize(),
+                                      &pushConstant);
         mesh->Draw(m_CommandBuffer);
         m_CommandBuffer.endRenderPass();
     }

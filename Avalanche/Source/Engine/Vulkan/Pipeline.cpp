@@ -75,6 +75,16 @@ void Pipeline::CreatePipeline(uint32_t width, uint32_t height, const VertexInput
               .setAttachments(attachment);
     pipelineInfo.setPColorBlendState(&colorBlend);
 
+    vk::PipelineDepthStencilStateCreateInfo depthStencil;
+    depthStencil.setDepthTestEnable(true)
+                .setDepthWriteEnable(true)
+                .setDepthCompareOp(vk::CompareOp::eAlways)
+                .setDepthBoundsTestEnable(false)
+                .setMinDepthBounds(0.0)
+                .setMaxDepthBounds(1.0)
+                .setStencilTestEnable(false);
+    pipelineInfo.setPDepthStencilState(&depthStencil);
+
     pipelineInfo.setRenderPass(m_RenderPass)
                 .setLayout(m_Layout);
 
@@ -90,32 +100,54 @@ void Pipeline::CreatePipeline(uint32_t width, uint32_t height, const VertexInput
 void Pipeline::CreateRenderPass()
 {
     vk::RenderPassCreateInfo renderPassInfo;
-    vk::AttachmentDescription attachment;
-    attachment.setFormat(Context::Instance().GetSwapchain().GetFormat())
-              .setInitialLayout(vk::ImageLayout::eUndefined)
-              .setFinalLayout(vk::ImageLayout::ePresentSrcKHR)
-              .setLoadOp(vk::AttachmentLoadOp::eClear)
-              .setStoreOp(vk::AttachmentStoreOp::eStore)
-              .setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)
-              .setStencilStoreOp(vk::AttachmentStoreOp::eDontCare)
-              .setSamples(vk::SampleCountFlagBits::e1);
-    renderPassInfo.setAttachments(attachment);
+    vk::AttachmentDescription colorAttachment, depthAttachment;
+    colorAttachment.setFormat(Context::Instance().GetSwapchain().GetFormat())
+                   .setInitialLayout(vk::ImageLayout::eUndefined)
+                   .setFinalLayout(vk::ImageLayout::ePresentSrcKHR)
+                   .setLoadOp(vk::AttachmentLoadOp::eClear)
+                   .setStoreOp(vk::AttachmentStoreOp::eStore)
+                   .setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)
+                   .setStencilStoreOp(vk::AttachmentStoreOp::eDontCare)
+                   .setSamples(vk::SampleCountFlagBits::e1);
+    depthAttachment.setFormat(vk::Format::eD32Sfloat)
+                   .setInitialLayout(vk::ImageLayout::eUndefined)
+                   .setFinalLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal)
+                   .setLoadOp(vk::AttachmentLoadOp::eClear)
+                   .setStoreOp(vk::AttachmentStoreOp::eStore)
+                   .setStencilLoadOp(vk::AttachmentLoadOp::eClear)
+                   .setStencilStoreOp(vk::AttachmentStoreOp::eDontCare)
+                   .setSamples(vk::SampleCountFlagBits::e1);
 
-    vk::AttachmentReference attachmentRef;
-    attachmentRef.setLayout(vk::ImageLayout::eColorAttachmentOptimal)
-                 .setAttachment(0);
+    std::array attachments = {colorAttachment, depthAttachment};
+    renderPassInfo.setAttachments(attachments);
+
+    vk::AttachmentReference colorRef, depthRef;
+    colorRef.setLayout(vk::ImageLayout::eColorAttachmentOptimal)
+            .setAttachment(0);
+    depthRef.setLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal)
+            .setAttachment(1);
     vk::SubpassDescription subpass;
     subpass.setPipelineBindPoint(vk::PipelineBindPoint::eGraphics)
-           .setColorAttachments(attachmentRef);
+           .setColorAttachments(colorRef)
+           .setPDepthStencilAttachment(&depthRef);
     renderPassInfo.setSubpasses(subpass);
 
-    vk::SubpassDependency dependency;
-    dependency.setSrcSubpass(VK_SUBPASS_EXTERNAL)
-              .setDstSubpass(0)
-              .setDstAccessMask(vk::AccessFlagBits::eColorAttachmentWrite)
-              .setSrcStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput)
-              .setDstStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
-    renderPassInfo.setDependencies(dependency);
+    vk::SubpassDependency colorDependency, depthDependency;
+    colorDependency.setSrcSubpass(VK_SUBPASS_EXTERNAL)
+                   .setDstSubpass(0)
+                   .setDstAccessMask(vk::AccessFlagBits::eColorAttachmentWrite)
+                   .setSrcStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput)
+                   .setDstStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
+    depthDependency.setSrcSubpass(VK_SUBPASS_EXTERNAL)
+                   .setDstSubpass(0)
+                   .setDstAccessMask(vk::AccessFlagBits::eDepthStencilAttachmentWrite)
+                   .setSrcStageMask(
+                       vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests)
+                   .setDstStageMask(
+                       vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests);
+
+    std::array dependencies = {colorDependency, depthDependency};
+    renderPassInfo.setDependencies(dependencies);
 
     m_RenderPass = Context::Instance().GetDevice().createRenderPass(renderPassInfo);
 }

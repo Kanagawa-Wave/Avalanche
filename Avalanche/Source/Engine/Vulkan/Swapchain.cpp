@@ -36,6 +36,7 @@ Swapchain::Swapchain(uint32_t width, uint32_t height)
 
     GetImages();
     CreateImageViews();
+    CreateDepthBuffer(width, height);
 }
 
 Swapchain::~Swapchain()
@@ -114,13 +115,20 @@ void Swapchain::CreateImageViews()
     }
 }
 
+void Swapchain::CreateDepthBuffer(uint32_t width, uint32_t height)
+{
+    vk::Extent2D extent(width, height);
+    m_DepthStencil = std::make_unique<Image>(vk::Format::eD32Sfloat, extent, ImageUsage::eDepthStencil);
+}
+
 void Swapchain::CreateFramebuffers(uint32_t width, uint32_t height)
 {
     m_Framebuffers.resize(m_Images.size());
     for (uint32_t i = 0; i < m_Framebuffers.size(); i++)
     {
         vk::FramebufferCreateInfo framebufferInfo;
-        framebufferInfo.setAttachments(m_ImageViews[i])
+        std::array attachments = {m_ImageViews[i], m_DepthStencil->GetView()};
+        framebufferInfo.setAttachments(attachments)
                        .setWidth(width)
                        .setHeight(height)
                        .setRenderPass(Context::Instance().GetPipeline().GetRenderPass())
