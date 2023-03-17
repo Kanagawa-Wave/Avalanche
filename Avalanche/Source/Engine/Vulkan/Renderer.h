@@ -3,6 +3,7 @@
 #include <vulkan/vulkan.hpp>
 #include <glm/glm.hpp>
 
+#include "Engine/Scene/Components/Camera.h"
 #include "Engine/Scene/Components/Mesh.h"
 
 struct PushConstant
@@ -13,10 +14,11 @@ struct PushConstant
 class Renderer
 {
 public:
-    Renderer();
+    Renderer(float aspect);
     ~Renderer();
 
     void Render(Mesh* mesh);
+    void OnUpdate(float deltaTime) const;
     
     static uint32_t PushConstantSize() { return sizeof(PushConstant); }
 
@@ -30,4 +32,6 @@ private:
     vk::CommandBuffer m_CommandBuffer;
     vk::Semaphore m_RenderSemaphore, m_PresentSemaphore;
     vk::Fence m_Fence;
+
+    std::unique_ptr<Camera> m_Camera;
 };

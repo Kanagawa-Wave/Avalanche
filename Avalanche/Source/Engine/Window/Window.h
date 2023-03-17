@@ -16,6 +16,7 @@ public:
     std::pair<uint32_t, uint32_t> GetExtent() const;
     uint32_t GetWidth() const;
     uint32_t GetHeight() const;
+    float GetAspect() const;
 
 private:
     uint32_t m_Width = 0, m_Height = 0;

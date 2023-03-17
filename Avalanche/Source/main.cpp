@@ -1,10 +1,11 @@
-#include "Engine/Engine.h"
+#include "Engine/Application.h"
 
 int main()
 {
-    const std::unique_ptr<Engine> engine = std::make_unique<Engine>();
+    Application::InitInstance();
+    Application& app = Application::Instance(); 
 
-    engine->Init();
-    engine->Run();
-    engine->Destroy();
+    app.Init();
+    app.Run();
+    app.Destroy();
 }

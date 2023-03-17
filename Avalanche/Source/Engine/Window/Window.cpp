@@ -45,3 +45,8 @@ uint32_t Window::GetHeight() const
 {
     return m_Height;
 }
+
+float Window::GetAspect() const
+{
+    return (float)m_Width / (float)m_Height;
+}

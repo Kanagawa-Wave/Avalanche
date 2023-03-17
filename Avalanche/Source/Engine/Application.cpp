@@ -1,8 +1,15 @@
-﻿#include "Engine.h"
+﻿#include "Application.h"
 
 #include "Log/Log.h"
 
-void Engine::Init()
+std::unique_ptr<Application> Application::s_Instance = nullptr;
+
+void Application::InitInstance()
+{
+    s_Instance.reset(new Application());
+}
+
+void Application::Init()
 {
     Log::Init();
 
@@ -14,7 +21,7 @@ void Engine::Init()
     ctx.InitSwapchain(m_Window->GetWidth(), m_Window->GetHeight());
     ctx.InitPipeline();
     ctx.InitCommandManager();
-    m_Renderer = std::make_unique<Renderer>();
+    m_Renderer = std::make_unique<Renderer>(m_Window->GetAspect());
     ctx.GetPipeline().CreateRenderPass();
     ctx.GetPipeline().CreateLayout(Renderer::PushConstantSize());
     ctx.GetSwapchain().CreateFramebuffers(m_Window->GetWidth(), m_Window->GetHeight());
@@ -23,7 +30,7 @@ void Engine::Init()
     ctx.GetPipeline().CreatePipeline(m_Window->GetWidth(), m_Window->GetHeight(), m_Triangle->GetVertexBuffer().GetLayout().GetVertexInputInfo());
 }
 
-void Engine::Destroy()
+void Application::Destroy()
 {
     Context::Instance().GetDevice().waitIdle();
     m_Triangle.reset();
@@ -31,12 +38,12 @@ void Engine::Destroy()
     Context::Instance().Destroy();
 }
 
-void Engine::Draw()
+void Application::Draw()
 {
     m_Renderer->Render(m_Triangle.get());
 }
 
-void Engine::Run()
+void Application::Run()
 {
     while (m_Window->Running())
     {

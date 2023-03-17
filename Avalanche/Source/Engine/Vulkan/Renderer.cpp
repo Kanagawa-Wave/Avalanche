@@ -7,11 +7,12 @@
 
 #include "glm/gtx/transform.hpp"
 
-Renderer::Renderer()
+Renderer::Renderer(float aspect)
 {
     AllocateCommandBuffer();
     CreateFence();
     CreateSemaphores();
+    m_Camera = std::make_unique<Camera>(30.f, aspect, 0.001f, 10000.f);
 }
 
 Renderer::~Renderer()
@@ -100,6 +101,11 @@ void Renderer::Render(Mesh* mesh)
     {
         ASSERT(0, "Failed to present image")
     }
+}
+
+void Renderer::OnUpdate(float deltaTime) const
+{
+    m_Camera->OnUpdate(deltaTime);
 }
 
 void Renderer::AllocateCommandBuffer()

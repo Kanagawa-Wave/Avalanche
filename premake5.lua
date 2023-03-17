@@ -96,6 +96,7 @@ project "Avalanche"
     links
     {
         "Shcore.lib",
+        "Imm32.lib",
         "%{Libraries.Vulkan}",
         "GLFW",
         -- "ImGui",
