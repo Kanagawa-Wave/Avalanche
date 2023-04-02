@@ -162,27 +162,35 @@ private:
     uint32_t m_Stride = 0;
 };
 
-class VertexBuffer final : public Buffer
+class VertexBuffer final : public BufferBase
 {
 public:
     VertexBuffer(const void* vertices, size_t size);
-    ~VertexBuffer() = default;
 
     const BufferLayout& GetLayout() const { return m_Layout; }
     void SetLayout(const BufferLayout& layout) { m_Layout = layout; }
+
+    virtual void Bind(vk::CommandBuffer commandBuffer) override;
 
 private:
     BufferLayout m_Layout;
 };
 
-class IndexBuffer final : public Buffer
+class IndexBuffer final : public BufferBase
 {
 public:
-    IndexBuffer(const uint32_t* indices, uint32_t count);
-    ~IndexBuffer() = default;
+    IndexBuffer(const uint32_t* indices, size_t count);
+
+    virtual void Bind(vk::CommandBuffer commandBuffer) override;
 
     uint32_t GetCount() const { return m_Count; }
     
 private:
     uint32_t m_Count = 0;
+};
+
+class Buffer final : public BufferBase
+{
+public:
+    Buffer(vk::BufferUsageFlags usage, VmaMemoryUsage memoryUsage, size_t size);
 };

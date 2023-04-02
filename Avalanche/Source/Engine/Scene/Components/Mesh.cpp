@@ -37,8 +37,8 @@ Mesh::Mesh(const std::string& meshPath)
 
 void Mesh::Bind(vk::CommandBuffer commandBuffer) const
 {
-    commandBuffer.bindVertexBuffers(0, m_VertexBuffer->GetBuffer(), {0});
-    commandBuffer.bindIndexBuffer(m_IndexBuffer->GetBuffer(), 0, vk::IndexType::eUint32);
+    m_VertexBuffer->Bind(commandBuffer);
+    m_IndexBuffer->Bind(commandBuffer);
 }
 
 void Mesh::Draw(vk::CommandBuffer commandBuffer) const

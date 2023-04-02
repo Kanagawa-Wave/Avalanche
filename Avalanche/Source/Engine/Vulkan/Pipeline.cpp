@@ -23,6 +23,7 @@ void Pipeline::CreateLayout(uint32_t pushConstantSize)
                      .setSize(pushConstantSize)
                      .setStageFlags(vk::ShaderStageFlagBits::eVertex);
     layoutInfo.setPushConstantRanges(pushConstantRange);
+    layoutInfo.setSetLayouts()
 
     m_Layout = Context::Instance().GetDevice().createPipelineLayout(layoutInfo);
 }

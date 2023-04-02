@@ -13,7 +13,7 @@ Renderer::Renderer(float aspect)
     AllocateCommandBuffer();
     CreateFence();
     CreateSemaphores();
-    m_Camera = std::make_unique<Camera>(30, aspect, 0.001, 100);
+    m_Camera = std::make_unique<Camera>(30.0f, aspect, 0.001f, 100.0f);
 }
 
 Renderer::~Renderer()

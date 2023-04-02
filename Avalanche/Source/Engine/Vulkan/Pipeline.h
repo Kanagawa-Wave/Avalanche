@@ -14,6 +14,7 @@ public:
     vk::PipelineLayout GetLayout() const { return m_Layout; }
     vk::Pipeline GetPipeline() const { return m_Pipeline; }
     vk::RenderPass GetRenderPass() const { return m_RenderPass; }
+    Shader& GetShader() const { return *m_Shader.get(); }
 
     void CreateLayout(uint32_t pushConstantSize);
     void CreatePipeline(uint32_t width, uint32_t height, const VertexInputInfo& vertexInputInfo);
