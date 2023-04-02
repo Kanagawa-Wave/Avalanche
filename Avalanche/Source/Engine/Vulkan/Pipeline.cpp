@@ -1,7 +1,7 @@
 ﻿#include "Pipeline.h"
 
 #include "Context.h"
-#include "Engine/Log/Log.h"
+#include "Engine/Core/Log.h"
 
 Pipeline::Pipeline(const std::string& vertPath, const std::string& fragPath)
 {

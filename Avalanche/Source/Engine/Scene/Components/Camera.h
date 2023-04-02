@@ -7,6 +7,10 @@ class Camera
 public:
     Camera(float fov, float aspect, float nearClip, float farClip);
 
+    glm::mat4 GetViewProjection() const { return m_Projection * m_View; }
+    glm::mat4 GetView() const { return m_View; }
+    glm::mat4 GetProjection() const { return m_Projection; }
+
     bool OnUpdate(float deltaTime);
 private:
     void RecalculateView();

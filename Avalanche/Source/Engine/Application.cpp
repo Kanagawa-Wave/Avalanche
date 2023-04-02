@@ -1,6 +1,7 @@
 ﻿#include "Application.h"
 
-#include "Log/Log.h"
+#include "Core/Log.h"
+#include "Core/Timer.h"
 
 std::unique_ptr<Application> Application::s_Instance = nullptr;
 
@@ -11,6 +12,7 @@ void Application::InitInstance()
 
 void Application::Init()
 {
+    Timer::Init();
     Log::Init();
 
     m_Window = std::make_unique<Window>(800, 600, "Avalanche");
@@ -47,6 +49,7 @@ void Application::Run()
 {
     while (m_Window->Running())
     {
+        Timer::Reset();
         m_Window->PollEvents();
         Draw();
     }

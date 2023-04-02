@@ -1,15 +1,17 @@
 ﻿#include "Camera.h"
 
-#include "Engine/Input/Input.h"
+#include "Engine/Core/Input.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#define GLM_FORCE_LEFT_HANDED
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
 
 Camera::Camera(float fov, float aspect, float nearClip, float farClip)
 {
-    m_Projection = glm::perspective(fov, aspect, nearClip, farClip);
+    m_Projection = glm::perspective(glm::radians(fov), aspect, nearClip, farClip);
     RecalculateView();
 }
 
@@ -32,7 +34,7 @@ bool Camera::OnUpdate(float deltaTime)
     constexpr glm::vec3 upDirection(0.0f, 1.0f, 0.0f);
     glm::vec3 rightDirection = glm::cross(m_Forward, upDirection);
 
-    float speed = 5.0f;
+    float speed = 50.0f;
 
     // Movement
     if (Input::IsKeyPressed(Key::W))

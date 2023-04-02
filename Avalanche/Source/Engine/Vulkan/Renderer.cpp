@@ -1,10 +1,11 @@
 ﻿#include "Renderer.h"
 
 #include "Context.h"
-#include "Engine/Log/Log.h"
+#include "Engine/Core/Log.h"
 
 #include <glm/glm.hpp>
 
+#include "Engine/Core/Timer.h"
 #include "glm/gtx/transform.hpp"
 
 Renderer::Renderer(float aspect)
@@ -12,7 +13,7 @@ Renderer::Renderer(float aspect)
     AllocateCommandBuffer();
     CreateFence();
     CreateSemaphores();
-    m_Camera = std::make_unique<Camera>(30.f, aspect, 0.001f, 10000.f);
+    m_Camera = std::make_unique<Camera>(30, aspect, 0.001, 100);
 }
 
 Renderer::~Renderer()
@@ -26,13 +27,13 @@ Renderer::~Renderer()
 
 void Renderer::Render(Mesh* mesh)
 {
+    m_Camera->OnUpdate(Timer::Elapsed());
     // TODO: remove
     glm::vec3 camPos = {0.f, 0.f, -2.f};
 
-    glm::mat4 view = glm::translate(glm::mat4(1.f), camPos);
-    glm::mat4 projection = glm::perspective(glm::radians(70.f), 800.f / 600.f, 0.1f, 200.0f);
-    //projection[1][1] *= -1;
-    glm::mat4 model = glm::mat4(1.f);
+    glm::mat4 view = m_Camera->GetView();
+    glm::mat4 projection = m_Camera->GetProjection();
+    glm::mat4 model = glm::scale(glm::mat4(1.f), glm::vec3(10, 10, 10));
 
     PushConstant pushConstant;
     pushConstant.transform = projection * view * model;
