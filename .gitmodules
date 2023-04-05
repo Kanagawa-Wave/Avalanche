@@ -16,3 +16,6 @@
 [submodule "Avalanche/ThirdParty/tinyobjloader"]
 	path = Avalanche/ThirdParty/tinyobjloader
 	url = https://github.com/tinyobjloader/tinyobjloader.git
+[submodule "Avalanche/ThirdParty/imgui"]
+	path = Avalanche/ThirdParty/imgui
+	url = https://github.com/Kanagawa-Wave/imgui.git
