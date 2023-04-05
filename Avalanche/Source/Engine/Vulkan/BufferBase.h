@@ -15,8 +15,11 @@ public:
     virtual void Bind(vk::CommandBuffer commandBuffer);
     
     const vk::Buffer& GetBuffer() const { return m_Buffer; }
+    const size_t GetSize() const { return m_Size; }
 
 protected:
     vk::Buffer m_Buffer;
     VmaAllocation m_Allocation = VK_NULL_HANDLE;
+
+    size_t m_Size = 0;
 };

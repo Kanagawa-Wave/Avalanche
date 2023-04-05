@@ -27,3 +27,15 @@ Buffer::Buffer(vk::BufferUsageFlags usage, VmaMemoryUsage memoryUsage, size_t si
     : BufferBase(usage, memoryUsage, size)
 {
 }
+
+void Buffer::Upload(const void* src) const
+{
+    auto& allocator = Context::Instance().GetAllocator();
+    
+    void* dst;
+    vmaMapMemory(allocator, m_Allocation, &dst);
+    memcpy(dst, src, m_Size);
+    vmaUnmapMemory(allocator, m_Allocation);
+}
+
+

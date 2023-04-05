@@ -7,12 +7,18 @@ layout (location = 3) in vec2 vTexcoord;
 
 layout (location = 0) out vec3 fColor;
 
-layout (push_constant) uniform constants
+layout (push_constant) uniform Constants
 {
-    mat4 transform;
-} PushConstants;
+    mat4 model;
+} constants;
+
+layout (set = 0, binding = 0) uniform Camera {
+    mat4 projection;
+    mat4 view;
+    mat4 viewProjection;
+} camera;
 
 void main() {
-    gl_Position = PushConstants.transform * vec4(vPosition, 1.0) ;
+    gl_Position = camera.viewProjection * constants.model * vec4(vPosition, 1.0) ;
     fColor = vColor;
 }

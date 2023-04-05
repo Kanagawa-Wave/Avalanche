@@ -30,6 +30,8 @@ void Application::Init()
 
     m_Triangle = std::make_unique<Mesh>("Content/bunny.obj");
     ctx.GetPipeline().CreatePipeline(m_Window->GetWidth(), m_Window->GetHeight(), m_Triangle->GetVertexBuffer().GetLayout().GetVertexInputInfo());
+
+    m_Renderer->Init();
 }
 
 void Application::Destroy()
@@ -40,9 +42,9 @@ void Application::Destroy()
     Context::Instance().Destroy();
 }
 
-void Application::Draw()
+void Application::Draw() const
 {
-    m_Renderer->Render(m_Triangle.get());
+    m_Renderer->Render(*m_Triangle.get());
 }
 
 void Application::Run()

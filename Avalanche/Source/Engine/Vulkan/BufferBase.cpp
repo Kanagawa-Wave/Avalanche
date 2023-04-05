@@ -9,6 +9,7 @@ BufferBase::BufferBase(vk::BufferUsageFlags usage, VmaMemoryUsage memoryUsage, c
 }
 
 BufferBase::BufferBase(vk::BufferUsageFlags usage, VmaMemoryUsage memoryUsage, size_t size)
+    : m_Size(size)
 {
     const auto& allocator = Context::Instance().GetAllocator();
 

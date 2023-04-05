@@ -193,4 +193,11 @@ class Buffer final : public BufferBase
 {
 public:
     Buffer(vk::BufferUsageFlags usage, VmaMemoryUsage memoryUsage, size_t size);
+    
+    void SetDescriptor(vk::DescriptorSet descriptor) { m_Descriptor = descriptor; }
+    vk::DescriptorSet GetDescriptor() const { return m_Descriptor; }
+    void Upload(const void* src) const;
+
+private:
+    vk::DescriptorSet m_Descriptor;
 };

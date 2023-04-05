@@ -9,11 +9,11 @@
 #include "glm/gtx/transform.hpp"
 
 Renderer::Renderer(float aspect)
+    : m_Aspect(aspect)
 {
     AllocateCommandBuffer();
     CreateFence();
     CreateSemaphores();
-    m_Camera = std::make_unique<Camera>(30.0f, aspect, 0.001f, 100.0f);
 }
 
 Renderer::~Renderer()
@@ -25,18 +25,22 @@ Renderer::~Renderer()
     device.destroyFence(m_Fence);
 }
 
-void Renderer::Render(Mesh* mesh)
+void Renderer::Init()
+{
+    InitCamera(m_Aspect);
+}
+
+void Renderer::Render(const Mesh& mesh)
 {
     m_Camera->OnUpdate(Timer::Elapsed());
-    // TODO: remove
-    glm::vec3 camPos = {0.f, 0.f, -2.f};
 
-    glm::mat4 view = m_Camera->GetView();
-    glm::mat4 projection = m_Camera->GetProjection();
-    glm::mat4 model = glm::scale(glm::mat4(1.f), glm::vec3(10, 10, 10));
+    const glm::mat4 model = glm::scale(glm::mat4(1.f), glm::vec3(10, 10, 10));
 
     PushConstant pushConstant;
-    pushConstant.transform = projection * view * model;
+    pushConstant.model = model;
+
+    m_CameraData.SetData(m_Camera->GetProjection(), m_Camera->GetView());
+    m_CameraBuffer->Upload(&m_CameraData);
 
     const auto& device = Context::Instance().GetDevice();
     const auto& pipeline = Context::Instance().GetPipeline();
@@ -63,8 +67,9 @@ void Renderer::Render(Mesh* mesh)
     commandBufferBegin.setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
     m_CommandBuffer.begin(commandBufferBegin);
     {
-        m_CommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline.GetPipeline());
-        mesh->Bind(m_CommandBuffer);
+        pipeline.Bind(m_CommandBuffer);
+        pipeline.BindBuffer(m_CommandBuffer, *m_CameraBuffer);
+        mesh.Bind(m_CommandBuffer);
         vk::RenderPassBeginInfo renderPassBegin;
         vk::Rect2D area;
         vk::ClearValue color, depth;
@@ -80,7 +85,7 @@ void Renderer::Render(Mesh* mesh)
         m_CommandBuffer.beginRenderPass(renderPassBegin, {});
         m_CommandBuffer.pushConstants(pipeline.GetLayout(), vk::ShaderStageFlagBits::eVertex, 0, PushConstantSize(),
                                       &pushConstant);
-        mesh->Draw(m_CommandBuffer);
+        mesh.Draw(m_CommandBuffer);
         m_CommandBuffer.endRenderPass();
     }
     m_CommandBuffer.end();
@@ -127,4 +132,13 @@ void Renderer::CreateFence()
     vk::FenceCreateInfo fenceInfo;
     fenceInfo.setFlags(vk::FenceCreateFlagBits::eSignaled);
     m_Fence = Context::Instance().GetDevice().createFence(fenceInfo);
+}
+
+void Renderer::InitCamera(float aspect)
+{
+    auto& pipeline = Context::Instance().GetPipeline();
+    
+    m_Camera = std::make_unique<Camera>(30.0f, aspect, 0.001f, 100.0f);
+    m_CameraBuffer = std::make_unique<Buffer>(vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU, sizeof(CameraData));
+    pipeline.SetUniformBuffer(*m_CameraBuffer, 0);
 }

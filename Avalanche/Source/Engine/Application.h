@@ -15,7 +15,7 @@ public:
     void Init();
     void Destroy();
 
-    void Draw();
+    void Draw() const;
     void Run();
 
     Window& GetWindow() const { return *m_Window; }
