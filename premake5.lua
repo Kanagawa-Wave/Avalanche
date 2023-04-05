@@ -87,7 +87,7 @@ project "Avalanche"
         "%{IncludeDir.GLM}",
         "%{IncludeDir.GLFW}",
         "%{IncludeDir.SPDLOG}",
-        -- "%{IncludeDir.IMGUI}",
+        "%{IncludeDir.IMGUI}",
         "%{IncludeDir.VKBOOTSTRAP}",
         "%{IncludeDir.VMA}",
         "%{IncludeDir.TINYOBJLOADER}",
@@ -99,7 +99,7 @@ project "Avalanche"
         "Imm32.lib",
         "%{Libraries.Vulkan}",
         "GLFW",
-        -- "ImGui",
+        "ImGui",
         "VkBootstrap",
     }
 
@@ -149,6 +149,6 @@ project "Avalanche"
         runtime "Release"
         optimize "on"
 
--- include "Avalanche/ThirdParty/imgui"
+include "Avalanche/ThirdParty/imgui"
 include "Avalanche/ThirdParty/glfw"
 include "Avalanche/ThirdParty/vk-bootstrap"

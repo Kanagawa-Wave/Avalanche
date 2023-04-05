@@ -50,7 +50,12 @@ private:
             this->viewProjection = projection * view;
         }
     } m_CameraData;
+
+    struct TestData
+    {
+        float test = 1.f;
+    } m_TestData;
     
     std::unique_ptr<Camera> m_Camera;
-    std::unique_ptr<Buffer> m_CameraBuffer;
+    std::unique_ptr<Buffer> m_CameraBuffer, m_TestBuffer;
 };

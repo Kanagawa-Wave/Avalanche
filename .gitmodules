@@ -7,9 +7,6 @@
 [submodule "Avalanche/ThirdParty/glfw"]
 	path = Avalanche/ThirdParty/glfw
 	url = https://github.com/TheCherno/glfw.git
-[submodule "Avalanche/ThirdParty/imgui"]
-	path = Avalanche/ThirdParty/imgui
-	url = https://github.com/TheCherno/imgui.git
 [submodule "Avalanche/ThirdParty/vk-bootstrap"]
 	path = Avalanche/ThirdParty/vk-bootstrap
 	url = https://github.com/Kanagawa-Wave/vk-bootstrap.git

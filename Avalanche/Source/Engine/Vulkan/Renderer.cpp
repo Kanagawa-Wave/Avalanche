@@ -41,6 +41,7 @@ void Renderer::Render(const Mesh& mesh)
 
     m_CameraData.SetData(m_Camera->GetProjection(), m_Camera->GetView());
     m_CameraBuffer->Upload(&m_CameraData);
+    m_TestBuffer->Upload(&m_TestData);
 
     const auto& device = Context::Instance().GetDevice();
     const auto& pipeline = Context::Instance().GetPipeline();
@@ -137,8 +138,13 @@ void Renderer::CreateFence()
 void Renderer::InitCamera(float aspect)
 {
     auto& pipeline = Context::Instance().GetPipeline();
-    
+
     m_Camera = std::make_unique<Camera>(30.0f, aspect, 0.001f, 100.0f);
-    m_CameraBuffer = std::make_unique<Buffer>(vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU, sizeof(CameraData));
+    m_CameraBuffer = std::make_unique<Buffer>(vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU,
+                                              sizeof(CameraData));
     pipeline.SetUniformBuffer(*m_CameraBuffer, 0);
+
+    m_TestBuffer = std::make_unique<Buffer>(vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU,
+                                            sizeof(TestData));
+    pipeline.SetUniformBuffer(*m_TestBuffer, 0);
 }

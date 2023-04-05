@@ -18,7 +18,11 @@ layout (set = 0, binding = 0) uniform Camera {
     mat4 viewProjection;
 } camera;
 
+layout (set = 0, binding = 0) uniform Material {
+    float test;
+} material;
+
 void main() {
     gl_Position = camera.viewProjection * constants.model * vec4(vPosition, 1.0) ;
-    fColor = vColor;
+    fColor = vec3(material.test, 0.0, 0.0);
 }
