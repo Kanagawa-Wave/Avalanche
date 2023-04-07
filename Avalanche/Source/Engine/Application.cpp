@@ -23,7 +23,7 @@ void Application::Init()
     ctx.InitSwapchain(m_Window->GetWidth(), m_Window->GetHeight());
     ctx.InitPipeline();
     ctx.InitCommandManager();
-    m_Renderer = std::make_unique<Renderer>(m_Window->GetAspect());
+    m_Renderer = std::make_unique<Renderer>(*m_Window);
     ctx.GetPipeline().CreateRenderPass();
     ctx.GetPipeline().CreateLayout(Renderer::PushConstantSize());
     ctx.GetSwapchain().CreateFramebuffers(m_Window->GetWidth(), m_Window->GetHeight());

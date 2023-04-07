@@ -6,6 +6,8 @@
 #include "Engine/Scene/Components/Camera.h"
 #include "Engine/Scene/Components/Mesh.h"
 
+class Window;
+
 struct PushConstant
 {
     glm::mat4 model{1.0};
@@ -14,7 +16,7 @@ struct PushConstant
 class Renderer
 {
 public:
-    Renderer(float aspect);
+    Renderer(const Window& window);
     ~Renderer();
 
     void Init();
@@ -28,15 +30,21 @@ private:
     void CreateSemaphores();
     void CreateFence();
     void InitCamera(float aspect);
+    void InitImGui();
 
 private:
-    float m_Aspect;
+    const Window& m_Window;
     
     vk::CommandPool m_CommandPool;
     vk::CommandBuffer m_CommandBuffer;
     vk::Semaphore m_RenderSemaphore, m_PresentSemaphore;
     vk::Fence m_Fence;
 
+    struct ImGuiData
+    {
+        vk::DescriptorPool ImGuiPool;
+    } m_ImGuiData;
+    
     struct CameraData
     {
         glm::mat4 projection{};

@@ -2,14 +2,20 @@
 
 #include "Context.h"
 #include "Engine/Core/Log.h"
-
-#include <glm/glm.hpp>
-
 #include "Engine/Core/Timer.h"
-#include "glm/gtx/transform.hpp"
+#include "Engine/Window/Window.h"
 
-Renderer::Renderer(float aspect)
-    : m_Aspect(aspect)
+#include <imgui.h>
+#include <Engine/Vulkan/ImGui/imgui_impl_glfw.h>
+#include <Engine/Vulkan/ImGui/imgui_impl_vulkan.h>
+#include <glm/glm.hpp>
+#include <glm/gtx/transform.hpp>
+
+#include "Commands.h"
+
+
+Renderer::Renderer(const Window& window)
+    : m_Window(window)
 {
     AllocateCommandBuffer();
     CreateFence();
@@ -20,6 +26,11 @@ Renderer::~Renderer()
 {
     const auto& device = Context::Instance().GetDevice();
     device.waitIdle();
+
+    ImGui_ImplVulkan_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+
+    device.destroyDescriptorPool(m_ImGuiData.ImGuiPool);
     device.destroySemaphore(m_RenderSemaphore);
     device.destroySemaphore(m_PresentSemaphore);
     device.destroyFence(m_Fence);
@@ -27,11 +38,22 @@ Renderer::~Renderer()
 
 void Renderer::Init()
 {
-    InitCamera(m_Aspect);
+    InitImGui();
+    InitCamera(m_Window.GetAspect());
 }
 
 void Renderer::Render(const Mesh& mesh)
 {
+    ImGui_ImplGlfw_NewFrame();
+    ImGui_ImplVulkan_NewFrame();
+
+    ImGui::NewFrame();
+
+    ImGui::ShowDemoWindow();
+
+    ImGui::Render();
+    ImGui::EndFrame();
+
     m_Camera->OnUpdate(Timer::Elapsed());
 
     const glm::mat4 model = glm::scale(glm::mat4(1.f), glm::vec3(10, 10, 10));
@@ -84,9 +106,12 @@ void Renderer::Render(const Mesh& mesh)
                        .setFramebuffer(swapchain.GetFramebuffer(imageIndex))
                        .setClearValues(clearValues);
         m_CommandBuffer.beginRenderPass(renderPassBegin, {});
-        m_CommandBuffer.pushConstants(pipeline.GetLayout(), vk::ShaderStageFlagBits::eVertex, 0, PushConstantSize(),
-                                      &pushConstant);
-        mesh.Draw(m_CommandBuffer);
+        {
+            m_CommandBuffer.pushConstants(pipeline.GetLayout(), vk::ShaderStageFlagBits::eVertex, 0, PushConstantSize(),
+                                          &pushConstant);
+            mesh.Draw(m_CommandBuffer);
+            ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), m_CommandBuffer);
+        }
         m_CommandBuffer.endRenderPass();
     }
     m_CommandBuffer.end();
@@ -147,4 +172,52 @@ void Renderer::InitCamera(float aspect)
     m_TestBuffer = std::make_unique<Buffer>(vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU,
                                             sizeof(TestData));
     pipeline.SetUniformBuffer(*m_TestBuffer, 0);
+}
+
+void Renderer::InitImGui()
+{
+    const auto& ctx = Context::Instance();
+
+    std::vector<vk::DescriptorPoolSize> poolSizes =
+    {
+        {vk::DescriptorType::eSampler, 1000},
+        {vk::DescriptorType::eCombinedImageSampler, 1000},
+        {vk::DescriptorType::eSampledImage, 1000},
+        {vk::DescriptorType::eStorageImage, 1000},
+        {vk::DescriptorType::eUniformTexelBuffer, 1000},
+        {vk::DescriptorType::eStorageTexelBuffer, 1000},
+        {vk::DescriptorType::eUniformBuffer, 1000},
+        {vk::DescriptorType::eStorageBuffer, 1000},
+        {vk::DescriptorType::eUniformBufferDynamic, 1000},
+        {vk::DescriptorType::eStorageBufferDynamic, 1000},
+        {vk::DescriptorType::eInputAttachment, 1000}
+    };
+
+    vk::DescriptorPoolCreateInfo poolInfo;
+    poolInfo.setMaxSets(1000)
+            .setPoolSizes(poolSizes);
+
+    m_ImGuiData.ImGuiPool = ctx.GetDevice().createDescriptorPool(poolInfo);
+
+    ImGui::CreateContext();
+    ImGui_ImplGlfw_InitForVulkan(m_Window.GetGLFWWindow(), true);
+
+    ImGui_ImplVulkan_InitInfo imguiInfo{};
+    imguiInfo.Instance = ctx.GetInstance();
+    imguiInfo.Device = ctx.GetDevice();
+    imguiInfo.PhysicalDevice = ctx.GetPhysicalDevice();
+    imguiInfo.Queue = ctx.GetGraphicsQueue();
+    imguiInfo.DescriptorPool = m_ImGuiData.ImGuiPool;
+    imguiInfo.MinImageCount = 2;
+    imguiInfo.ImageCount = 2;
+    imguiInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+
+    ImGui_ImplVulkan_Init(&imguiInfo, ctx.GetPipeline().GetRenderPass());
+
+    Commands::ImmediateSubmit([&](vk::CommandBuffer commandBuffer)
+    {
+        ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
+    });
+
+    ImGui_ImplVulkan_DestroyFontUploadObjects();
 }

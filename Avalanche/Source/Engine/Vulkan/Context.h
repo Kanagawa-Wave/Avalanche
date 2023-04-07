@@ -23,7 +23,8 @@ public:
     void InitSwapchain(uint32_t width, uint32_t height);
     void InitPipeline();
     void InitCommandManager();
-    
+
+    const vk::Instance& GetInstance() const { return m_Instance; }
     const vk::SurfaceKHR& GetSurface() const { return m_Surface; }
     const vk::PhysicalDevice& GetPhysicalDevice() const { return m_PhysicalDevice; }
     const vk::Device& GetDevice() const { return m_Device; }
