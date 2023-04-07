@@ -4,7 +4,7 @@
 
 #include <GLFW/glfw3.h>
 
-#include "Commands.h"
+#include "ImmediateContext.h"
 
 
 std::unique_ptr<Context> Context::s_Instance = nullptr;
@@ -12,13 +12,13 @@ std::unique_ptr<Context> Context::s_Instance = nullptr;
 void Context::Init(GLFWwindow* window)
 {
     s_Instance.reset(new Context(window));
-    Commands::Init();
+    ImmediateContext::Init();
 }
 
 void Context::Destroy()
 {
     m_Device.waitIdle();
-    Commands::Shutdown();
+    ImmediateContext::Shutdown();
     m_CommandManager.reset();
     m_Pipeline.reset();
     m_Swapchain.reset();

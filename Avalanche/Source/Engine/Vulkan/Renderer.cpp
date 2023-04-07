@@ -11,10 +11,9 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 
-#include "Commands.h"
+#include "ImmediateContext.h"
 
-
-Renderer::Renderer(const Window& window)
+Renderer::Renderer(Window& window)
     : m_Window(window)
 {
     AllocateCommandBuffer();
@@ -214,7 +213,7 @@ void Renderer::InitImGui()
 
     ImGui_ImplVulkan_Init(&imguiInfo, ctx.GetPipeline().GetRenderPass());
 
-    Commands::ImmediateSubmit([&](vk::CommandBuffer commandBuffer)
+    ImmediateContext::Submit([&](vk::CommandBuffer commandBuffer)
     {
         ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
     });

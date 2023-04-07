@@ -3,11 +3,21 @@
 #include <GLFW/glfw3.h>
 
 Window::Window(uint32_t width, uint32_t height, const std::string& name)
-    : m_Width(width), m_Height(height), m_Name(name)
+    : m_WindowData(width, height, name)
 {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     m_Window = glfwCreateWindow((int)width, (int)height, name.c_str(), nullptr, nullptr);
+
+    glfwSetWindowUserPointer(m_Window, &m_WindowData);
+    
+    glfwSetWindowSizeCallback(m_Window, [](GLFWwindow* window, int width, int height)
+    {
+        WindowData* windowData = reinterpret_cast<WindowData*>(glfwGetWindowUserPointer(window));
+        windowData->m_Width = width;
+        windowData->m_Height = height;
+        windowData->m_Resized = true; 
+    });
 }
 
 Window::~Window()
@@ -24,29 +34,4 @@ bool Window::Running() const
 void Window::PollEvents() const
 {
     glfwPollEvents();
-}
-
-GLFWwindow* Window::GetGLFWWindow() const
-{
-    return m_Window;
-}
-
-std::pair<uint32_t, uint32_t> Window::GetExtent() const
-{
-    return {m_Width, m_Height};
-}
-
-uint32_t Window::GetWidth() const
-{
-    return m_Width;
-}
-
-uint32_t Window::GetHeight() const
-{
-    return m_Height;
-}
-
-float Window::GetAspect() const
-{
-    return (float)m_Width / (float)m_Height;
 }

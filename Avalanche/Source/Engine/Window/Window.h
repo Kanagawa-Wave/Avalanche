@@ -12,15 +12,28 @@ public:
 
     bool Running() const;
     void PollEvents() const;
-    GLFWwindow* GetGLFWWindow() const;
-    std::pair<uint32_t, uint32_t> GetExtent() const;
-    uint32_t GetWidth() const;
-    uint32_t GetHeight() const;
-    float GetAspect() const;
+
+    GLFWwindow* GetGLFWWindow() const { return m_Window; }
+    std::pair<uint32_t, uint32_t> GetExtent() const { return {m_WindowData.m_Width, m_WindowData.m_Height}; }
+    uint32_t GetWidth() const { return m_WindowData.m_Width; }
+    uint32_t GetHeight() const { return m_WindowData.m_Height; }
+    float GetAspect() const { return (float)m_WindowData.m_Width / (float)m_WindowData.m_Height; }
+
+    bool SwapchainOutdated() const { return m_WindowData.m_Resized; }
+    void SwapchainResized() { m_WindowData.m_Resized = false; } 
 
 private:
-    uint32_t m_Width = 0, m_Height = 0;
-    std::string m_Name;
+    struct WindowData
+    {
+        uint32_t m_Width = 0, m_Height = 0;
+        std::string m_Name;
+        bool m_Resized = false;
+
+        WindowData(uint32_t width, uint32_t height, const std::string& name)
+            : m_Width(width), m_Height(height), m_Name(name)
+        {
+        }
+    } m_WindowData;
 
     GLFWwindow* m_Window = nullptr;
 };

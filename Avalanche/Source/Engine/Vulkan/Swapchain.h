@@ -9,7 +9,7 @@ class Swapchain final
 public:
     Swapchain(uint32_t width, uint32_t height);
     ~Swapchain();
-
+    
     const vk::Format& GetFormat() const { return m_SwapchainInfo.Format.format; }
     const vk::Extent2D& GetExtent() const { return m_SwapchainInfo.Extent; }
     const vk::Framebuffer& GetFramebuffer(uint32_t index) const { return m_Framebuffers[index]; }

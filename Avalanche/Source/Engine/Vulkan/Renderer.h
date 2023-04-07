@@ -16,7 +16,7 @@ struct PushConstant
 class Renderer
 {
 public:
-    Renderer(const Window& window);
+    Renderer(Window& window);
     ~Renderer();
 
     void Init();
@@ -33,7 +33,7 @@ private:
     void InitImGui();
 
 private:
-    const Window& m_Window;
+    Window& m_Window;
     
     vk::CommandPool m_CommandPool;
     vk::CommandBuffer m_CommandBuffer;
