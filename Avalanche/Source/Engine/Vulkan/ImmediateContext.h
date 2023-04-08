@@ -3,6 +3,8 @@
 #include <functional>
 #include <vulkan/vulkan.hpp>
 
+class CommandManager;
+
 class ImmediateContext
 {
 public:
@@ -12,6 +14,6 @@ public:
 
 private:
     static vk::Fence m_Fence;
-    static vk::CommandPool m_CommandPool;
     static vk::CommandBuffer m_CommandBuffer;
+    static std::unique_ptr<CommandManager> m_CommandManager;
 };

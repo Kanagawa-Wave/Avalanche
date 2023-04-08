@@ -1,32 +1,23 @@
 ﻿#include "ImmediateContext.h"
 
 #include "Context.h"
+#include "CommandManager.h"
 
 #include <thread>
 
 vk::Fence ImmediateContext::m_Fence;
-vk::CommandPool ImmediateContext::m_CommandPool;
 vk::CommandBuffer ImmediateContext::m_CommandBuffer;
+std::unique_ptr<CommandManager> ImmediateContext::m_CommandManager = nullptr;
 
 void ImmediateContext::Init()
 {
-    auto& ctx = Context::Instance();
     auto& device = Context::Instance().GetDevice();
-
     vk::FenceCreateInfo fenceInfo;
     fenceInfo.setFlags(vk::FenceCreateFlagBits::eSignaled);
     m_Fence = device.createFence(fenceInfo);
 
-    vk::CommandPoolCreateInfo poolInfo;
-    poolInfo.setQueueFamilyIndex(ctx.GetGraphicsQueueFamilyIndex());
-    m_CommandPool = device.createCommandPool(poolInfo);
-
-    vk::CommandBufferAllocateInfo allocateInfo;
-    allocateInfo.setLevel(vk::CommandBufferLevel::ePrimary)
-                .setCommandPool(m_CommandPool)
-                .setCommandBufferCount(1);
-
-    m_CommandBuffer = device.allocateCommandBuffers(allocateInfo)[0];
+    m_CommandManager = std::make_unique<CommandManager>();
+    m_CommandBuffer = m_CommandManager->AllocateCommandBuffer();
 }
 
 void ImmediateContext::Submit(std::function<void(vk::CommandBuffer commandBuffer)>&& function)
@@ -34,9 +25,9 @@ void ImmediateContext::Submit(std::function<void(vk::CommandBuffer commandBuffer
     auto& ctx = Context::Instance();
     auto& device = Context::Instance().GetDevice();
 
-    device.resetCommandPool(m_CommandPool);
+    m_CommandManager->ResetCommands();
     device.resetFences(m_Fence);
-    
+
     vk::CommandBuffer commandBuffer = m_CommandBuffer;
 
     vk::CommandBufferBeginInfo beginInfo;
@@ -61,5 +52,5 @@ void ImmediateContext::Shutdown()
     auto& device = Context::Instance().GetDevice();
 
     device.destroyFence(m_Fence);
-    device.destroyCommandPool(m_CommandPool);
+    m_CommandManager.reset();
 }
