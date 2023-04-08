@@ -3,8 +3,6 @@
 #include "Context.h"
 #include "CommandManager.h"
 
-#include <thread>
-
 vk::Fence ImmediateContext::m_Fence;
 vk::CommandBuffer ImmediateContext::m_CommandBuffer;
 std::unique_ptr<CommandManager> ImmediateContext::m_CommandManager = nullptr;

@@ -1,6 +1,6 @@
 ﻿#include "BufferBase.h"
 
-#include "Context.h"
+#include "Engine/Vulkan/Context.h"
 
 BufferBase::BufferBase(vk::BufferUsageFlags usage, VmaMemoryUsage memoryUsage, const void* bufferData, size_t size)
     : BufferBase(usage, memoryUsage, size)

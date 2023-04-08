@@ -6,7 +6,6 @@
 
 #include "ImmediateContext.h"
 
-
 std::unique_ptr<Context> Context::s_Instance = nullptr;
 
 void Context::Init(GLFWwindow* window)
