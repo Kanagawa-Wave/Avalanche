@@ -20,8 +20,6 @@ public:
     ~Context();
 
 public:
-    void InitSwapchain(uint32_t width, uint32_t height);
-    void InitPipeline();
     void InitCommandManager();
 
     const vk::Instance& GetInstance() const { return m_Instance; }
@@ -31,9 +29,7 @@ public:
     const vk::Queue& GetGraphicsQueue() const { return m_GraphicsQueue; }
     const vk::Queue& GetPresentQueue() const { return m_PresentQueue; }
     const VmaAllocator& GetAllocator() const { return m_Allocator; }
-    Swapchain& GetSwapchain() const { return *m_Swapchain; }
-    Pipeline& GetPipeline() const { return *m_Pipeline; }
-    CommandManager& GetCommandManager() const { return *m_CommandManager; }
+    CommandManager* GetCommandManager() const { return m_CommandManager.get(); }
     uint32_t GetGraphicsQueueFamilyIndex() const { return m_QueueFamilyIndices.GraphicsQueue.value(); }
     uint32_t GetPresentQueueFamilyIndex() const { return m_QueueFamilyIndices.PresentQueue.value(); }
         
@@ -68,8 +64,6 @@ private:
     vk::Queue m_GraphicsQueue, m_PresentQueue;
     vk::SurfaceKHR m_Surface;
     VmaAllocator m_Allocator = VK_NULL_HANDLE;
-    std::unique_ptr<Swapchain> m_Swapchain;
-    std::unique_ptr<Pipeline> m_Pipeline;
     std::unique_ptr<CommandManager> m_CommandManager;
     
     QueueFamilyIndices m_QueueFamilyIndices;

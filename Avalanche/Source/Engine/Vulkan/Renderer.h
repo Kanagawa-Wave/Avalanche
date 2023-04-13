@@ -3,6 +3,8 @@
 #include <vulkan/vulkan.hpp>
 #include <glm/glm.hpp>
 
+#include "API/Pipeline.h"
+#include "API/RenderPass.h"
 #include "Engine/Scene/Components/Camera.h"
 #include "Engine/Scene/Components/Mesh.h"
 
@@ -16,7 +18,7 @@ struct PushConstant
 class Renderer
 {
 public:
-    Renderer(Window& window);
+    Renderer(Window* window);
     ~Renderer();
 
     void Init();
@@ -33,7 +35,10 @@ private:
     void InitImGui();
 
 private:
-    Window& m_Window;
+    Window* m_Window;
+
+    std::unique_ptr<RenderPass> m_RenderPass;
+    std::unique_ptr<Pipeline> m_Pipeline;
     
     vk::CommandPool m_CommandPool;
     vk::CommandBuffer m_CommandBuffer;

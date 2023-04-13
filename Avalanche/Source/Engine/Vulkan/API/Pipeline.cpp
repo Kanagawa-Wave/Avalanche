@@ -3,11 +3,14 @@
 #include "Engine/Vulkan/Context.h"
 #include "Engine/Core/Log.h"
 
-Pipeline::Pipeline(const std::string& vertPath, const std::string& fragPath)
+Pipeline::Pipeline(const std::string& vertPath, const std::string& fragPath, vk::Extent2D extent,
+                   uint32_t pushConstantSize, const VertexInputInfo& vertexInputInfo, vk::RenderPass renderPass)
 {
     m_Shader.reset(new Shader(vertPath, fragPath));
 
     InitDescriptors();
+    CreateLayout(pushConstantSize);
+    CreatePipeline(extent.width, extent.height, vertexInputInfo, renderPass);
 }
 
 Pipeline::~Pipeline()
@@ -16,7 +19,6 @@ Pipeline::~Pipeline()
 
     device.destroyDescriptorSetLayout(m_GlobalSetLayout);
     device.destroyDescriptorPool(m_DescriptorPool);
-    device.destroyRenderPass(m_RenderPass);
     device.destroyPipelineLayout(m_Layout);
     device.destroyPipeline(m_Pipeline);
 }
@@ -34,7 +36,8 @@ void Pipeline::CreateLayout(uint32_t pushConstantSize)
     m_Layout = Context::Instance().GetDevice().createPipelineLayout(layoutInfo);
 }
 
-void Pipeline::CreatePipeline(uint32_t width, uint32_t height, const VertexInputInfo& vertexInputInfo)
+void Pipeline::CreatePipeline(uint32_t width, uint32_t height, const VertexInputInfo& vertexInputInfo,
+                              vk::RenderPass renderPass)
 {
     vk::GraphicsPipelineCreateInfo pipelineInfo;
 
@@ -92,7 +95,7 @@ void Pipeline::CreatePipeline(uint32_t width, uint32_t height, const VertexInput
                 .setStencilTestEnable(false);
     pipelineInfo.setPDepthStencilState(&depthStencil);
 
-    pipelineInfo.setRenderPass(m_RenderPass)
+    pipelineInfo.setRenderPass(renderPass)
                 .setLayout(m_Layout);
 
     auto result = Context::Instance().GetDevice().createGraphicsPipeline(nullptr, pipelineInfo);
@@ -102,61 +105,6 @@ void Pipeline::CreatePipeline(uint32_t width, uint32_t height, const VertexInput
     }
 
     m_Pipeline = result.value;
-}
-
-void Pipeline::CreateRenderPass()
-{
-    vk::RenderPassCreateInfo renderPassInfo;
-    vk::AttachmentDescription colorAttachment, depthAttachment;
-    colorAttachment.setFormat(Context::Instance().GetSwapchain().GetFormat())
-                   .setInitialLayout(vk::ImageLayout::eUndefined)
-                   .setFinalLayout(vk::ImageLayout::ePresentSrcKHR)
-                   .setLoadOp(vk::AttachmentLoadOp::eClear)
-                   .setStoreOp(vk::AttachmentStoreOp::eStore)
-                   .setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)
-                   .setStencilStoreOp(vk::AttachmentStoreOp::eDontCare)
-                   .setSamples(vk::SampleCountFlagBits::e1);
-    depthAttachment.setFormat(vk::Format::eD32Sfloat)
-                   .setInitialLayout(vk::ImageLayout::eUndefined)
-                   .setFinalLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal)
-                   .setLoadOp(vk::AttachmentLoadOp::eClear)
-                   .setStoreOp(vk::AttachmentStoreOp::eStore)
-                   .setStencilLoadOp(vk::AttachmentLoadOp::eClear)
-                   .setStencilStoreOp(vk::AttachmentStoreOp::eDontCare)
-                   .setSamples(vk::SampleCountFlagBits::e1);
-
-    std::array attachments = {colorAttachment, depthAttachment};
-    renderPassInfo.setAttachments(attachments);
-
-    vk::AttachmentReference colorRef, depthRef;
-    colorRef.setLayout(vk::ImageLayout::eColorAttachmentOptimal)
-            .setAttachment(0);
-    depthRef.setLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal)
-            .setAttachment(1);
-    vk::SubpassDescription subpass;
-    subpass.setPipelineBindPoint(vk::PipelineBindPoint::eGraphics)
-           .setColorAttachments(colorRef)
-           .setPDepthStencilAttachment(&depthRef);
-    renderPassInfo.setSubpasses(subpass);
-
-    vk::SubpassDependency colorDependency, depthDependency;
-    colorDependency.setSrcSubpass(VK_SUBPASS_EXTERNAL)
-                   .setDstSubpass(0)
-                   .setDstAccessMask(vk::AccessFlagBits::eColorAttachmentWrite)
-                   .setSrcStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput)
-                   .setDstStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
-    depthDependency.setSrcSubpass(VK_SUBPASS_EXTERNAL)
-                   .setDstSubpass(0)
-                   .setDstAccessMask(vk::AccessFlagBits::eDepthStencilAttachmentWrite)
-                   .setSrcStageMask(
-                       vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests)
-                   .setDstStageMask(
-                       vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests);
-
-    std::array dependencies = {colorDependency, depthDependency};
-    renderPassInfo.setDependencies(dependencies);
-
-    m_RenderPass = Context::Instance().GetDevice().createRenderPass(renderPassInfo);
 }
 
 void Pipeline::SetUniformBuffer(Buffer& buffer, uint32_t binding)

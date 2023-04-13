@@ -11,6 +11,7 @@ std::unique_ptr<Context> Context::s_Instance = nullptr;
 void Context::Init(GLFWwindow* window)
 {
     s_Instance.reset(new Context(window));
+    s_Instance->InitCommandManager();
     ImmediateContext::Init();
 }
 
@@ -19,8 +20,6 @@ void Context::Destroy()
     m_Device.waitIdle();
     ImmediateContext::Shutdown();
     m_CommandManager.reset();
-    m_Pipeline.reset();
-    m_Swapchain.reset();
     m_Instance.destroySurfaceKHR(m_Surface);
     vmaDestroyAllocator(m_Allocator);
     m_Device.destroy();
@@ -153,16 +152,6 @@ void Context::InitAllocator()
     vmaInfo.instance = m_Instance;
     vmaInfo.physicalDevice = m_PhysicalDevice;
     vmaCreateAllocator(&vmaInfo, &m_Allocator);
-}
-
-void Context::InitSwapchain(uint32_t width, uint32_t height)
-{
-    m_Swapchain = std::make_unique<Swapchain>(width, height);
-}
-
-void Context::InitPipeline()
-{
-    m_Pipeline = std::make_unique<Pipeline>("Shaders/Triangle.vert.spv", "Shaders/Triangle.frag.spv");
 }
 
 void Context::InitCommandManager()

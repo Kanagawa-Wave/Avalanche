@@ -2,6 +2,8 @@
 
 #include <string>
 
+#include "Engine/Vulkan/API/Swapchain.h"
+
 struct GLFWwindow;
 
 class Window
@@ -10,11 +12,15 @@ public:
     Window(uint32_t width = 800, uint32_t height = 600, const std::string& name = "Engine");
     ~Window();
 
+    void Init();
+    void Destory();
+
     bool Running() const;
     void PollEvents() const;
 
     GLFWwindow* GetGLFWWindow() const { return m_Window; }
-    std::pair<uint32_t, uint32_t> GetExtent() const { return {m_WindowData.m_Width, m_WindowData.m_Height}; }
+    Swapchain* GetSwapchain() const { return m_Swapchain.get(); }
+    vk::Extent2D GetExtent() const { return {m_WindowData.m_Width, m_WindowData.m_Height}; }
     uint32_t GetWidth() const { return m_WindowData.m_Width; }
     uint32_t GetHeight() const { return m_WindowData.m_Height; }
     float GetAspect() const { return (float)m_WindowData.m_Width / (float)m_WindowData.m_Height; }
@@ -36,4 +42,6 @@ private:
     } m_WindowData;
 
     GLFWwindow* m_Window = nullptr;
+
+    std::unique_ptr<Swapchain> m_Swapchain;
 };

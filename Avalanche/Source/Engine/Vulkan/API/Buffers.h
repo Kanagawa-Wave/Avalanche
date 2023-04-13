@@ -143,8 +143,8 @@ public:
         }
 
         m_VertexInput.BindingDescription.setBinding(0)
-                            .setStride(m_Stride)
-                            .setInputRate(vk::VertexInputRate::eVertex);
+                     .setStride(m_Stride)
+                     .setInputRate(vk::VertexInputRate::eVertex);
     }
 
     inline uint32_t GetStride() const { return m_Stride; }
@@ -184,7 +184,7 @@ public:
     virtual void Bind(vk::CommandBuffer commandBuffer) override;
 
     uint32_t GetCount() const { return m_Count; }
-    
+
 private:
     uint32_t m_Count = 0;
 };
@@ -193,7 +193,7 @@ class Buffer final : public BufferBase
 {
 public:
     Buffer(vk::BufferUsageFlags usage, VmaMemoryUsage memoryUsage, size_t size);
-    
+
     void SetDescriptor(vk::DescriptorSet descriptor) { m_Descriptor = descriptor; }
     vk::DescriptorSet GetDescriptor() const { return m_Descriptor; }
     void Upload(const void* src) const;

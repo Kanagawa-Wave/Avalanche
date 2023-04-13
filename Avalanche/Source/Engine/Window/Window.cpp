@@ -26,6 +26,16 @@ Window::~Window()
     glfwTerminate();
 }
 
+void Window::Init()
+{
+    m_Swapchain = std::make_unique<Swapchain>(m_WindowData.m_Width, m_WindowData.m_Height);
+}
+
+void Window::Destory()
+{
+    m_Swapchain.reset();
+}
+
 bool Window::Running() const
 {
     return !glfwWindowShouldClose(m_Window);

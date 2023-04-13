@@ -18,20 +18,10 @@ void Application::Init()
     m_Window = std::make_unique<Window>(800, 600, "Avalanche");
 
     Context::Init(m_Window->GetGLFWWindow());
+    m_Window->Init();
     
-    auto& ctx = Context::Instance();
-    ctx.InitSwapchain(m_Window->GetWidth(), m_Window->GetHeight());
-    ctx.InitPipeline();
-    ctx.InitCommandManager();
-    m_Renderer = std::make_unique<Renderer>(*m_Window);
-    ctx.GetPipeline().CreateRenderPass();
-    ctx.GetPipeline().CreateLayout(Renderer::PushConstantSize());
-    ctx.GetSwapchain().CreateFramebuffers(m_Window->GetWidth(), m_Window->GetHeight());
-
+    m_Renderer = std::make_unique<Renderer>(m_Window.get());
     m_Triangle = std::make_unique<Mesh>("Content/bunny.obj");
-    ctx.GetPipeline().CreatePipeline(m_Window->GetWidth(), m_Window->GetHeight(), m_Triangle->GetVertexBuffer().GetLayout().GetVertexInputInfo());
-
-    m_Renderer->Init();
 }
 
 void Application::Destroy()
@@ -39,6 +29,7 @@ void Application::Destroy()
     Context::Instance().GetDevice().waitIdle();
     m_Triangle.reset();
     m_Renderer.reset();
+    m_Window->Destory();
     Context::Instance().Destroy();
 }
 

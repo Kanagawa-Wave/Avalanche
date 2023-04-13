@@ -121,7 +121,7 @@ void Swapchain::CreateDepthBuffer(uint32_t width, uint32_t height)
     m_DepthStencil = std::make_unique<Image>(vk::Format::eD32Sfloat, extent, ImageUsage::eDepthStencil);
 }
 
-void Swapchain::CreateFramebuffers(uint32_t width, uint32_t height)
+void Swapchain::CreateFramebuffers(uint32_t width, uint32_t height, vk::RenderPass renderPass)
 {
     m_Framebuffers.resize(m_Images.size());
     for (uint32_t i = 0; i < m_Framebuffers.size(); i++)
@@ -131,7 +131,7 @@ void Swapchain::CreateFramebuffers(uint32_t width, uint32_t height)
         framebufferInfo.setAttachments(attachments)
                        .setWidth(width)
                        .setHeight(height)
-                       .setRenderPass(Context::Instance().GetPipeline().GetRenderPass())
+                       .setRenderPass(renderPass)
                        .setLayers(1);
         m_Framebuffers[i] = Context::Instance().GetDevice().createFramebuffer(framebufferInfo);
     }

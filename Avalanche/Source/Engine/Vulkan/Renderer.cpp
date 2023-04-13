@@ -13,12 +13,23 @@
 
 #include "ImmediateContext.h"
 
-Renderer::Renderer(Window& window)
+Renderer::Renderer(Window* window)
     : m_Window(window)
 {
+    m_RenderPass = std::make_unique<RenderPass>(window->GetSwapchain()->GetFormat());
+    window->GetSwapchain()->CreateFramebuffers(window->GetWidth(), window->GetHeight(), m_RenderPass->GetRenderPass());
+    m_Pipeline = std::make_unique<Pipeline>("Shaders/Triangle.vert.spv",
+                                            "Shaders/Triangle.frag.spv",
+                                            window->GetExtent(),
+                                            PushConstantSize(),
+                                            Vertex::Layout().GetVertexInputInfo(),
+                                            m_RenderPass->GetRenderPass());
     AllocateCommandBuffer();
     CreateFence();
     CreateSemaphores();
+
+    InitImGui();
+    InitCamera(m_Window->GetAspect());
 }
 
 Renderer::~Renderer()
@@ -33,12 +44,15 @@ Renderer::~Renderer()
     device.destroySemaphore(m_RenderSemaphore);
     device.destroySemaphore(m_PresentSemaphore);
     device.destroyFence(m_Fence);
+
+    m_RenderPass.reset();
+    m_Pipeline.reset();
 }
 
 void Renderer::Init()
 {
     InitImGui();
-    InitCamera(m_Window.GetAspect());
+    InitCamera(m_Window->GetAspect());
 }
 
 void Renderer::Render(const Mesh& mesh)
@@ -65,8 +79,6 @@ void Renderer::Render(const Mesh& mesh)
     m_TestBuffer->Upload(&m_TestData);
 
     const auto& device = Context::Instance().GetDevice();
-    const auto& pipeline = Context::Instance().GetPipeline();
-    const auto& swapchain = Context::Instance().GetSwapchain();
 
     if (device.waitForFences(m_Fence, true, std::numeric_limits<std::uint64_t>::max()) != vk::Result::eSuccess)
     {
@@ -74,7 +86,7 @@ void Renderer::Render(const Mesh& mesh)
     }
     device.resetFences(m_Fence);
 
-    const auto result = device.acquireNextImageKHR(swapchain.GetSwapchain(),
+    const auto result = device.acquireNextImageKHR(m_Window->GetSwapchain()->GetSwapchain(),
                                                    std::numeric_limits<uint64_t>::max(), m_PresentSemaphore);
     if (result.result != vk::Result::eSuccess)
     {
@@ -89,24 +101,25 @@ void Renderer::Render(const Mesh& mesh)
     commandBufferBegin.setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
     m_CommandBuffer.begin(commandBufferBegin);
     {
-        pipeline.Bind(m_CommandBuffer);
-        pipeline.BindBuffer(m_CommandBuffer, *m_CameraBuffer);
+        m_Pipeline->Bind(m_CommandBuffer);
+        m_Pipeline->BindBuffer(m_CommandBuffer, *m_CameraBuffer);
         mesh.Bind(m_CommandBuffer);
         vk::RenderPassBeginInfo renderPassBegin;
         vk::Rect2D area;
         vk::ClearValue color, depth;
         area.setOffset({0, 0})
-            .setExtent(swapchain.GetExtent());
+            .setExtent(m_Window->GetSwapchain()->GetExtent());
         color.setColor({0.1f, 0.1f, 0.1f, 1.0f});
         depth.setDepthStencil(1.0f);
         std::array clearValues = {color, depth};
-        renderPassBegin.setRenderPass(pipeline.GetRenderPass())
+        renderPassBegin.setRenderPass(m_RenderPass->GetRenderPass())
                        .setRenderArea(area)
-                       .setFramebuffer(swapchain.GetFramebuffer(imageIndex))
+                       .setFramebuffer(m_Window->GetSwapchain()->GetFramebuffer(imageIndex))
                        .setClearValues(clearValues);
         m_CommandBuffer.beginRenderPass(renderPassBegin, {});
         {
-            m_CommandBuffer.pushConstants(pipeline.GetLayout(), vk::ShaderStageFlagBits::eVertex, 0, PushConstantSize(),
+            m_CommandBuffer.pushConstants(m_Pipeline->GetLayout(), vk::ShaderStageFlagBits::eVertex, 0,
+                                          PushConstantSize(),
                                           &pushConstant);
             mesh.Draw(m_CommandBuffer);
             ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), m_CommandBuffer);
@@ -127,7 +140,7 @@ void Renderer::Render(const Mesh& mesh)
     vk::PresentInfoKHR present;
     present.setWaitSemaphores(m_RenderSemaphore)
            .setImageIndices(imageIndex)
-           .setSwapchains(swapchain.GetSwapchain());
+           .setSwapchains(m_Window->GetSwapchain()->GetSwapchain());
     if (Context::Instance().GetPresentQueue().presentKHR(present) != vk::Result::eSuccess)
     {
         ASSERT(0, "Failed to present image")
@@ -141,7 +154,7 @@ void Renderer::OnUpdate(float deltaTime) const
 
 void Renderer::AllocateCommandBuffer()
 {
-    m_CommandBuffer = Context::Instance().GetCommandManager().AllocateCommandBuffer();
+    m_CommandBuffer = Context::Instance().GetCommandManager()->AllocateCommandBuffer();
 }
 
 void Renderer::CreateSemaphores()
@@ -161,16 +174,14 @@ void Renderer::CreateFence()
 
 void Renderer::InitCamera(float aspect)
 {
-    auto& pipeline = Context::Instance().GetPipeline();
-
     m_Camera = std::make_unique<Camera>(30.0f, aspect, 0.001f, 100.0f);
     m_CameraBuffer = std::make_unique<Buffer>(vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU,
                                               sizeof(CameraData));
-    pipeline.SetUniformBuffer(*m_CameraBuffer, 0);
+    m_Pipeline->SetUniformBuffer(*m_CameraBuffer, 0);
 
     m_TestBuffer = std::make_unique<Buffer>(vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU,
                                             sizeof(TestData));
-    pipeline.SetUniformBuffer(*m_TestBuffer, 0);
+    m_Pipeline->SetUniformBuffer(*m_TestBuffer, 0);
 }
 
 void Renderer::InitImGui()
@@ -199,7 +210,7 @@ void Renderer::InitImGui()
     m_ImGuiData.ImGuiPool = ctx.GetDevice().createDescriptorPool(poolInfo);
 
     ImGui::CreateContext();
-    ImGui_ImplGlfw_InitForVulkan(m_Window.GetGLFWWindow(), true);
+    ImGui_ImplGlfw_InitForVulkan(m_Window->GetGLFWWindow(), true);
 
     ImGui_ImplVulkan_InitInfo imguiInfo{};
     imguiInfo.Instance = ctx.GetInstance();
@@ -211,7 +222,7 @@ void Renderer::InitImGui()
     imguiInfo.ImageCount = 2;
     imguiInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 
-    ImGui_ImplVulkan_Init(&imguiInfo, ctx.GetPipeline().GetRenderPass());
+    ImGui_ImplVulkan_Init(&imguiInfo, m_RenderPass->GetRenderPass());
 
     ImmediateContext::Submit([&](vk::CommandBuffer commandBuffer)
     {
