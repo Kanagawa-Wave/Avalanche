@@ -20,9 +20,9 @@ public:
     void CreatePipeline(uint32_t width, uint32_t height, const VertexInputInfo& vertexInputInfo,
                         vk::RenderPass renderPass);
 
-    void SetUniformBuffer(Buffer& buffer, uint32_t binding);
+    void SetUniformBuffer(Buffer* buffer, uint32_t binding);
     void Bind(vk::CommandBuffer commandBuffer) const;
-    void BindBuffer(vk::CommandBuffer commandBuffer, const Buffer& buffer) const;
+    void BindBuffer(vk::CommandBuffer commandBuffer, const Buffer* buffer) const;
 
 private:
     void InitDescriptors();

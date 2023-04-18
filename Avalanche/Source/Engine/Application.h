@@ -27,7 +27,7 @@ private:
     std::unique_ptr<Renderer> m_Renderer;
 
     // TODO: remove
-    std::unique_ptr<Mesh> m_Triangle;
+    std::unique_ptr<Mesh> m_Mesh;
 
     static std::unique_ptr<Application> s_Instance;
 };

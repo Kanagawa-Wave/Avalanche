@@ -20,14 +20,14 @@ void Application::Init()
     Context::Init(m_Window->GetGLFWWindow());
     m_Window->Init();
     
-    m_Renderer = std::make_unique<Renderer>(m_Window.get());
-    m_Triangle = std::make_unique<Mesh>("Content/bunny.obj");
+    m_Renderer = std::make_unique<Renderer>(m_Window.get(), false);
+    m_Mesh = std::make_unique<Mesh>("Content/bunny.obj");
 }
 
 void Application::Destroy()
 {
     Context::Instance().GetDevice().waitIdle();
-    m_Triangle.reset();
+    m_Mesh.reset();
     m_Renderer.reset();
     m_Window->Destory();
     Context::Instance().Destroy();
@@ -35,7 +35,7 @@ void Application::Destroy()
 
 void Application::Draw() const
 {
-    m_Renderer->Render(*m_Triangle.get());
+    m_Renderer->Render(m_Mesh.get());
 }
 
 void Application::Run()
@@ -43,7 +43,9 @@ void Application::Run()
     while (m_Window->Running())
     {
         Timer::Reset();
+        
         m_Window->PollEvents();
+        m_Renderer->OnUpdate(Timer::Elapsed());
         Draw();
     }
 }

@@ -18,11 +18,10 @@ struct PushConstant
 class Renderer
 {
 public:
-    Renderer(Window* window);
+    Renderer(Window* window, bool enableImGui);
     ~Renderer();
-
-    void Init();
-    void Render(const Mesh& mesh);
+    
+    void Render(const Mesh* mesh);
     void OnUpdate(float deltaTime) const;
     
     static uint32_t PushConstantSize() { return sizeof(PushConstant); }
@@ -33,9 +32,11 @@ private:
     void CreateFence();
     void InitCamera(float aspect);
     void InitImGui();
+    void OnImGuiUpdate();
 
 private:
     Window* m_Window;
+    bool m_EnableImGui = true;
 
     std::unique_ptr<RenderPass> m_RenderPass;
     std::unique_ptr<Pipeline> m_Pipeline;

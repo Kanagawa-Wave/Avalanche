@@ -107,7 +107,7 @@ void Pipeline::CreatePipeline(uint32_t width, uint32_t height, const VertexInput
     m_Pipeline = result.value;
 }
 
-void Pipeline::SetUniformBuffer(Buffer& buffer, uint32_t binding)
+void Pipeline::SetUniformBuffer(Buffer* buffer, uint32_t binding)
 {
     auto& device = Context::Instance().GetDevice();
 
@@ -117,12 +117,12 @@ void Pipeline::SetUniformBuffer(Buffer& buffer, uint32_t binding)
                 .setDescriptorPool(m_DescriptorPool);
 
     const auto descriptorSet = device.allocateDescriptorSets(allocateInfo)[0];
-    buffer.SetDescriptor(descriptorSet);
+    buffer->SetDescriptor(descriptorSet);
 
     vk::DescriptorBufferInfo bufferInfo;
-    bufferInfo.setBuffer(buffer.GetBuffer())
+    bufferInfo.setBuffer(buffer->GetBuffer())
               .setOffset(0)
-              .setRange(buffer.GetSize());
+              .setRange(buffer->GetSize());
 
     vk::WriteDescriptorSet setWrite;
     setWrite.setDstBinding(binding)
@@ -139,9 +139,9 @@ void Pipeline::Bind(vk::CommandBuffer commandBuffer) const
     commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_Pipeline);
 }
 
-void Pipeline::BindBuffer(vk::CommandBuffer commandBuffer, const Buffer& buffer) const
+void Pipeline::BindBuffer(vk::CommandBuffer commandBuffer, const Buffer* buffer) const
 {
-    commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_Layout, 0, buffer.GetDescriptor(), nullptr);
+    commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_Layout, 0, buffer->GetDescriptor(), nullptr);
 }
 
 void Pipeline::InitDescriptors()

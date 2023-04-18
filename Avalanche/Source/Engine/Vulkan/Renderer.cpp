@@ -13,8 +13,8 @@
 
 #include "ImmediateContext.h"
 
-Renderer::Renderer(Window* window)
-    : m_Window(window)
+Renderer::Renderer(Window* window, bool enableImGui)
+    : m_Window(window), m_EnableImGui(enableImGui)
 {
     m_RenderPass = std::make_unique<RenderPass>(window->GetSwapchain()->GetFormat());
     window->GetSwapchain()->CreateFramebuffers(window->GetWidth(), window->GetHeight(), m_RenderPass->GetRenderPass());
@@ -28,7 +28,9 @@ Renderer::Renderer(Window* window)
     CreateFence();
     CreateSemaphores();
 
-    InitImGui();
+    if (m_EnableImGui)
+        InitImGui();
+    
     InitCamera(m_Window->GetAspect());
 }
 
@@ -37,8 +39,11 @@ Renderer::~Renderer()
     const auto& device = Context::Instance().GetDevice();
     device.waitIdle();
 
-    ImGui_ImplVulkan_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
+    if (m_EnableImGui)
+    {
+        ImGui_ImplVulkan_Shutdown();
+        ImGui_ImplGlfw_Shutdown();
+    }
 
     device.destroyDescriptorPool(m_ImGuiData.ImGuiPool);
     device.destroySemaphore(m_RenderSemaphore);
@@ -49,26 +54,8 @@ Renderer::~Renderer()
     m_Pipeline.reset();
 }
 
-void Renderer::Init()
+void Renderer::Render(const Mesh* mesh)
 {
-    InitImGui();
-    InitCamera(m_Window->GetAspect());
-}
-
-void Renderer::Render(const Mesh& mesh)
-{
-    ImGui_ImplGlfw_NewFrame();
-    ImGui_ImplVulkan_NewFrame();
-
-    ImGui::NewFrame();
-
-    ImGui::ShowDemoWindow();
-
-    ImGui::Render();
-    ImGui::EndFrame();
-
-    m_Camera->OnUpdate(Timer::Elapsed());
-
     const glm::mat4 model = glm::scale(glm::mat4(1.f), glm::vec3(10, 10, 10));
 
     PushConstant pushConstant;
@@ -102,8 +89,8 @@ void Renderer::Render(const Mesh& mesh)
     m_CommandBuffer.begin(commandBufferBegin);
     {
         m_Pipeline->Bind(m_CommandBuffer);
-        m_Pipeline->BindBuffer(m_CommandBuffer, *m_CameraBuffer);
-        mesh.Bind(m_CommandBuffer);
+        m_Pipeline->BindBuffer(m_CommandBuffer, m_CameraBuffer.get());
+        mesh->Bind(m_CommandBuffer);
         vk::RenderPassBeginInfo renderPassBegin;
         vk::Rect2D area;
         vk::ClearValue color, depth;
@@ -121,8 +108,10 @@ void Renderer::Render(const Mesh& mesh)
             m_CommandBuffer.pushConstants(m_Pipeline->GetLayout(), vk::ShaderStageFlagBits::eVertex, 0,
                                           PushConstantSize(),
                                           &pushConstant);
-            mesh.Draw(m_CommandBuffer);
-            ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), m_CommandBuffer);
+            mesh->Draw(m_CommandBuffer);
+
+            if (m_EnableImGui)
+                ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), m_CommandBuffer);
         }
         m_CommandBuffer.endRenderPass();
     }
@@ -177,11 +166,11 @@ void Renderer::InitCamera(float aspect)
     m_Camera = std::make_unique<Camera>(30.0f, aspect, 0.001f, 100.0f);
     m_CameraBuffer = std::make_unique<Buffer>(vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU,
                                               sizeof(CameraData));
-    m_Pipeline->SetUniformBuffer(*m_CameraBuffer, 0);
+    m_Pipeline->SetUniformBuffer(m_CameraBuffer.get(), 0);
 
     m_TestBuffer = std::make_unique<Buffer>(vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU,
                                             sizeof(TestData));
-    m_Pipeline->SetUniformBuffer(*m_TestBuffer, 0);
+    m_Pipeline->SetUniformBuffer(m_TestBuffer.get(), 0);
 }
 
 void Renderer::InitImGui()
@@ -230,4 +219,17 @@ void Renderer::InitImGui()
     });
 
     ImGui_ImplVulkan_DestroyFontUploadObjects();
+}
+
+void Renderer::OnImGuiUpdate()
+{
+    ImGui_ImplGlfw_NewFrame();
+    ImGui_ImplVulkan_NewFrame();
+
+    ImGui::NewFrame();
+
+    ImGui::ShowDemoWindow();
+
+    ImGui::Render();
+    ImGui::EndFrame();
 }
