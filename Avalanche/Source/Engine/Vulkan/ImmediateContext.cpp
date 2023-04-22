@@ -52,3 +52,33 @@ void ImmediateContext::Shutdown()
     device.destroyFence(m_Fence);
     m_CommandManager.reset();
 }
+
+void ImmediateContext::Begin()
+{
+    auto& device = Context::Instance().GetDevice();
+
+    m_CommandManager->ResetCommands();
+    device.resetFences(m_Fence);
+
+    vk::CommandBufferBeginInfo beginInfo;
+    beginInfo.setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+
+    m_CommandBuffer.begin(beginInfo);
+}
+
+void ImmediateContext::End()
+{
+    auto& ctx = Context::Instance();
+    auto& device = Context::Instance().GetDevice();
+    
+    m_CommandBuffer.end();
+
+    vk::SubmitInfo submitInfo;
+    submitInfo.setCommandBuffers(m_CommandBuffer);
+    ctx.GetGraphicsQueue().submit(submitInfo, m_Fence);
+
+    if (device.waitForFences(m_Fence, true, std::numeric_limits<std::uint64_t>::max()) != vk::Result::eSuccess)
+    {
+        ASSERT(0, "Failed to wait for fence")
+    }
+}

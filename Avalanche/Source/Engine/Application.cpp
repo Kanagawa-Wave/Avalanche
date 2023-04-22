@@ -20,7 +20,7 @@ void Application::Init()
     Context::Init(m_Window->GetGLFWWindow());
     m_Window->Init();
     
-    m_Renderer = std::make_unique<Renderer>(m_Window.get(), false);
+    m_Renderer = std::make_unique<Renderer>(m_Window.get(), true);
     m_Mesh = std::make_unique<Mesh>("Content/bunny.obj");
 }
 

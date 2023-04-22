@@ -29,8 +29,11 @@ Renderer::Renderer(Window* window, bool enableImGui)
     CreateSemaphores();
 
     if (m_EnableImGui)
+    {
         InitImGui();
-    
+        InitImGUIObjects();
+    }
+
     InitCamera(m_Window->GetAspect());
 }
 
@@ -136,9 +139,12 @@ void Renderer::Render(const Mesh* mesh)
     }
 }
 
-void Renderer::OnUpdate(float deltaTime) const
+void Renderer::OnUpdate(float deltaTime)
 {
     m_Camera->OnUpdate(deltaTime);
+
+    if (m_EnableImGui)
+        OnImGuiUpdate();
 }
 
 void Renderer::AllocateCommandBuffer()
@@ -232,4 +238,61 @@ void Renderer::OnImGuiUpdate()
 
     ImGui::Render();
     ImGui::EndFrame();
+}
+
+void Renderer::InitImGUIObjects()
+{
+    const auto& device = Context::Instance().GetDevice();
+    const auto& allocator = Context::Instance().GetAllocator();
+
+    const uint32_t imageCount = m_Window->GetSwapchain()->GetImageCount();
+    m_ImGuiData.m_ViewportImages.resize(imageCount);
+    m_ImGuiData.m_Allocations.resize(imageCount);
+    m_ImGuiData.m_ViewportImageViews.resize(imageCount);
+
+    for (uint32_t i = 0; i < imageCount; i++)
+    {
+        vk::ImageCreateInfo imageInfo;
+        imageInfo.setImageType(vk::ImageType::e2D)
+                 .setFormat(m_Window->GetSwapchain()->GetFormat())
+                 .setExtent(vk::Extent3D(m_Window->GetSwapchain()->GetExtent(), 1.0f))
+                 .setArrayLayers(1)
+                 .setMipLevels(1)
+                 .setSamples(vk::SampleCountFlagBits::e1)
+                 .setInitialLayout(vk::ImageLayout::eUndefined)
+                 .setTiling(vk::ImageTiling::eOptimal)
+                 .setUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled);
+
+        VmaAllocationCreateInfo allocationInfo{};
+        allocationInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+        allocationInfo.requiredFlags = VkMemoryPropertyFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+        vmaCreateImage(allocator, (VkImageCreateInfo*)&imageInfo, &allocationInfo,
+                       (VkImage*)&m_ImGuiData.m_ViewportImages[i], &m_ImGuiData.m_Allocations[i], nullptr);
+
+        vk::ImageMemoryBarrier barrier;
+        barrier.setImage(m_ImGuiData.m_ViewportImages[i])
+               .setSrcAccessMask(vk::AccessFlagBits::eTransferRead)
+               .setDstAccessMask(vk::AccessFlagBits::eMemoryRead)
+               .setOldLayout(vk::ImageLayout::eUndefined)
+               .setNewLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
+               .setSubresourceRange({vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
+
+        vk::CommandBuffer commandBuffer = ImmediateContext::GetCommandBuffer();
+        ImmediateContext::Begin();
+        commandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer,
+                                      vk::DependencyFlagBits::eByRegion, nullptr, nullptr, barrier);
+        ImmediateContext::End();
+    }
+
+    for (uint32_t i = 0; i < imageCount; i++)
+    {
+        vk::ImageViewCreateInfo viewInfo;
+        viewInfo.setImage(m_ImGuiData.m_ViewportImages[i])
+                .setSubresourceRange({vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1})
+                .setFormat(m_Window->GetSwapchain()->GetFormat())
+                .setViewType(vk::ImageViewType::e2D);
+
+        m_ImGuiData.m_ViewportImageViews[i] = device.createImageView(viewInfo);
+    }
 }

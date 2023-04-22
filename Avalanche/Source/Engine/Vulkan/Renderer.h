@@ -22,7 +22,7 @@ public:
     ~Renderer();
     
     void Render(const Mesh* mesh);
-    void OnUpdate(float deltaTime) const;
+    void OnUpdate(float deltaTime);
     
     static uint32_t PushConstantSize() { return sizeof(PushConstant); }
 
@@ -33,6 +33,7 @@ private:
     void InitCamera(float aspect);
     void InitImGui();
     void OnImGuiUpdate();
+    void InitImGUIObjects();
 
 private:
     Window* m_Window;
@@ -46,8 +47,11 @@ private:
     vk::Semaphore m_RenderSemaphore, m_PresentSemaphore;
     vk::Fence m_Fence;
 
-    struct ImGuiData
+    struct ImGuiObjects
     {
+        std::vector<VkImage> m_ViewportImages;
+        std::vector<VmaAllocation> m_Allocations;
+        std::vector<VkImageView> m_ViewportImageViews;
         vk::DescriptorPool ImGuiPool;
     } m_ImGuiData;
     

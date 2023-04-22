@@ -14,6 +14,7 @@ public:
     const vk::Extent2D& GetExtent() const { return m_SwapchainInfo.Extent; }
     const vk::Framebuffer& GetFramebuffer(uint32_t index) const { return m_Framebuffers[index]; }
     const vk::SwapchainKHR& GetSwapchain() const { return m_Swapchain; }
+    const uint32_t& GetImageCount() const { return m_SwapchainInfo.Count; }
     void CreateFramebuffers(uint32_t width, uint32_t height, vk::RenderPass renderPass);
 
 private:
