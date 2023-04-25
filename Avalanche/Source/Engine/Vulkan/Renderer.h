@@ -39,8 +39,8 @@ private:
     Window* m_Window;
     bool m_EnableImGui = true;
 
-    std::unique_ptr<RenderPass> m_RenderPass;
-    std::unique_ptr<Pipeline> m_Pipeline;
+    std::unique_ptr<RenderPass> m_MainRenderPass, m_ViewportRenderPass;
+    std::unique_ptr<Pipeline> m_MainPipeline, m_ViewportPipeline;
     
     vk::CommandPool m_CommandPool;
     vk::CommandBuffer m_CommandBuffer;
@@ -49,9 +49,10 @@ private:
 
     struct ImGuiObjects
     {
-        std::vector<VkImage> m_ViewportImages;
+        std::vector<vk::Image> m_ViewportImages;
         std::vector<VmaAllocation> m_Allocations;
-        std::vector<VkImageView> m_ViewportImageViews;
+        std::vector<vk::ImageView> m_ViewportImageViews;
+        std::vector<vk::Framebuffer> m_ViewportFramebuffers;
         vk::DescriptorPool ImGuiPool;
     } m_ImGuiData;
     

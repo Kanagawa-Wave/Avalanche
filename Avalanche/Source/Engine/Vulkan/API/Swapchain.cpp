@@ -41,15 +41,18 @@ Swapchain::Swapchain(uint32_t width, uint32_t height)
 
 Swapchain::~Swapchain()
 {
+    const auto& device = Context::Instance().GetDevice();
+    
+    device.waitIdle();
     for (const auto framebuffer : m_Framebuffers)
     {
-        Context::Instance().GetDevice().destroyFramebuffer(framebuffer);
+        device.destroyFramebuffer(framebuffer);
     }
     for (const auto view : m_ImageViews)
     {
-        Context::Instance().GetDevice().destroyImageView(view);
+        device.destroyImageView(view);
     }
-    Context::Instance().GetDevice().destroySwapchainKHR(m_Swapchain);
+    device.destroySwapchainKHR(m_Swapchain);
 }
 
 void Swapchain::QueryInfo(uint32_t width, uint32_t height)

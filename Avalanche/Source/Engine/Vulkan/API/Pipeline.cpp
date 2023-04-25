@@ -17,6 +17,8 @@ Pipeline::~Pipeline()
 {
     auto& device = Context::Instance().GetDevice();
 
+    device.waitIdle();
+
     device.destroyDescriptorSetLayout(m_GlobalSetLayout);
     device.destroyDescriptorPool(m_DescriptorPool);
     device.destroyPipelineLayout(m_Layout);
@@ -54,11 +56,14 @@ void Pipeline::CreatePipeline(uint32_t width, uint32_t height, const VertexInput
     pipelineInfo.setStages(m_Shader->GetStageInfo());
 
     vk::PipelineViewportStateCreateInfo viewportState;
-    vk::Viewport viewport(0.f, (float)height, (float)width, -(float)height, 0.f, 1.f);
-    vk::Rect2D rect(vk::Offset2D(0, 0), vk::Extent2D(width, height));
-    viewportState.setViewports(viewport)
-                 .setScissors(rect);
+    viewportState.setViewportCount(1)
+                 .setScissorCount(1);
     pipelineInfo.setPViewportState(&viewportState);
+
+    vk::PipelineDynamicStateCreateInfo dynamicState;
+    std::vector<vk::DynamicState> states = {vk::DynamicState::eViewport, vk::DynamicState::eScissor};
+    dynamicState.setDynamicStates(states);
+    pipelineInfo.setPDynamicState(&dynamicState);
 
     vk::PipelineRasterizationStateCreateInfo rasterizationState;
     rasterizationState.setRasterizerDiscardEnable(false)

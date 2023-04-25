@@ -10,6 +10,7 @@
 #include <glm/gtx/quaternion.hpp>
 
 Camera::Camera(float fov, float aspect, float nearClip, float farClip)
+    : m_FOV(fov), m_NearClip(nearClip), m_FarClip(farClip)
 {
     m_Projection = glm::perspective(glm::radians(fov), aspect, nearClip, farClip);
     RecalculateView();
@@ -87,6 +88,12 @@ bool Camera::OnUpdate(float deltaTime)
     }
 
     return moved;
+}
+
+void Camera::Resize(float aspect)
+{
+    m_Projection = glm::perspective(glm::radians(m_FOV), aspect, m_NearClip, m_FarClip);
+    RecalculateView();
 }
 
 void Camera::RecalculateView()

@@ -16,14 +16,15 @@
 Renderer::Renderer(Window* window, bool enableImGui)
     : m_Window(window), m_EnableImGui(enableImGui)
 {
-    m_RenderPass = std::make_unique<RenderPass>(window->GetSwapchain()->GetFormat());
-    window->GetSwapchain()->CreateFramebuffers(window->GetWidth(), window->GetHeight(), m_RenderPass->GetRenderPass());
-    m_Pipeline = std::make_unique<Pipeline>("Shaders/Triangle.vert.spv",
-                                            "Shaders/Triangle.frag.spv",
-                                            window->GetExtent(),
-                                            PushConstantSize(),
-                                            Vertex::Layout().GetVertexInputInfo(),
-                                            m_RenderPass->GetRenderPass());
+    m_ViewportRenderPass = std::make_unique<RenderPass>(window->GetSwapchain()->GetFormat());
+    window->GetSwapchain()->CreateFramebuffers(window->GetWidth(), window->GetHeight(),
+                                               m_ViewportRenderPass->GetRenderPass());
+    m_ViewportPipeline = std::make_unique<Pipeline>("Shaders/Triangle.vert.spv",
+                                                    "Shaders/Triangle.frag.spv",
+                                                    window->GetExtent(),
+                                                    PushConstantSize(),
+                                                    Vertex::Layout().GetVertexInputInfo(),
+                                                    m_ViewportRenderPass->GetRenderPass());
     AllocateCommandBuffer();
     CreateFence();
     CreateSemaphores();
@@ -31,7 +32,7 @@ Renderer::Renderer(Window* window, bool enableImGui)
     if (m_EnableImGui)
     {
         InitImGui();
-        InitImGUIObjects();
+        // InitImGUIObjects();
     }
 
     InitCamera(m_Window->GetAspect());
@@ -53,8 +54,10 @@ Renderer::~Renderer()
     device.destroySemaphore(m_PresentSemaphore);
     device.destroyFence(m_Fence);
 
-    m_RenderPass.reset();
-    m_Pipeline.reset();
+    m_ViewportRenderPass.reset();
+    m_MainRenderPass.reset();
+    m_ViewportPipeline.reset();
+    m_MainPipeline.reset();
 }
 
 void Renderer::Render(const Mesh* mesh)
@@ -74,16 +77,23 @@ void Renderer::Render(const Mesh* mesh)
     {
         ASSERT(0, "Failed to wait for fence")
     }
-    device.resetFences(m_Fence);
 
-    const auto result = device.acquireNextImageKHR(m_Window->GetSwapchain()->GetSwapchain(),
-                                                   std::numeric_limits<uint64_t>::max(), m_PresentSemaphore);
-    if (result.result != vk::Result::eSuccess)
+    uint32_t imageIndex;
+    VkResult result = vkAcquireNextImageKHR(device, m_Window->GetSwapchain()->GetSwapchain(),
+                                            std::numeric_limits<uint64_t>::max(),
+                                            m_PresentSemaphore, VK_NULL_HANDLE, &imageIndex);
+
+    if (result == VK_ERROR_OUT_OF_DATE_KHR)
+    {
+        m_Window->RecreateSwapchain(m_ViewportRenderPass->GetRenderPass());
+        m_Camera->Resize(m_Window->GetAspect());
+        return;
+    }
+    if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
     {
         ASSERT(0, "Failed to acquire next swapchain image")
     }
-
-    uint32_t imageIndex = result.value;
+    device.resetFences(m_Fence);
 
     m_CommandBuffer.reset();
 
@@ -91,8 +101,8 @@ void Renderer::Render(const Mesh* mesh)
     commandBufferBegin.setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
     m_CommandBuffer.begin(commandBufferBegin);
     {
-        m_Pipeline->Bind(m_CommandBuffer);
-        m_Pipeline->BindBuffer(m_CommandBuffer, m_CameraBuffer.get());
+        m_ViewportPipeline->Bind(m_CommandBuffer);
+        m_ViewportPipeline->BindBuffer(m_CommandBuffer, m_CameraBuffer.get());
         mesh->Bind(m_CommandBuffer);
         vk::RenderPassBeginInfo renderPassBegin;
         vk::Rect2D area;
@@ -102,13 +112,16 @@ void Renderer::Render(const Mesh* mesh)
         color.setColor({0.1f, 0.1f, 0.1f, 1.0f});
         depth.setDepthStencil(1.0f);
         std::array clearValues = {color, depth};
-        renderPassBegin.setRenderPass(m_RenderPass->GetRenderPass())
+        renderPassBegin.setRenderPass(m_ViewportRenderPass->GetRenderPass())
                        .setRenderArea(area)
                        .setFramebuffer(m_Window->GetSwapchain()->GetFramebuffer(imageIndex))
                        .setClearValues(clearValues);
+
         m_CommandBuffer.beginRenderPass(renderPassBegin, {});
         {
-            m_CommandBuffer.pushConstants(m_Pipeline->GetLayout(), vk::ShaderStageFlagBits::eVertex, 0,
+            m_CommandBuffer.setViewport(0, m_Window->GetViewport());
+            m_CommandBuffer.setScissor(0, m_Window->GetScissor());
+            m_CommandBuffer.pushConstants(m_ViewportPipeline->GetLayout(), vk::ShaderStageFlagBits::eVertex, 0,
                                           PushConstantSize(),
                                           &pushConstant);
             mesh->Draw(m_CommandBuffer);
@@ -128,12 +141,19 @@ void Renderer::Render(const Mesh* mesh)
           .setSignalSemaphores(m_RenderSemaphore);
     Context::Instance().GetGraphicsQueue().submit(submit, m_Fence);
 
-
     vk::PresentInfoKHR present;
     present.setWaitSemaphores(m_RenderSemaphore)
            .setImageIndices(imageIndex)
            .setSwapchains(m_Window->GetSwapchain()->GetSwapchain());
-    if (Context::Instance().GetPresentQueue().presentKHR(present) != vk::Result::eSuccess)
+
+    result = vkQueuePresentKHR(Context::Instance().GetPresentQueue(), (VkPresentInfoKHR*)&present);
+
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_Window->SwapchainOutdated())
+    {
+        m_Window->RecreateSwapchain(m_ViewportRenderPass->GetRenderPass());
+        m_Camera->Resize(m_Window->GetAspect());
+    }
+    else if (result != VK_SUCCESS)
     {
         ASSERT(0, "Failed to present image")
     }
@@ -172,11 +192,11 @@ void Renderer::InitCamera(float aspect)
     m_Camera = std::make_unique<Camera>(30.0f, aspect, 0.001f, 100.0f);
     m_CameraBuffer = std::make_unique<Buffer>(vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU,
                                               sizeof(CameraData));
-    m_Pipeline->SetUniformBuffer(m_CameraBuffer.get(), 0);
+    m_ViewportPipeline->SetUniformBuffer(m_CameraBuffer.get(), 0);
 
     m_TestBuffer = std::make_unique<Buffer>(vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU,
                                             sizeof(TestData));
-    m_Pipeline->SetUniformBuffer(m_TestBuffer.get(), 0);
+    m_ViewportPipeline->SetUniformBuffer(m_TestBuffer.get(), 0);
 }
 
 void Renderer::InitImGui()
@@ -213,11 +233,11 @@ void Renderer::InitImGui()
     imguiInfo.PhysicalDevice = ctx.GetPhysicalDevice();
     imguiInfo.Queue = ctx.GetGraphicsQueue();
     imguiInfo.DescriptorPool = m_ImGuiData.ImGuiPool;
-    imguiInfo.MinImageCount = 2;
-    imguiInfo.ImageCount = 2;
+    imguiInfo.MinImageCount = m_Window->GetSwapchain()->GetImageCount();
+    imguiInfo.ImageCount = m_Window->GetSwapchain()->GetImageCount();
     imguiInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 
-    ImGui_ImplVulkan_Init(&imguiInfo, m_RenderPass->GetRenderPass());
+    ImGui_ImplVulkan_Init(&imguiInfo, m_ViewportRenderPass->GetRenderPass());
 
     ImmediateContext::Submit([&](vk::CommandBuffer commandBuffer)
     {

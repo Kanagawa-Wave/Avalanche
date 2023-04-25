@@ -12,7 +12,7 @@ public:
     Window(uint32_t width = 800, uint32_t height = 600, const std::string& name = "Engine");
     ~Window();
 
-    void Init();
+    void CreateSwapchain();
     void Destory();
 
     bool Running() const;
@@ -24,9 +24,28 @@ public:
     uint32_t GetWidth() const { return m_WindowData.m_Width; }
     uint32_t GetHeight() const { return m_WindowData.m_Height; }
     float GetAspect() const { return (float)m_WindowData.m_Width / (float)m_WindowData.m_Height; }
+    vk::Rect2D GetScissor() const
+    {
+        vk::Rect2D scissor;
+        scissor.setOffset({0, 0})
+               .setExtent(GetSwapchain()->GetExtent());
+        return scissor;
+    }
+    vk::Viewport GetViewport() const
+    {
+        vk::Viewport viewport;
+        viewport.setX(0.f)
+                .setY((float)GetSwapchain()->GetExtent().height)
+                .setWidth((float)GetSwapchain()->GetExtent().width)
+                .setHeight(-(float)GetSwapchain()->GetExtent().height)
+                .setMinDepth(0.f)
+                .setMaxDepth(1.f);
+        return viewport;
+    }
 
     bool SwapchainOutdated() const { return m_WindowData.m_Resized; }
-    void SwapchainResized() { m_WindowData.m_Resized = false; } 
+    void SwapchainResized() { m_WindowData.m_Resized = false; }
+    void RecreateSwapchain(vk::RenderPass renderPass);
 
 private:
     struct WindowData

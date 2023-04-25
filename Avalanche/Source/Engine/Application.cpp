@@ -18,7 +18,7 @@ void Application::Init()
     m_Window = std::make_unique<Window>(800, 600, "Avalanche");
 
     Context::Init(m_Window->GetGLFWWindow());
-    m_Window->Init();
+    m_Window->CreateSwapchain();
     
     m_Renderer = std::make_unique<Renderer>(m_Window.get(), true);
     m_Mesh = std::make_unique<Mesh>("Content/bunny.obj");

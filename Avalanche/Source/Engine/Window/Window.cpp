@@ -26,7 +26,7 @@ Window::~Window()
     glfwTerminate();
 }
 
-void Window::Init()
+void Window::CreateSwapchain()
 {
     m_Swapchain = std::make_unique<Swapchain>(m_WindowData.m_Width, m_WindowData.m_Height);
 }
@@ -44,4 +44,12 @@ bool Window::Running() const
 void Window::PollEvents() const
 {
     glfwPollEvents();
+}
+
+void Window::RecreateSwapchain(vk::RenderPass renderPass)
+{
+    m_Swapchain.reset();
+    m_Swapchain = std::make_unique<Swapchain>(m_WindowData.m_Width, m_WindowData.m_Height);
+    m_Swapchain->CreateFramebuffers(m_WindowData.m_Width, m_WindowData.m_Height, renderPass);
+    SwapchainResized();
 }
