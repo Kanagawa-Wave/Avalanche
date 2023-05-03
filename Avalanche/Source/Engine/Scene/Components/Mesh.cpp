@@ -46,6 +46,11 @@ void Mesh::Draw(vk::CommandBuffer commandBuffer) const
     commandBuffer.drawIndexed(m_IndexBuffer->GetCount(), 1, 0, 0, 0);
 }
 
+void Mesh::AddTexture(const std::string& path)
+{
+    m_Texture = std::make_unique<Texture>(path);
+}
+
 void Mesh::LoadObjFromFile(const std::string& path)
 {
     tinyobj::attrib_t attrib;

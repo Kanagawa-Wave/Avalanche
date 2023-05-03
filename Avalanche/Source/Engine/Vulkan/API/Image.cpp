@@ -2,25 +2,7 @@
 
 #include "Engine/Vulkan/Context.h"
 
-Image::Image(vk::Format format, vk::Extent2D extent, ImageUsage usage)
-{
-    switch (usage)
-    {
-    case ImageUsage::eDepthStencil:
-        CreateImageForDepthStencil(format, extent);
-        return;
-    case ImageUsage::eTexture:
-        return;
-    }
-}
-
-Image::~Image()
-{
-    Context::Instance().GetDevice().destroyImageView(m_ImageView);
-    vmaDestroyImage(Context::Instance().GetAllocator(), m_Image, m_Allocation);
-}
-
-void Image::CreateImageForDepthStencil(vk::Format format, vk::Extent2D extent)
+Image::Image(vk::Format format, vk::Extent2D extent, vk::ImageUsageFlags usage)
 {
     vk::Extent3D extent3D(extent, 1);
 
@@ -32,11 +14,18 @@ void Image::CreateImageForDepthStencil(vk::Format format, vk::Extent2D extent)
              .setTiling(vk::ImageTiling::eOptimal)
              .setMipLevels(1)
              .setArrayLayers(1)
-             .setUsage(vk::ImageUsageFlagBits::eDepthStencilAttachment);
+             .setUsage(usage);
 
     VmaAllocationCreateInfo allocInfo{};
-    allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-    allocInfo.requiredFlags = VkMemoryPropertyFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    if (usage == vk::ImageUsageFlagBits::eDepthStencilAttachment)
+    {
+        allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
+        allocInfo.requiredFlags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
+    }
+    else
+    {
+        allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+    }
 
     vmaCreateImage(Context::Instance().GetAllocator(), (VkImageCreateInfo*)&imageInfo, &allocInfo, (VkImage*)&m_Image,
                    &m_Allocation, nullptr);
@@ -46,8 +35,11 @@ void Image::CreateImageForDepthStencil(vk::Format format, vk::Extent2D extent)
     subresourceRange.setBaseMipLevel(0)
                     .setLevelCount(1)
                     .setBaseArrayLayer(0)
-                    .setLayerCount(1)
-                    .setAspectMask(vk::ImageAspectFlagBits::eDepth);
+                    .setLayerCount(1);
+    if (usage == vk::ImageUsageFlagBits::eDepthStencilAttachment)
+        subresourceRange.setAspectMask(vk::ImageAspectFlagBits::eDepth);
+    else
+        subresourceRange.setAspectMask(vk::ImageAspectFlagBits::eColor);
     imageViewInfo.setViewType(vk::ImageViewType::e2D)
                  .setImage(m_Image)
                  .setFormat(format)
@@ -56,6 +48,8 @@ void Image::CreateImageForDepthStencil(vk::Format format, vk::Extent2D extent)
     m_ImageView = Context::Instance().GetDevice().createImageView(imageViewInfo);
 }
 
-void Image::CreateImageForTexture(vk::Format format, vk::Extent2D extent)
+Image::~Image()
 {
+    Context::Instance().GetDevice().destroyImageView(m_ImageView);
+    vmaDestroyImage(Context::Instance().GetAllocator(), m_Image, m_Allocation);
 }

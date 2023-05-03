@@ -22,6 +22,7 @@ void Application::Init()
     
     m_Renderer = std::make_unique<Renderer>(m_Window.get(), true);
     m_Mesh = std::make_unique<Mesh>("Content/bunny.obj");
+    m_Mesh->AddTexture("Content/white.png");
 }
 
 void Application::Destroy()

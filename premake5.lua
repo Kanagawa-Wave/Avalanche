@@ -44,7 +44,7 @@ IncludeDir["GLFW"] = "Avalanche/ThirdParty/glfw/include"
 IncludeDir["GLM"] = "Avalanche/ThirdParty/glm"
 IncludeDir["SPDLOG"] = "Avalanche/ThirdParty/spdlog/include"
 IncludeDir["IMGUI"] = "Avalanche/ThirdParty/imgui"
-IncludeDir["STB_IMAGE"] = "Avalanche/ThirdParty/stb"
+IncludeDir["STB"] = "Avalanche/ThirdParty/stb"
 IncludeDir["TINYOBJLOADER"] = "Avalanche/ThirdParty/tinyobjloader"
 IncludeDir["ENTT"] = "Avalanche/ThirdParty/entt"
 IncludeDir["VKBOOTSTRAP"] = "Avalanche/ThirdParty/vk-bootstrap/src"
@@ -91,6 +91,7 @@ project "Avalanche"
         "%{IncludeDir.VKBOOTSTRAP}",
         "%{IncludeDir.VMA}",
         "%{IncludeDir.TINYOBJLOADER}",
+        "%{IncludeDir.STB}",
     }
     
     links

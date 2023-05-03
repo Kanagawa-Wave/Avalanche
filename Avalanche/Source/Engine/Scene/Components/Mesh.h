@@ -4,6 +4,8 @@
 
 #include <glm/glm.hpp>
 
+#include "Engine/Vulkan/API/Texture.h"
+
 struct Vertex
 {
     glm::vec3 position{};
@@ -38,16 +40,21 @@ public:
 
     void Bind(vk::CommandBuffer commandBuffer) const;
     void Draw(vk::CommandBuffer commandBuffer) const;
+
+    void AddTexture(const std::string& path);
     
-    VertexBuffer& GetVertexBuffer() const { return *m_VertexBuffer; }
-    IndexBuffer& GetIndexBuffer() const { return *m_IndexBuffer; }
+    Texture* GetTexture() const { return m_Texture.get(); }
+    VertexBuffer* GetVertexBuffer() const { return m_VertexBuffer.get(); }
+    IndexBuffer* GetIndexBuffer() const { return m_IndexBuffer.get(); }
 
 private:
     void LoadObjFromFile(const std::string& path);
 
+    std::unique_ptr<Texture> m_Texture = nullptr;
+    
     std::vector<Vertex> m_Vertices;
     std::vector<uint32_t> m_Indices;
     
-    std::unique_ptr<VertexBuffer> m_VertexBuffer;
-    std::unique_ptr<IndexBuffer> m_IndexBuffer;
+    std::unique_ptr<VertexBuffer> m_VertexBuffer = nullptr;
+    std::unique_ptr<IndexBuffer> m_IndexBuffer = nullptr;
 };

@@ -19,3 +19,6 @@
 [submodule "Avalanche/ThirdParty/imgui"]
 	path = Avalanche/ThirdParty/imgui
 	url = https://github.com/Kanagawa-Wave/imgui.git
+[submodule "Avalanche/ThirdParty/stb"]
+	path = Avalanche/ThirdParty/stb
+	url = https://github.com/nothings/stb.git

@@ -42,7 +42,7 @@ Swapchain::Swapchain(uint32_t width, uint32_t height)
 Swapchain::~Swapchain()
 {
     const auto& device = Context::Instance().GetDevice();
-    
+
     device.waitIdle();
     for (const auto framebuffer : m_Framebuffers)
     {
@@ -121,7 +121,8 @@ void Swapchain::CreateImageViews()
 void Swapchain::CreateDepthBuffer(uint32_t width, uint32_t height)
 {
     vk::Extent2D extent(width, height);
-    m_DepthStencil = std::make_unique<Image>(vk::Format::eD32Sfloat, extent, ImageUsage::eDepthStencil);
+    m_DepthStencil = std::make_unique<Image>(vk::Format::eD32Sfloat, extent,
+                                             vk::ImageUsageFlagBits::eDepthStencilAttachment);
 }
 
 void Swapchain::CreateFramebuffers(uint32_t width, uint32_t height, vk::RenderPass renderPass)
