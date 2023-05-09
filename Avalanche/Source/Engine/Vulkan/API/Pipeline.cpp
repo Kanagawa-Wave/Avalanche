@@ -19,7 +19,6 @@ Pipeline::~Pipeline()
 
     device.waitIdle();
 
-    device.destroyDescriptorSetLayout(m_GlobalSetLayout);
     device.destroyDescriptorPool(m_DescriptorPool);
     device.destroyPipelineLayout(m_Layout);
     device.destroyPipeline(m_Pipeline);
@@ -27,13 +26,14 @@ Pipeline::~Pipeline()
 
 void Pipeline::CreateLayout(uint32_t pushConstantSize)
 {
+    vk::DescriptorSetLayout setLayouts[] = { m_PipelineDescriptorSet->GetLayout() };
     vk::PipelineLayoutCreateInfo layoutInfo;
     vk::PushConstantRange pushConstantRange;
     pushConstantRange.setOffset(0)
                      .setSize(pushConstantSize)
                      .setStageFlags(vk::ShaderStageFlagBits::eVertex);
     layoutInfo.setPushConstantRanges(pushConstantRange);
-    layoutInfo.setSetLayouts(m_GlobalSetLayout);
+    layoutInfo.setSetLayouts(setLayouts);
 
     m_Layout = Context::Instance().GetDevice().createPipelineLayout(layoutInfo);
 }
@@ -116,54 +116,24 @@ void Pipeline::UpdateUniformBuffer(Buffer* buffer, uint32_t binding)
 {
     auto& device = Context::Instance().GetDevice();
 
-    vk::DescriptorBufferInfo bufferInfo;
-    bufferInfo.setBuffer(buffer->GetBuffer())
-              .setOffset(0)
-              .setRange(buffer->GetSize());
-
-    vk::WriteDescriptorSet setWrite;
-    setWrite.setDstBinding(binding)
-            .setDstSet(m_GlobalSet)
-            .setDescriptorCount(1)
-            .setBufferInfo(bufferInfo)
-            .setDescriptorType(vk::DescriptorType::eUniformBuffer);
-
-    device.updateDescriptorSets(setWrite, nullptr);
+    m_PipelineDescriptorSet->UpdateUniformBuffer(buffer, binding);
 }
 
 void Pipeline::Bind(vk::CommandBuffer commandBuffer) const
 {
     commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_Pipeline);
-    commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_Layout, 0, m_GlobalSet, nullptr);
+    commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_Layout, 0,
+                                     m_PipelineDescriptorSet->GetDescriptorSet(),
+                                     nullptr);
 }
 
 void Pipeline::BindDescriptorSet(vk::CommandBuffer commandBuffer) const
 {
-    
 }
 
 void Pipeline::InitDescriptors()
 {
     auto& device = Context::Instance().GetDevice();
-
-    vk::DescriptorSetLayoutBinding cameraBufferBinding;
-    cameraBufferBinding.setBinding(0)
-                       .setDescriptorCount(1)
-                       .setDescriptorType(vk::DescriptorType::eUniformBuffer)
-                       .setStageFlags(vk::ShaderStageFlagBits::eVertex);
-
-    vk::DescriptorSetLayoutBinding testBufferBinding;
-    testBufferBinding.setBinding(1)
-                     .setDescriptorCount(1)
-                     .setDescriptorType(vk::DescriptorType::eUniformBuffer)
-                     .setStageFlags(vk::ShaderStageFlagBits::eFragment);
-
-    vk::DescriptorSetLayoutBinding bindings[] = { cameraBufferBinding, testBufferBinding };
-    
-    vk::DescriptorSetLayoutCreateInfo setLayout;
-    setLayout.setBindings(bindings);
-
-    m_GlobalSetLayout = device.createDescriptorSetLayout(setLayout);
 
     vk::DescriptorPoolCreateInfo poolInfo;
     std::vector<vk::DescriptorPoolSize> poolSizes = {{vk::DescriptorType::eUniformBuffer, 1000}};
@@ -171,11 +141,11 @@ void Pipeline::InitDescriptors()
             .setMaxSets(1000);
 
     m_DescriptorPool = device.createDescriptorPool(poolInfo);
-
-    vk::DescriptorSetAllocateInfo allocateInfo;
-    allocateInfo.setSetLayouts(m_GlobalSetLayout)
-                .setDescriptorSetCount(1)
-                .setDescriptorPool(m_DescriptorPool);
-
-    m_GlobalSet = device.allocateDescriptorSets(allocateInfo)[0];
+    
+    vk::DescriptorSetLayoutBinding bindings[] = {
+        {0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex},
+        {1, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eFragment}
+    };
+    
+    m_PipelineDescriptorSet = std::make_unique<DescriptorSet>(m_DescriptorPool, bindings);
 }

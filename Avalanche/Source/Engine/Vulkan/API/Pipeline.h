@@ -3,6 +3,7 @@
 #include <vulkan/vulkan.hpp>
 
 #include "Buffers.h"
+#include "DescriptorSet.h"
 #include "Shader.h"
 
 class Pipeline
@@ -32,6 +33,6 @@ private:
     vk::PipelineLayout m_Layout;
 
     vk::DescriptorPool m_DescriptorPool;
-    vk::DescriptorSet m_GlobalSet;
-    vk::DescriptorSetLayout m_GlobalSetLayout;
+
+    std::unique_ptr<DescriptorSet> m_PipelineDescriptorSet;
 };
