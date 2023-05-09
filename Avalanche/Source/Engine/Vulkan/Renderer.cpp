@@ -68,8 +68,8 @@ void Renderer::Render(const Mesh* mesh)
     pushConstant.model = model;
 
     m_CameraData.SetData(m_Camera->GetProjection(), m_Camera->GetView());
-    m_CameraBuffer->Upload(&m_CameraData);
-    m_TestBuffer->Upload(&m_TestData);
+    m_CameraBuffer->SetData(&m_CameraData);
+    m_TestBuffer->SetData(&m_TestData);
 
     const auto& device = Context::Instance().GetDevice();
 
@@ -101,9 +101,6 @@ void Renderer::Render(const Mesh* mesh)
     commandBufferBegin.setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
     m_CommandBuffer.begin(commandBufferBegin);
     {
-        m_ViewportPipeline->Bind(m_CommandBuffer);
-        m_ViewportPipeline->BindBuffer(m_CommandBuffer, m_CameraBuffer.get());
-        mesh->Bind(m_CommandBuffer);
         vk::RenderPassBeginInfo renderPassBegin;
         vk::Rect2D area;
         vk::ClearValue color, depth;
@@ -119,11 +116,15 @@ void Renderer::Render(const Mesh* mesh)
 
         m_CommandBuffer.beginRenderPass(renderPassBegin, {});
         {
+            m_ViewportPipeline->Bind(m_CommandBuffer);
+            
             m_CommandBuffer.setViewport(0, m_Window->GetViewport());
             m_CommandBuffer.setScissor(0, m_Window->GetScissor());
+
             m_CommandBuffer.pushConstants(m_ViewportPipeline->GetLayout(), vk::ShaderStageFlagBits::eVertex, 0,
                                           PushConstantSize(),
                                           &pushConstant);
+            mesh->Bind(m_CommandBuffer);
             mesh->Draw(m_CommandBuffer);
 
             if (m_EnableImGui)
@@ -192,11 +193,11 @@ void Renderer::InitCamera(float aspect)
     m_Camera = std::make_unique<Camera>(30.0f, aspect, 0.001f, 100.0f);
     m_CameraBuffer = std::make_unique<Buffer>(vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU,
                                               sizeof(CameraData));
-    m_ViewportPipeline->SetUniformBuffer(m_CameraBuffer.get(), 0);
+    m_ViewportPipeline->UpdateUniformBuffer(m_CameraBuffer.get(), 0);
 
     m_TestBuffer = std::make_unique<Buffer>(vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU,
                                             sizeof(TestData));
-    m_ViewportPipeline->SetUniformBuffer(m_TestBuffer.get(), 0);
+    m_ViewportPipeline->UpdateUniformBuffer(m_TestBuffer.get(), 1);
 }
 
 void Renderer::InitImGui()

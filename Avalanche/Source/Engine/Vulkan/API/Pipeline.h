@@ -20,9 +20,9 @@ public:
     void CreatePipeline(uint32_t width, uint32_t height, const VertexInputInfo& vertexInputInfo,
                         vk::RenderPass renderPass);
 
-    void SetUniformBuffer(Buffer* buffer, uint32_t binding);
+    void UpdateUniformBuffer(Buffer* buffer, uint32_t binding);
     void Bind(vk::CommandBuffer commandBuffer) const;
-    void BindBuffer(vk::CommandBuffer commandBuffer, const Buffer* buffer) const;
+    void BindDescriptorSet(vk::CommandBuffer commandBuffer) const;
 
 private:
     void InitDescriptors();
@@ -32,5 +32,6 @@ private:
     vk::PipelineLayout m_Layout;
 
     vk::DescriptorPool m_DescriptorPool;
+    vk::DescriptorSet m_GlobalSet;
     vk::DescriptorSetLayout m_GlobalSetLayout;
 };

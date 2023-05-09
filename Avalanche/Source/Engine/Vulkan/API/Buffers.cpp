@@ -28,7 +28,7 @@ Buffer::Buffer(vk::BufferUsageFlags usage, VmaMemoryUsage memoryUsage, size_t si
 {
 }
 
-void Buffer::Upload(const void* src) const
+void Buffer::SetData(const void* src) const
 {
     auto& allocator = Context::Instance().GetAllocator();
     
