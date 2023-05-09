@@ -195,7 +195,4 @@ public:
     Buffer(vk::BufferUsageFlags usage, VmaMemoryUsage memoryUsage, size_t size);
     
     void SetData(const void* src) const;
-
-private:
-    vk::DescriptorSet m_Descriptor;
 };
