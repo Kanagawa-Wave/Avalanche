@@ -8,18 +8,17 @@ Pipeline::Pipeline(const std::string& vertPath, const std::string& fragPath, vk:
 {
     m_Shader.reset(new Shader(vertPath, fragPath));
 
-    InitDescriptors();
+    InitPipelineDescriptorSet();
     CreateLayout(pushConstantSize);
     CreatePipeline(extent.width, extent.height, vertexInputInfo, renderPass);
 }
 
 Pipeline::~Pipeline()
 {
-    auto& device = Context::Instance().GetDevice();
+    const auto& device = Context::Instance().GetDevice();
 
     device.waitIdle();
-
-    device.destroyDescriptorPool(m_DescriptorPool);
+    
     device.destroyPipelineLayout(m_Layout);
     device.destroyPipeline(m_Pipeline);
 }
@@ -114,8 +113,6 @@ void Pipeline::CreatePipeline(uint32_t width, uint32_t height, const VertexInput
 
 void Pipeline::UpdateUniformBuffer(Buffer* buffer, uint32_t binding)
 {
-    auto& device = Context::Instance().GetDevice();
-
     m_PipelineDescriptorSet->UpdateUniformBuffer(buffer, binding);
 }
 
@@ -131,21 +128,14 @@ void Pipeline::BindDescriptorSet(vk::CommandBuffer commandBuffer) const
 {
 }
 
-void Pipeline::InitDescriptors()
+void Pipeline::InitPipelineDescriptorSet()
 {
-    auto& device = Context::Instance().GetDevice();
-
-    vk::DescriptorPoolCreateInfo poolInfo;
-    std::vector<vk::DescriptorPoolSize> poolSizes = {{vk::DescriptorType::eUniformBuffer, 1000}};
-    poolInfo.setPoolSizes(poolSizes)
-            .setMaxSets(1000);
-
-    m_DescriptorPool = device.createDescriptorPool(poolInfo);
+    const auto& pool = Context::Instance().GetDescriptorPool();
     
     vk::DescriptorSetLayoutBinding bindings[] = {
         {0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex},
         {1, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eFragment}
     };
     
-    m_PipelineDescriptorSet = std::make_unique<DescriptorSet>(m_DescriptorPool, bindings);
+    m_PipelineDescriptorSet = std::make_unique<DescriptorSet>(pool, bindings);
 }

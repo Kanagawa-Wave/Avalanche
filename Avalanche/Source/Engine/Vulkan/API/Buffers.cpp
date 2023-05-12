@@ -30,7 +30,7 @@ Buffer::Buffer(vk::BufferUsageFlags usage, VmaMemoryUsage memoryUsage, size_t si
 
 void Buffer::SetData(const void* src) const
 {
-    auto& allocator = Context::Instance().GetAllocator();
+    const auto& allocator = Context::Instance().GetAllocator();
     
     void* dst;
     vmaMapMemory(allocator, m_Allocation, &dst);

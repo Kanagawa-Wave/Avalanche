@@ -20,6 +20,7 @@ void Context::Destroy()
     m_Device.waitIdle();
     ImmediateContext::Shutdown();
     m_CommandManager.reset();
+    m_Device.destroyDescriptorPool(m_DescriptorPool);
     m_Instance.destroySurfaceKHR(m_Surface);
     vmaDestroyAllocator(m_Allocator);
     m_Device.destroy();
@@ -40,6 +41,7 @@ Context::Context(GLFWwindow* window)
     QueryQueueFamilyIndices();
     CreateDevice();
     GetQueue();
+    CreateDescriptorPool();
     InitAllocator();
 }
 
@@ -145,6 +147,20 @@ void Context::CreateSurface(GLFWwindow* window)
     glfwCreateWindowSurface(m_Instance, window, nullptr, (VkSurfaceKHR*)&m_Surface);
 }
 
+void Context::CreateDescriptorPool()
+{
+    vk::DescriptorPoolCreateInfo poolInfo;
+    std::vector<vk::DescriptorPoolSize> poolSizes = {
+        {vk::DescriptorType::eUniformBuffer, 1000},
+        {vk::DescriptorType::eCombinedImageSampler, 1000}
+    };
+    
+    poolInfo.setPoolSizes(poolSizes)
+            .setMaxSets(1000);
+
+    m_DescriptorPool = m_Device.createDescriptorPool(poolInfo);
+}
+
 void Context::InitAllocator()
 {
     VmaAllocatorCreateInfo vmaInfo{};
@@ -161,5 +177,4 @@ void Context::InitCommandManager()
 
 Context::~Context()
 {
-
 }
