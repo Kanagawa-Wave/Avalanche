@@ -22,14 +22,13 @@ public:
     ~Renderer();
     
     void Render(const Mesh* mesh);
-    void OnUpdate(float deltaTime);
-    
-    static uint32_t PushConstantSize() { return sizeof(PushConstant); }
+    void Update(float deltaTime);
 
 private:
     void AllocateCommandBuffer();
     void CreateSemaphores();
     void CreateFence();
+    void CreateDescriptorSets();
     void InitCamera(float aspect);
     void InitImGui();
     void OnImGuiUpdate();
@@ -39,8 +38,8 @@ private:
     Window* m_Window;
     bool m_EnableImGui = true;
 
-    std::unique_ptr<RenderPass> m_MainRenderPass, m_ViewportRenderPass;
-    std::unique_ptr<Pipeline> m_MainPipeline, m_ViewportPipeline;
+    std::unique_ptr<RenderPass> m_RenderPass;
+    std::unique_ptr<Pipeline> m_Pipeline;
     
     vk::CommandPool m_CommandPool;
     vk::CommandBuffer m_CommandBuffer;
@@ -77,4 +76,6 @@ private:
     
     std::unique_ptr<Camera> m_Camera;
     std::unique_ptr<Buffer> m_CameraBuffer, m_TestBuffer;
+
+    std::unique_ptr<DescriptorSet> m_GlobalSet, m_TextureSet;
 };

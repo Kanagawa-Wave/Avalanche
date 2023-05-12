@@ -34,7 +34,7 @@ void Application::Destroy()
     Context::Instance().Destroy();
 }
 
-void Application::Draw() const
+void Application::Render() const
 {
     m_Renderer->Render(m_Mesh.get());
 }
@@ -46,7 +46,7 @@ void Application::Run()
         Timer::Reset();
         
         m_Window->PollEvents();
-        m_Renderer->OnUpdate(Timer::Elapsed());
-        Draw();
+        m_Renderer->Update(Timer::Elapsed());
+        Render();
     }
 }

@@ -3,14 +3,12 @@
 #include "Engine/Vulkan/Context.h"
 #include "Engine/Core/Log.h"
 
-Pipeline::Pipeline(const std::string& vertPath, const std::string& fragPath, vk::Extent2D extent,
-                   uint32_t pushConstantSize, const VertexInputInfo& vertexInputInfo, vk::RenderPass renderPass)
+Pipeline::Pipeline(const PipelineCreateInfo& pipelineCreateInfo)
 {
-    m_Shader.reset(new Shader(vertPath, fragPath));
-
-    InitPipelineDescriptorSet();
-    CreateLayout(pushConstantSize);
-    CreatePipeline(extent.width, extent.height, vertexInputInfo, renderPass);
+    m_Shader.reset(new Shader(pipelineCreateInfo.VertexShader, pipelineCreateInfo.FragmentShader));
+    
+    CreateLayout(pipelineCreateInfo.PushConstantSize, pipelineCreateInfo.DescriptorSetLayouts);
+    CreatePipeline(pipelineCreateInfo.VertexInput, pipelineCreateInfo.RenderPass);
 }
 
 Pipeline::~Pipeline()
@@ -18,26 +16,25 @@ Pipeline::~Pipeline()
     const auto& device = Context::Instance().GetDevice();
 
     device.waitIdle();
-    
+
     device.destroyPipelineLayout(m_Layout);
     device.destroyPipeline(m_Pipeline);
 }
 
-void Pipeline::CreateLayout(uint32_t pushConstantSize)
+void Pipeline::CreateLayout(uint32_t pushConstantSize, const vk::ArrayProxy<vk::DescriptorSetLayout>& layouts)
 {
-    vk::DescriptorSetLayout setLayouts[] = { m_PipelineDescriptorSet->GetLayout() };
     vk::PipelineLayoutCreateInfo layoutInfo;
     vk::PushConstantRange pushConstantRange;
     pushConstantRange.setOffset(0)
                      .setSize(pushConstantSize)
                      .setStageFlags(vk::ShaderStageFlagBits::eVertex);
     layoutInfo.setPushConstantRanges(pushConstantRange);
-    layoutInfo.setSetLayouts(setLayouts);
+    layoutInfo.setSetLayouts(layouts);
 
     m_Layout = Context::Instance().GetDevice().createPipelineLayout(layoutInfo);
 }
 
-void Pipeline::CreatePipeline(uint32_t width, uint32_t height, const VertexInputInfo& vertexInputInfo,
+void Pipeline::CreatePipeline(const VertexInputInfo& vertexInputInfo,
                               vk::RenderPass renderPass)
 {
     vk::GraphicsPipelineCreateInfo pipelineInfo;
@@ -111,31 +108,15 @@ void Pipeline::CreatePipeline(uint32_t width, uint32_t height, const VertexInput
     m_Pipeline = result.value;
 }
 
-void Pipeline::UpdateUniformBuffer(Buffer* buffer, uint32_t binding)
-{
-    m_PipelineDescriptorSet->UpdateUniformBuffer(buffer, binding);
-}
 
 void Pipeline::Bind(vk::CommandBuffer commandBuffer) const
 {
     commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_Pipeline);
+}
+
+void Pipeline::BindDescriptorSet(vk::CommandBuffer commandBuffer, vk::DescriptorSet descriptorSet) const
+{
     commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_Layout, 0,
-                                     m_PipelineDescriptorSet->GetDescriptorSet(),
+                                     descriptorSet,
                                      nullptr);
-}
-
-void Pipeline::BindDescriptorSet(vk::CommandBuffer commandBuffer) const
-{
-}
-
-void Pipeline::InitPipelineDescriptorSet()
-{
-    const auto& pool = Context::Instance().GetDescriptorPool();
-    
-    vk::DescriptorSetLayoutBinding bindings[] = {
-        {0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex},
-        {1, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eFragment}
-    };
-    
-    m_PipelineDescriptorSet = std::make_unique<DescriptorSet>(pool, bindings);
 }

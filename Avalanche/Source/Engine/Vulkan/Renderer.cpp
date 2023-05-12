@@ -16,15 +16,21 @@
 Renderer::Renderer(Window* window, bool enableImGui)
     : m_Window(window), m_EnableImGui(enableImGui)
 {
-    m_ViewportRenderPass = std::make_unique<RenderPass>(window->GetSwapchain()->GetFormat());
+    m_RenderPass = std::make_unique<RenderPass>(window->GetSwapchain()->GetFormat());
     window->GetSwapchain()->CreateFramebuffers(window->GetWidth(), window->GetHeight(),
-                                               m_ViewportRenderPass->GetRenderPass());
-    m_ViewportPipeline = std::make_unique<Pipeline>("Shaders/Triangle.vert.spv",
-                                                    "Shaders/Triangle.frag.spv",
-                                                    window->GetExtent(),
-                                                    PushConstantSize(),
-                                                    Vertex::Layout().GetVertexInputInfo(),
-                                                    m_ViewportRenderPass->GetRenderPass());
+                                               m_RenderPass->GetRenderPass());
+
+    CreateDescriptorSets();
+
+    PipelineCreateInfo pipelineInfo;
+    pipelineInfo.setVertexShader("Shaders/Triangle.vert.spv")
+                .setFragmentShader("Shaders/Triangle.frag.spv")
+                .setRenderPass(m_RenderPass->GetRenderPass())
+                .setDescriptorSetLayouts({m_GlobalSet->GetLayout()})
+                .setPushConstantSize(sizeof(PushConstant))
+                .setVertexInputInfo(Vertex::Layout().GetVertexInputInfo());
+    m_Pipeline = std::make_unique<Pipeline>(pipelineInfo);
+
     AllocateCommandBuffer();
     CreateFence();
     CreateSemaphores();
@@ -54,10 +60,10 @@ Renderer::~Renderer()
     device.destroySemaphore(m_PresentSemaphore);
     device.destroyFence(m_Fence);
 
-    m_ViewportRenderPass.reset();
-    m_MainRenderPass.reset();
-    m_ViewportPipeline.reset();
-    m_MainPipeline.reset();
+    m_GlobalSet.reset();
+    m_TextureSet.reset();
+    m_RenderPass.reset();
+    m_Pipeline.reset();
 }
 
 void Renderer::Render(const Mesh* mesh)
@@ -85,7 +91,7 @@ void Renderer::Render(const Mesh* mesh)
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR)
     {
-        m_Window->RecreateSwapchain(m_ViewportRenderPass->GetRenderPass());
+        m_Window->RecreateSwapchain(m_RenderPass->GetRenderPass());
         m_Camera->Resize(m_Window->GetAspect());
         return;
     }
@@ -109,20 +115,21 @@ void Renderer::Render(const Mesh* mesh)
         color.setColor({0.1f, 0.1f, 0.1f, 1.0f});
         depth.setDepthStencil(1.0f);
         std::array clearValues = {color, depth};
-        renderPassBegin.setRenderPass(m_ViewportRenderPass->GetRenderPass())
+        renderPassBegin.setRenderPass(m_RenderPass->GetRenderPass())
                        .setRenderArea(area)
                        .setFramebuffer(m_Window->GetSwapchain()->GetFramebuffer(imageIndex))
                        .setClearValues(clearValues);
 
         m_CommandBuffer.beginRenderPass(renderPassBegin, {});
         {
-            m_ViewportPipeline->Bind(m_CommandBuffer);
-            
+            m_Pipeline->Bind(m_CommandBuffer);
+            m_Pipeline->BindDescriptorSet(m_CommandBuffer, m_GlobalSet->GetDescriptorSet());
+
             m_CommandBuffer.setViewport(0, m_Window->GetViewport());
             m_CommandBuffer.setScissor(0, m_Window->GetScissor());
 
-            m_CommandBuffer.pushConstants(m_ViewportPipeline->GetLayout(), vk::ShaderStageFlagBits::eVertex, 0,
-                                          PushConstantSize(),
+            m_CommandBuffer.pushConstants(m_Pipeline->GetLayout(), vk::ShaderStageFlagBits::eVertex, 0,
+                                          sizeof(PushConstant),
                                           &pushConstant);
             mesh->Bind(m_CommandBuffer);
             mesh->Draw(m_CommandBuffer);
@@ -151,7 +158,7 @@ void Renderer::Render(const Mesh* mesh)
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_Window->SwapchainOutdated())
     {
-        m_Window->RecreateSwapchain(m_ViewportRenderPass->GetRenderPass());
+        m_Window->RecreateSwapchain(m_RenderPass->GetRenderPass());
         m_Camera->Resize(m_Window->GetAspect());
     }
     else if (result != VK_SUCCESS)
@@ -160,7 +167,7 @@ void Renderer::Render(const Mesh* mesh)
     }
 }
 
-void Renderer::OnUpdate(float deltaTime)
+void Renderer::Update(float deltaTime)
 {
     m_Camera->OnUpdate(deltaTime);
 
@@ -188,16 +195,28 @@ void Renderer::CreateFence()
     m_Fence = Context::Instance().GetDevice().createFence(fenceInfo);
 }
 
+void Renderer::CreateDescriptorSets()
+{
+    const auto& pool = Context::Instance().GetDescriptorPool();
+
+    vk::DescriptorSetLayoutBinding bindings[] = {
+        {0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex},
+        {1, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eFragment}
+    };
+
+    m_GlobalSet = std::make_unique<DescriptorSet>(pool, bindings);
+}
+
 void Renderer::InitCamera(float aspect)
 {
     m_Camera = std::make_unique<Camera>(30.0f, aspect, 0.001f, 100.0f);
     m_CameraBuffer = std::make_unique<Buffer>(vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU,
                                               sizeof(CameraData));
-    m_ViewportPipeline->UpdateUniformBuffer(m_CameraBuffer.get(), 0);
+    m_GlobalSet->UpdateUniformBuffer(m_CameraBuffer.get(), 0);
 
     m_TestBuffer = std::make_unique<Buffer>(vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU,
                                             sizeof(TestData));
-    m_ViewportPipeline->UpdateUniformBuffer(m_TestBuffer.get(), 1);
+    m_GlobalSet->UpdateUniformBuffer(m_TestBuffer.get(), 1);
 }
 
 void Renderer::InitImGui()
@@ -238,7 +257,7 @@ void Renderer::InitImGui()
     imguiInfo.ImageCount = m_Window->GetSwapchain()->GetImageCount();
     imguiInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 
-    ImGui_ImplVulkan_Init(&imguiInfo, m_ViewportRenderPass->GetRenderPass());
+    ImGui_ImplVulkan_Init(&imguiInfo, m_RenderPass->GetRenderPass());
 
     ImmediateContext::Submit([&](vk::CommandBuffer commandBuffer)
     {
