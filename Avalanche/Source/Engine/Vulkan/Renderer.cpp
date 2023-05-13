@@ -26,7 +26,7 @@ Renderer::Renderer(Window* window, bool enableImGui)
     pipelineInfo.setVertexShader("Shaders/Triangle.vert.spv")
                 .setFragmentShader("Shaders/Triangle.frag.spv")
                 .setRenderPass(m_RenderPass->GetRenderPass())
-                .setDescriptorSetLayouts({m_GlobalSet->GetLayout()})
+                .setDescriptorSetLayouts({m_GlobalSet->GetLayout(), m_TextureSet->GetLayout()})
                 .setPushConstantSize(sizeof(PushConstant))
                 .setVertexInputInfo(Vertex::Layout().GetVertexInputInfo());
     m_Pipeline = std::make_unique<Pipeline>(pipelineInfo);
@@ -83,7 +83,11 @@ void Renderer::Render(const Mesh* mesh)
     {
         ASSERT(0, "Failed to wait for fence")
     }
+    device.resetFences(m_Fence);
+    m_CommandBuffer.reset();
 
+    m_TextureSet->UpdateTexture(mesh->GetTexture(), 0);
+    
     uint32_t imageIndex;
     VkResult result = vkAcquireNextImageKHR(device, m_Window->GetSwapchain()->GetSwapchain(),
                                             std::numeric_limits<uint64_t>::max(),
@@ -99,9 +103,6 @@ void Renderer::Render(const Mesh* mesh)
     {
         ASSERT(0, "Failed to acquire next swapchain image")
     }
-    device.resetFences(m_Fence);
-
-    m_CommandBuffer.reset();
 
     vk::CommandBufferBeginInfo commandBufferBegin;
     commandBufferBegin.setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
@@ -123,7 +124,8 @@ void Renderer::Render(const Mesh* mesh)
         m_CommandBuffer.beginRenderPass(renderPassBegin, {});
         {
             m_Pipeline->Bind(m_CommandBuffer);
-            m_Pipeline->BindDescriptorSet(m_CommandBuffer, m_GlobalSet->GetDescriptorSet());
+            m_Pipeline->BindDescriptorSets(m_CommandBuffer, m_GlobalSet->GetDescriptorSet(), 0);
+            m_Pipeline->BindDescriptorSets(m_CommandBuffer, m_TextureSet->GetDescriptorSet(), 1);
 
             m_CommandBuffer.setViewport(0, m_Window->GetViewport());
             m_CommandBuffer.setScissor(0, m_Window->GetScissor());
@@ -199,12 +201,16 @@ void Renderer::CreateDescriptorSets()
 {
     const auto& pool = Context::Instance().GetDescriptorPool();
 
-    vk::DescriptorSetLayoutBinding bindings[] = {
+    vk::DescriptorSetLayoutBinding globalSetBindings[] = {
         {0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex},
         {1, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eFragment}
     };
+    m_GlobalSet = std::make_unique<DescriptorSet>(pool, globalSetBindings);
 
-    m_GlobalSet = std::make_unique<DescriptorSet>(pool, bindings);
+    vk::DescriptorSetLayoutBinding textureSetBindings[] = {
+        {0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}
+    };
+    m_TextureSet = std::make_unique<DescriptorSet>(pool, textureSetBindings);
 }
 
 void Renderer::InitCamera(float aspect)

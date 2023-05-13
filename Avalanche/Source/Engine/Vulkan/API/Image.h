@@ -3,13 +3,7 @@
 #include <vulkan/vulkan.hpp>
 #include <vk_mem_alloc.h>
 
-enum class ImageUsage
-{
-    eDepthStencil = 0,
-    eTexture = 1
-};
-
-class Image final
+class Image
 {
 public:
     Image(vk::Format format, vk::Extent2D extent, vk::ImageUsageFlags usage);

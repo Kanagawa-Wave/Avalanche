@@ -6,7 +6,7 @@
 Pipeline::Pipeline(const PipelineCreateInfo& pipelineCreateInfo)
 {
     m_Shader.reset(new Shader(pipelineCreateInfo.VertexShader, pipelineCreateInfo.FragmentShader));
-    
+
     CreateLayout(pipelineCreateInfo.PushConstantSize, pipelineCreateInfo.DescriptorSetLayouts);
     CreatePipeline(pipelineCreateInfo.VertexInput, pipelineCreateInfo.RenderPass);
 }
@@ -21,7 +21,7 @@ Pipeline::~Pipeline()
     device.destroyPipeline(m_Pipeline);
 }
 
-void Pipeline::CreateLayout(uint32_t pushConstantSize, const vk::ArrayProxy<vk::DescriptorSetLayout>& layouts)
+void Pipeline::CreateLayout(uint32_t pushConstantSize, const std::vector<vk::DescriptorSetLayout>& layouts)
 {
     vk::PipelineLayoutCreateInfo layoutInfo;
     vk::PushConstantRange pushConstantRange;
@@ -64,7 +64,7 @@ void Pipeline::CreatePipeline(const VertexInputInfo& vertexInputInfo,
     vk::PipelineRasterizationStateCreateInfo rasterizationState;
     rasterizationState.setRasterizerDiscardEnable(false)
                       .setCullMode(vk::CullModeFlagBits::eBack)
-                      .setFrontFace(vk::FrontFace::eClockwise)
+                      .setFrontFace(vk::FrontFace::eCounterClockwise)
                       .setPolygonMode(vk::PolygonMode::eFill)
                       .setLineWidth(1.f);
     pipelineInfo.setPRasterizationState(&rasterizationState);
@@ -91,8 +91,8 @@ void Pipeline::CreatePipeline(const VertexInputInfo& vertexInputInfo,
                 .setDepthWriteEnable(true)
                 .setDepthCompareOp(vk::CompareOp::eAlways)
                 .setDepthBoundsTestEnable(false)
-                .setMinDepthBounds(0.0)
-                .setMaxDepthBounds(1.0)
+                .setMinDepthBounds(0.f)
+                .setMaxDepthBounds(1.f)
                 .setStencilTestEnable(false);
     pipelineInfo.setPDepthStencilState(&depthStencil);
 
@@ -114,9 +114,11 @@ void Pipeline::Bind(vk::CommandBuffer commandBuffer) const
     commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_Pipeline);
 }
 
-void Pipeline::BindDescriptorSet(vk::CommandBuffer commandBuffer, vk::DescriptorSet descriptorSet) const
+void Pipeline::BindDescriptorSets(vk::CommandBuffer commandBuffer,
+                                  const vk::ArrayProxy<vk::DescriptorSet>& descriptorSets,
+                                  uint32_t firstSet) const
 {
-    commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_Layout, 0,
-                                     descriptorSet,
+    commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_Layout, firstSet,
+                                     descriptorSets,
                                      nullptr);
 }

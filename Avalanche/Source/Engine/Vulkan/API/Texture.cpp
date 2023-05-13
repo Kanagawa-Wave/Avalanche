@@ -11,6 +11,7 @@ Texture::Texture(const std::string& path)
 {
     // Read pixel data using stbi_image
     const auto& allocator = Context::Instance().GetAllocator();
+    const auto& device = Context::Instance().GetDevice();
 
     stbi_uc* pixelData = stbi_load(path.c_str(), &m_Width, &m_Height, &m_Channels, STBI_rgb_alpha);
 
@@ -73,4 +74,21 @@ Texture::Texture(const std::string& path)
                                       vk::DependencyFlagBits::eByRegion, nullptr, nullptr,
                                       imageBarrierToShaderReadable);
     });
+
+    vk::SamplerCreateInfo samplerInfo;
+    samplerInfo.setMagFilter(vk::Filter::eLinear)
+               .setMinFilter(vk::Filter::eLinear)
+               .setAddressModeU(vk::SamplerAddressMode::eRepeat)
+               .setAddressModeV(vk::SamplerAddressMode::eRepeat)
+               .setAddressModeW(vk::SamplerAddressMode::eRepeat);
+
+    m_Sampler = device.createSampler(samplerInfo);
+}
+
+Texture::~Texture()
+{
+    const auto& device = Context::Instance().GetDevice();
+
+    device.waitIdle();
+    device.destroySampler(m_Sampler);
 }

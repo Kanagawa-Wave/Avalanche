@@ -11,12 +11,12 @@ DescriptorSet::DescriptorSet(vk::DescriptorPool pool, const vk::ArrayProxy<vk::D
 
     m_DescriptorSetLayout = device.createDescriptorSetLayout(layoutInfo);
 
-    vk::DescriptorSetAllocateInfo setInfo;
-    setInfo.setDescriptorPool(pool)
-           .setSetLayouts(m_DescriptorSetLayout)
-           .setDescriptorSetCount(1);
+    vk::DescriptorSetAllocateInfo allocateInfo;
+    allocateInfo.setDescriptorPool(pool)
+                .setSetLayouts(m_DescriptorSetLayout)
+                .setDescriptorSetCount(1);
 
-    m_DescriptorSet = device.allocateDescriptorSets(setInfo).front();
+    m_DescriptorSet = device.allocateDescriptorSets(allocateInfo).front();
 }
 
 DescriptorSet::~DescriptorSet()
@@ -27,10 +27,10 @@ DescriptorSet::~DescriptorSet()
     device.destroyDescriptorSetLayout(m_DescriptorSetLayout);
 }
 
-void DescriptorSet::UpdateUniformBuffer(Buffer* buffer, uint32_t binding) const
+void DescriptorSet::UpdateUniformBuffer(const Buffer* buffer, uint32_t binding) const
 {
     const auto& device = Context::Instance().GetDevice();
-    
+
     vk::DescriptorBufferInfo bufferInfo;
     bufferInfo.setBuffer(buffer->GetBuffer())
               .setOffset(0)
@@ -40,6 +40,25 @@ void DescriptorSet::UpdateUniformBuffer(Buffer* buffer, uint32_t binding) const
     writeInfo.setDescriptorCount(1)
              .setDescriptorType(vk::DescriptorType::eUniformBuffer)
              .setBufferInfo(bufferInfo)
+             .setDstBinding(binding)
+             .setDstSet(m_DescriptorSet);
+
+    device.updateDescriptorSets(writeInfo, nullptr);
+}
+
+void DescriptorSet::UpdateTexture(const Texture* texture, uint32_t binding) const
+{
+    const auto& device = Context::Instance().GetDevice();
+
+    vk::DescriptorImageInfo imageInfo;
+    imageInfo.setSampler(texture->GetSampler())
+             .setImageView(texture->GetView())
+             .setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
+
+    vk::WriteDescriptorSet writeInfo;
+    writeInfo.setDescriptorCount(1)
+             .setDescriptorType(vk::DescriptorType::eCombinedImageSampler)
+             .setImageInfo(imageInfo)
              .setDstBinding(binding)
              .setDstSet(m_DescriptorSet);
 

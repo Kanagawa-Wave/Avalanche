@@ -6,6 +6,7 @@ layout (location = 2) in vec3 vNormal;
 layout (location = 3) in vec2 vTexcoord;
 
 layout (location = 0) out vec3 fColor;
+layout (location = 1) out vec2 fTexcoord;
 
 layout (push_constant) uniform Constants
 {
@@ -21,4 +22,5 @@ layout (set = 0, binding = 0) uniform Camera {
 void main() {
     gl_Position = camera.viewProjection * constants.model * vec4(vPosition, 1.0) ;
     fColor = vec3(0.0, 0.0, 0.0);
+    fTexcoord = vTexcoord;
 }

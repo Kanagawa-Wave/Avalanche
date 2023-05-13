@@ -13,7 +13,7 @@ struct PipelineCreateInfo
     uint32_t PushConstantSize = 0;
     VertexInputInfo VertexInput;
     vk::RenderPass RenderPass;
-    vk::ArrayProxy<vk::DescriptorSetLayout> DescriptorSetLayouts;
+    std::vector<vk::DescriptorSetLayout> DescriptorSetLayouts;
 
     PipelineCreateInfo& setVertexShader(const std::string& vertexShader)
     {
@@ -45,7 +45,7 @@ struct PipelineCreateInfo
         return *this;
     }
 
-    PipelineCreateInfo& setDescriptorSetLayouts(const vk::ArrayProxy<vk::DescriptorSetLayout>& layouts)
+    PipelineCreateInfo& setDescriptorSetLayouts(const std::vector<vk::DescriptorSetLayout>& layouts)
     {
         DescriptorSetLayouts = layouts;
         return *this;
@@ -61,12 +61,14 @@ public:
     vk::PipelineLayout GetLayout() const { return m_Layout; }
     vk::Pipeline GetPipeline() const { return m_Pipeline; }
     Shader* GetShader() const { return m_Shader.get(); }
-    
+
     void Bind(vk::CommandBuffer commandBuffer) const;
-    void BindDescriptorSet(vk::CommandBuffer commandBuffer, vk::DescriptorSet descriptorSet) const;
+    void BindDescriptorSets(vk::CommandBuffer commandBuffer,
+                            const vk::ArrayProxy<vk::DescriptorSet>& descriptorSets,
+                            uint32_t firstSet = 0) const;
 
 private:
-    void CreateLayout(uint32_t pushConstantSize, const vk::ArrayProxy<vk::DescriptorSetLayout>& layouts);
+    void CreateLayout(uint32_t pushConstantSize, const std::vector<vk::DescriptorSetLayout>& layouts);
     void CreatePipeline(const VertexInputInfo& vertexInputInfo,
                         vk::RenderPass renderPass);
 
