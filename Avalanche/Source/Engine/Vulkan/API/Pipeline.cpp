@@ -89,7 +89,7 @@ void Pipeline::CreatePipeline(const VertexInputInfo& vertexInputInfo,
     vk::PipelineDepthStencilStateCreateInfo depthStencil;
     depthStencil.setDepthTestEnable(true)
                 .setDepthWriteEnable(true)
-                .setDepthCompareOp(vk::CompareOp::eAlways)
+                .setDepthCompareOp(vk::CompareOp::eLess)
                 .setDepthBoundsTestEnable(false)
                 .setMinDepthBounds(0.f)
                 .setMaxDepthBounds(1.f)

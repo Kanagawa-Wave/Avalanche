@@ -13,4 +13,5 @@ layout (set = 1, binding = 0) uniform sampler2D baseColor;
 
 void main() {
     outColor = texture(baseColor, fTexcoord);
+    // outColor = vec4(fColor, 1.0);
 }

@@ -21,6 +21,6 @@ layout (set = 0, binding = 0) uniform Camera {
 
 void main() {
     gl_Position = camera.viewProjection * constants.model * vec4(vPosition, 1.0) ;
-    fColor = vColor;
+    fColor = vec3(vTexcoord, 0.5);
     fTexcoord = vTexcoord;
 }
