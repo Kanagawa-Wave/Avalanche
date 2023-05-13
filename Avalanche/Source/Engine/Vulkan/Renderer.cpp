@@ -38,7 +38,6 @@ Renderer::Renderer(Window* window, bool enableImGui)
     if (m_EnableImGui)
     {
         InitImGui();
-        // InitImGUIObjects();
     }
 
     InitCamera(m_Window->GetAspect());
@@ -59,11 +58,6 @@ Renderer::~Renderer()
     device.destroySemaphore(m_RenderSemaphore);
     device.destroySemaphore(m_PresentSemaphore);
     device.destroyFence(m_Fence);
-
-    m_GlobalSet.reset();
-    m_TextureSet.reset();
-    m_RenderPass.reset();
-    m_Pipeline.reset();
 }
 
 void Renderer::Render(const Mesh* mesh)
@@ -87,7 +81,7 @@ void Renderer::Render(const Mesh* mesh)
     m_CommandBuffer.reset();
 
     m_TextureSet->UpdateTexture(mesh->GetTexture(), 0);
-    
+
     uint32_t imageIndex;
     VkResult result = vkAcquireNextImageKHR(device, m_Window->GetSwapchain()->GetSwapchain(),
                                             std::numeric_limits<uint64_t>::max(),
@@ -124,8 +118,9 @@ void Renderer::Render(const Mesh* mesh)
         m_CommandBuffer.beginRenderPass(renderPassBegin, {});
         {
             m_Pipeline->Bind(m_CommandBuffer);
-            m_Pipeline->BindDescriptorSets(m_CommandBuffer, m_GlobalSet->GetDescriptorSet(), 0);
-            m_Pipeline->BindDescriptorSets(m_CommandBuffer, m_TextureSet->GetDescriptorSet(), 1);
+            m_Pipeline->BindDescriptorSets(m_CommandBuffer, {
+                                               m_GlobalSet->GetDescriptorSet(), m_TextureSet->GetDescriptorSet()
+                                           });
 
             m_CommandBuffer.setViewport(0, m_Window->GetViewport());
             m_CommandBuffer.setScissor(0, m_Window->GetScissor());
