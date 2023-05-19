@@ -16,20 +16,27 @@
 Renderer::Renderer(Window* window, bool enableImGui)
     : m_Window(window), m_EnableImGui(enableImGui)
 {
-    m_RenderPass = std::make_unique<RenderPass>(window->GetSwapchain()->GetFormat());
+    RenderPassCreateInfo renderPassInfo;
+    renderPassInfo.setEnableDepthAttachment(true)
+                  .setColorAttachmentFormat(window->GetSwapchain()->GetFormat())
+                  .setDepthAttachmentFormat(vk::Format::eD32Sfloat)
+                  .setLoadOp(vk::AttachmentLoadOp::eClear)
+                  .setStoreOp(vk::AttachmentStoreOp::eStore);
+    m_PresnetRenderPass = std::make_unique<RenderPass>(renderPassInfo);
+
     window->GetSwapchain()->CreateFramebuffers(window->GetWidth(), window->GetHeight(),
-                                               m_RenderPass->GetRenderPass());
+                                               m_PresnetRenderPass->GetRenderPass());
 
     CreateDescriptorSets();
 
     PipelineCreateInfo pipelineInfo;
     pipelineInfo.setVertexShader("Shaders/Triangle.vert.spv")
                 .setFragmentShader("Shaders/Triangle.frag.spv")
-                .setRenderPass(m_RenderPass->GetRenderPass())
+                .setRenderPass(m_PresnetRenderPass->GetRenderPass())
                 .setDescriptorSetLayouts({m_GlobalSet->GetLayout(), m_TextureSet->GetLayout()})
                 .setPushConstantSize(sizeof(PushConstant))
                 .setVertexInputInfo(Vertex::Layout().GetVertexInputInfo());
-    m_Pipeline = std::make_unique<Pipeline>(pipelineInfo);
+    m_ViewportPipeline = std::make_unique<Pipeline>(pipelineInfo);
 
     AllocateCommandBuffer();
     CreateFence();
@@ -41,6 +48,13 @@ Renderer::Renderer(Window* window, bool enableImGui)
     }
 
     InitCamera(m_Window->GetAspect());
+
+    // TODO: Testing only, remove
+    m_TestRenderTarget = std::make_unique<RenderTarget>(window->GetSwapchain()->GetFormat(),
+                                                        window->GetExtent(), false);
+
+    pipelineInfo.setRenderPass(m_TestRenderTarget->GetRenderPass());
+    m_TestPipeline = std::make_unique<Pipeline>(pipelineInfo);
 }
 
 Renderer::~Renderer()
@@ -54,10 +68,14 @@ Renderer::~Renderer()
         ImGui_ImplGlfw_Shutdown();
     }
 
-    device.destroyDescriptorPool(m_ImGuiData.ImGuiPool);
+    device.destroyDescriptorPool(m_ImGuiPool);
     device.destroySemaphore(m_RenderSemaphore);
     device.destroySemaphore(m_PresentSemaphore);
     device.destroyFence(m_Fence);
+}
+
+void Renderer::Begin()
+{
 }
 
 void Renderer::Render(const Mesh* mesh)
@@ -89,7 +107,7 @@ void Renderer::Render(const Mesh* mesh)
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR)
     {
-        m_Window->RecreateSwapchain(m_RenderPass->GetRenderPass());
+        m_Window->RecreateSwapchain(m_PresnetRenderPass->GetRenderPass());
         m_Camera->Resize(m_Window->GetAspect());
         return;
     }
@@ -110,22 +128,22 @@ void Renderer::Render(const Mesh* mesh)
         color.setColor({0.1f, 0.1f, 0.1f, 1.0f});
         depth.setDepthStencil(1.0f);
         std::array clearValues = {color, depth};
-        renderPassBegin.setRenderPass(m_RenderPass->GetRenderPass())
+        renderPassBegin.setRenderPass(m_PresnetRenderPass->GetRenderPass())
                        .setRenderArea(area)
                        .setFramebuffer(m_Window->GetSwapchain()->GetFramebuffer(imageIndex))
                        .setClearValues(clearValues);
 
         m_CommandBuffer.beginRenderPass(renderPassBegin, {});
         {
-            m_Pipeline->Bind(m_CommandBuffer);
-            m_Pipeline->BindDescriptorSets(m_CommandBuffer, {
-                                               m_GlobalSet->GetDescriptorSet(), m_TextureSet->GetDescriptorSet()
-                                           });
+            m_ViewportPipeline->Bind(m_CommandBuffer);
+            m_ViewportPipeline->BindDescriptorSets(m_CommandBuffer, {
+                                                       m_GlobalSet->GetDescriptorSet(), m_TextureSet->GetDescriptorSet()
+                                                   });
 
             m_CommandBuffer.setViewport(0, m_Window->GetViewport());
             m_CommandBuffer.setScissor(0, m_Window->GetScissor());
 
-            m_CommandBuffer.pushConstants(m_Pipeline->GetLayout(), vk::ShaderStageFlagBits::eVertex, 0,
+            m_CommandBuffer.pushConstants(m_ViewportPipeline->GetLayout(), vk::ShaderStageFlagBits::eVertex, 0,
                                           sizeof(PushConstant),
                                           &pushConstant);
             mesh->Bind(m_CommandBuffer);
@@ -135,6 +153,23 @@ void Renderer::Render(const Mesh* mesh)
                 ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), m_CommandBuffer);
         }
         m_CommandBuffer.endRenderPass();
+
+        // TODO: Testing only, remove
+        m_TestRenderTarget->Begin(m_CommandBuffer);
+        m_TestPipeline->Bind(m_CommandBuffer);
+        m_TestPipeline->BindDescriptorSets(m_CommandBuffer, {
+                                               m_GlobalSet->GetDescriptorSet(), m_TextureSet->GetDescriptorSet()
+                                           });
+
+        m_CommandBuffer.setViewport(0, m_Window->GetViewport());
+        m_CommandBuffer.setScissor(0, m_Window->GetScissor());
+
+        m_CommandBuffer.pushConstants(m_TestPipeline->GetLayout(), vk::ShaderStageFlagBits::eVertex, 0,
+                                      sizeof(PushConstant),
+                                      &pushConstant);
+        mesh->Bind(m_CommandBuffer);
+        mesh->Draw(m_CommandBuffer);
+        m_TestRenderTarget->End(m_CommandBuffer);
     }
     m_CommandBuffer.end();
 
@@ -155,7 +190,7 @@ void Renderer::Render(const Mesh* mesh)
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_Window->SwapchainOutdated())
     {
-        m_Window->RecreateSwapchain(m_RenderPass->GetRenderPass());
+        m_Window->RecreateSwapchain(m_PresnetRenderPass->GetRenderPass());
         m_Camera->Resize(m_Window->GetAspect());
     }
     else if (result != VK_SUCCESS)
@@ -243,22 +278,26 @@ void Renderer::InitImGui()
     poolInfo.setMaxSets(1000)
             .setPoolSizes(poolSizes);
 
-    m_ImGuiData.ImGuiPool = ctx.GetDevice().createDescriptorPool(poolInfo);
+    m_ImGuiPool = ctx.GetDevice().createDescriptorPool(poolInfo);
 
     ImGui::CreateContext();
     ImGui_ImplGlfw_InitForVulkan(m_Window->GetGLFWWindow(), true);
+
+    // Enable docking support
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
     ImGui_ImplVulkan_InitInfo imguiInfo{};
     imguiInfo.Instance = ctx.GetInstance();
     imguiInfo.Device = ctx.GetDevice();
     imguiInfo.PhysicalDevice = ctx.GetPhysicalDevice();
     imguiInfo.Queue = ctx.GetGraphicsQueue();
-    imguiInfo.DescriptorPool = m_ImGuiData.ImGuiPool;
+    imguiInfo.DescriptorPool = m_ImGuiPool;
     imguiInfo.MinImageCount = m_Window->GetSwapchain()->GetImageCount();
     imguiInfo.ImageCount = m_Window->GetSwapchain()->GetImageCount();
     imguiInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 
-    ImGui_ImplVulkan_Init(&imguiInfo, m_RenderPass->GetRenderPass());
+    ImGui_ImplVulkan_Init(&imguiInfo, m_PresnetRenderPass->GetRenderPass());
 
     ImmediateContext::Submit([&](vk::CommandBuffer commandBuffer)
     {
@@ -275,65 +314,11 @@ void Renderer::OnImGuiUpdate()
 
     ImGui::NewFrame();
 
-    ImGui::ShowDemoWindow();
+    ImGui::DockSpaceOverViewport(nullptr, ImGuiDockNodeFlags_PassthruCentralNode);
+
+    ImGui::Begin("Viewport");
+    ImGui::End();
 
     ImGui::Render();
     ImGui::EndFrame();
-}
-
-void Renderer::InitImGUIObjects()
-{
-    const auto& device = Context::Instance().GetDevice();
-    const auto& allocator = Context::Instance().GetAllocator();
-
-    const uint32_t imageCount = m_Window->GetSwapchain()->GetImageCount();
-    m_ImGuiData.m_ViewportImages.resize(imageCount);
-    m_ImGuiData.m_Allocations.resize(imageCount);
-    m_ImGuiData.m_ViewportImageViews.resize(imageCount);
-
-    for (uint32_t i = 0; i < imageCount; i++)
-    {
-        vk::ImageCreateInfo imageInfo;
-        imageInfo.setImageType(vk::ImageType::e2D)
-                 .setFormat(m_Window->GetSwapchain()->GetFormat())
-                 .setExtent(vk::Extent3D(m_Window->GetSwapchain()->GetExtent(), 1.0f))
-                 .setArrayLayers(1)
-                 .setMipLevels(1)
-                 .setSamples(vk::SampleCountFlagBits::e1)
-                 .setInitialLayout(vk::ImageLayout::eUndefined)
-                 .setTiling(vk::ImageTiling::eOptimal)
-                 .setUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled);
-
-        VmaAllocationCreateInfo allocationInfo{};
-        allocationInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-        allocationInfo.requiredFlags = VkMemoryPropertyFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-        vmaCreateImage(allocator, (VkImageCreateInfo*)&imageInfo, &allocationInfo,
-                       (VkImage*)&m_ImGuiData.m_ViewportImages[i], &m_ImGuiData.m_Allocations[i], nullptr);
-
-        vk::ImageMemoryBarrier barrier;
-        barrier.setImage(m_ImGuiData.m_ViewportImages[i])
-               .setSrcAccessMask(vk::AccessFlagBits::eTransferRead)
-               .setDstAccessMask(vk::AccessFlagBits::eMemoryRead)
-               .setOldLayout(vk::ImageLayout::eUndefined)
-               .setNewLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
-               .setSubresourceRange({vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
-
-        vk::CommandBuffer commandBuffer = ImmediateContext::GetCommandBuffer();
-        ImmediateContext::Begin();
-        commandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer,
-                                      vk::DependencyFlagBits::eByRegion, nullptr, nullptr, barrier);
-        ImmediateContext::End();
-    }
-
-    for (uint32_t i = 0; i < imageCount; i++)
-    {
-        vk::ImageViewCreateInfo viewInfo;
-        viewInfo.setImage(m_ImGuiData.m_ViewportImages[i])
-                .setSubresourceRange({vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1})
-                .setFormat(m_Window->GetSwapchain()->GetFormat())
-                .setViewType(vk::ImageViewType::e2D);
-
-        m_ImGuiData.m_ViewportImageViews[i] = device.createImageView(viewInfo);
-    }
 }

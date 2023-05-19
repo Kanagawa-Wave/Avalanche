@@ -2,65 +2,87 @@
 
 #include "Engine/Vulkan/Context.h"
 
-RenderPass::RenderPass(vk::Format colorFormat)
+RenderPass::RenderPass(const RenderPassCreateInfo& info)
 {
-    auto& ctx = Context::Instance();
+    const auto& device = Context::Instance().GetDevice();
 
     vk::RenderPassCreateInfo renderPassInfo;
-    vk::AttachmentDescription colorAttachment, depthAttachment;
-    colorAttachment.setFormat(colorFormat)
+    vk::AttachmentDescription colorAttachment;
+    std::vector<vk::AttachmentDescription> attachments;
+    colorAttachment.setFormat(info.ColorFormat)
                    .setInitialLayout(vk::ImageLayout::eUndefined)
                    .setFinalLayout(vk::ImageLayout::ePresentSrcKHR)
-                   .setLoadOp(vk::AttachmentLoadOp::eClear)
-                   .setStoreOp(vk::AttachmentStoreOp::eStore)
+                   .setLoadOp(info.LoadOp)
+                   .setStoreOp(info.StoreOp)
                    .setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)
                    .setStencilStoreOp(vk::AttachmentStoreOp::eDontCare)
                    .setSamples(vk::SampleCountFlagBits::e1);
-    depthAttachment.setFormat(vk::Format::eD32Sfloat)
-                   .setInitialLayout(vk::ImageLayout::eUndefined)
-                   .setFinalLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal)
-                   .setLoadOp(vk::AttachmentLoadOp::eClear)
-                   .setStoreOp(vk::AttachmentStoreOp::eStore)
-                   .setStencilLoadOp(vk::AttachmentLoadOp::eClear)
-                   .setStencilStoreOp(vk::AttachmentStoreOp::eDontCare)
-                   .setSamples(vk::SampleCountFlagBits::e1);
+    attachments.push_back(colorAttachment);
 
-    std::array attachments = {colorAttachment, depthAttachment};
+    if (info.EnableDepthAttachment)
+    {
+        vk::AttachmentDescription depthAttachment;
+        depthAttachment.setFormat(info.DepthFormat)
+                       .setInitialLayout(vk::ImageLayout::eUndefined)
+                       .setFinalLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal)
+                       .setLoadOp(vk::AttachmentLoadOp::eClear)
+                       .setStoreOp(vk::AttachmentStoreOp::eStore)
+                       .setStencilLoadOp(vk::AttachmentLoadOp::eClear)
+                       .setStencilStoreOp(vk::AttachmentStoreOp::eDontCare)
+                       .setSamples(vk::SampleCountFlagBits::e1);
+        attachments.push_back(depthAttachment);
+    }
+
     renderPassInfo.setAttachments(attachments);
 
-    vk::AttachmentReference colorRef, depthRef;
+    vk::SubpassDescription subpass;
+    vk::AttachmentReference colorRef;
     colorRef.setLayout(vk::ImageLayout::eColorAttachmentOptimal)
             .setAttachment(0);
-    depthRef.setLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal)
-            .setAttachment(1);
-    vk::SubpassDescription subpass;
     subpass.setPipelineBindPoint(vk::PipelineBindPoint::eGraphics)
-           .setColorAttachments(colorRef)
-           .setPDepthStencilAttachment(&depthRef);
+           .setColorAttachments(colorRef);
+    if (info.EnableDepthAttachment)
+    {
+        vk::AttachmentReference depthRef;
+        depthRef.setLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal)
+                .setAttachment(1);
+        subpass.setPDepthStencilAttachment(&depthRef);
+    }
     renderPassInfo.setSubpasses(subpass);
 
-    vk::SubpassDependency colorDependency, depthDependency;
+    vk::SubpassDependency colorDependency;
+    std::vector<vk::SubpassDependency> dependencies;
     colorDependency.setSrcSubpass(VK_SUBPASS_EXTERNAL)
                    .setDstSubpass(0)
                    .setDstAccessMask(vk::AccessFlagBits::eColorAttachmentWrite)
                    .setSrcStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput)
                    .setDstStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
-    depthDependency.setSrcSubpass(VK_SUBPASS_EXTERNAL)
-                   .setDstSubpass(0)
-                   .setDstAccessMask(vk::AccessFlagBits::eDepthStencilAttachmentWrite)
-                   .setSrcStageMask(
-                       vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests)
-                   .setDstStageMask(
-                       vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests);
+    dependencies.push_back(colorDependency);
 
-    std::array dependencies = {colorDependency, depthDependency};
+    if (info.EnableDepthAttachment)
+    {
+        vk::SubpassDependency depthDependency;
+        depthDependency.setSrcSubpass(VK_SUBPASS_EXTERNAL)
+                       .setDstSubpass(0)
+                       .setDstAccessMask(vk::AccessFlagBits::eDepthStencilAttachmentWrite)
+                       .setSrcStageMask(
+                           vk::PipelineStageFlagBits::eEarlyFragmentTests |
+                           vk::PipelineStageFlagBits::eLateFragmentTests)
+                       .setDstStageMask(
+                           vk::PipelineStageFlagBits::eEarlyFragmentTests |
+                           vk::PipelineStageFlagBits::eLateFragmentTests);
+        dependencies.push_back(depthDependency);
+    }
+
     renderPassInfo.setDependencies(dependencies);
 
-    m_RenderPass = Context::Instance().GetDevice().createRenderPass(renderPassInfo);
+    m_RenderPass = device.createRenderPass(renderPassInfo);
 }
 
 RenderPass::~RenderPass()
 {
-    auto& device = Context::Instance().GetDevice();
+    const auto& device = Context::Instance().GetDevice();
+
+    device.waitIdle();
     device.destroyRenderPass(m_RenderPass);
 }

@@ -3,6 +3,7 @@
 #include <vulkan/vulkan.hpp>
 #include <glm/glm.hpp>
 
+#include "RenderTarget.h"
 #include "API/Pipeline.h"
 #include "API/RenderPass.h"
 #include "Engine/Scene/Components/Camera.h"
@@ -20,7 +21,8 @@ class Renderer
 public:
     Renderer(Window* window, bool enableImGui);
     ~Renderer();
-    
+
+    void Begin();
     void Render(const Mesh* mesh);
     void Update(float deltaTime);
 
@@ -32,40 +34,33 @@ private:
     void InitCamera(float aspect);
     void InitImGui();
     void OnImGuiUpdate();
-    void InitImGUIObjects();
 
 private:
     Window* m_Window;
     bool m_EnableImGui = true;
 
-    std::unique_ptr<RenderPass> m_RenderPass;
-    std::unique_ptr<Pipeline> m_Pipeline;
-    
-    vk::CommandPool m_CommandPool;
+    std::unique_ptr<RenderPass> m_PresnetRenderPass;
+    std::unique_ptr<Pipeline> m_ViewportPipeline;
+
+    std::unique_ptr<Pipeline> m_TestPipeline;
+    std::unique_ptr<RenderTarget> m_TestRenderTarget;
+
+    vk::DescriptorPool m_ImGuiPool;
     vk::CommandBuffer m_CommandBuffer;
     vk::Semaphore m_RenderSemaphore, m_PresentSemaphore;
     vk::Fence m_Fence;
-
-    struct ImGuiObjects
-    {
-        std::vector<vk::Image> m_ViewportImages;
-        std::vector<VmaAllocation> m_Allocations;
-        std::vector<vk::ImageView> m_ViewportImageViews;
-        std::vector<vk::Framebuffer> m_ViewportFramebuffers;
-        vk::DescriptorPool ImGuiPool;
-    } m_ImGuiData;
     
     struct CameraData
     {
-        glm::mat4 projection{};
-        glm::mat4 view{};
-        glm::mat4 viewProjection{};
+        glm::mat4 Projection{};
+        glm::mat4 View{};
+        glm::mat4 ViewProjection{};
 
-        void SetData(const glm::mat4& projection, const glm::mat4 view)
+        void SetData(const glm::mat4& projection, const glm::mat4& view)
         {
-            this->projection = projection;
-            this->view = view;
-            this->viewProjection = projection * view;
+            this->Projection = projection;
+            this->View = view;
+            this->ViewProjection = projection * view;
         }
     } m_CameraData;
 
