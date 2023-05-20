@@ -17,24 +17,32 @@ Renderer::Renderer(Window* window, bool enableImGui)
     : m_Window(window), m_EnableImGui(enableImGui)
 {
     RenderPassCreateInfo renderPassInfo;
-    renderPassInfo.setEnableDepthAttachment(true)
+    renderPassInfo.setEnableDepthAttachment(false)
                   .setColorAttachmentFormat(window->GetSwapchain()->GetFormat())
-                  .setDepthAttachmentFormat(vk::Format::eD32Sfloat)
                   .setLoadOp(vk::AttachmentLoadOp::eClear)
                   .setStoreOp(vk::AttachmentStoreOp::eStore)
                   .setInitialLayout(vk::ImageLayout::eUndefined)
                   .setFinalLayout(vk::ImageLayout::ePresentSrcKHR);
     m_PresnetRenderPass = std::make_unique<RenderPass>(renderPassInfo);
+    
+    if (m_EnableImGui)
+    {
+        InitImGui();
+    }
 
     window->GetSwapchain()->CreateFramebuffers(window->GetWidth(), window->GetHeight(),
                                                m_PresnetRenderPass->GetRenderPass());
 
     CreateDescriptorSets();
 
+    m_ViewportRenderTarget = std::make_unique<RenderTarget>(window->GetSwapchain()->GetFormat(),
+                                                            window->GetExtent(), true);
+    m_ViewportRenderTarget->GetRenderTexture()->RegisterForImGui();
+    
     PipelineCreateInfo pipelineInfo;
     pipelineInfo.setVertexShader("Shaders/Triangle.vert.spv")
                 .setFragmentShader("Shaders/Triangle.frag.spv")
-                .setRenderPass(m_PresnetRenderPass->GetRenderPass())
+                .setRenderPass(m_ViewportRenderTarget->GetRenderPass())
                 .setDescriptorSetLayouts({m_GlobalSet->GetLayout(), m_TextureSet->GetLayout()})
                 .setPushConstantSize(sizeof(PushConstant))
                 .setVertexInputInfo(Vertex::Layout().GetVertexInputInfo());
@@ -44,20 +52,7 @@ Renderer::Renderer(Window* window, bool enableImGui)
     CreateFence();
     CreateSemaphores();
 
-    if (m_EnableImGui)
-    {
-        InitImGui();
-    }
-
     InitCamera(m_Window->GetAspect());
-
-    // TODO: Testing only, remove
-    m_TestRenderTarget = std::make_unique<RenderTarget>(window->GetSwapchain()->GetFormat(),
-                                                        window->GetExtent(), false);
-    m_TestRenderTarget->GetRenderTexture()->RegisterForImGui();
-
-    pipelineInfo.setRenderPass(m_TestRenderTarget->GetRenderPass());
-    m_TestPipeline = std::make_unique<Pipeline>(pipelineInfo);
 }
 
 Renderer::~Renderer()
@@ -123,6 +118,34 @@ void Renderer::Render(const Mesh* mesh)
     commandBufferBegin.setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
     m_CommandBuffer.begin(commandBufferBegin);
     {
+        // Pass #1: Render to viewport
+        m_ViewportRenderTarget->Begin(m_CommandBuffer);
+        m_ViewportPipeline->Bind(m_CommandBuffer);
+        m_ViewportPipeline->BindDescriptorSets(m_CommandBuffer, {
+                                                   m_GlobalSet->GetDescriptorSet(), m_TextureSet->GetDescriptorSet()
+                                               });
+
+        vk::Viewport viewport;
+        vk::Rect2D scissor;
+        viewport.setX(0.f)
+                .setY((float)m_ViewportExtent.height)
+                .setWidth((float)m_ViewportExtent.width)
+                .setHeight(-(float)m_ViewportExtent.height)
+                .setMinDepth(0.f)
+                .setMaxDepth(1.f);
+        scissor.setOffset({0, 0})
+               .setExtent(m_ViewportExtent);
+        m_CommandBuffer.setViewport(0, viewport);
+        m_CommandBuffer.setScissor(0, scissor);
+
+        m_CommandBuffer.pushConstants(m_ViewportPipeline->GetLayout(), vk::ShaderStageFlagBits::eVertex, 0,
+                                      sizeof(PushConstant),
+                                      &pushConstant);
+        mesh->Bind(m_CommandBuffer);
+        mesh->Draw(m_CommandBuffer);
+        m_ViewportRenderTarget->End(m_CommandBuffer);
+
+        // Pass #2: Render ImGui
         vk::RenderPassBeginInfo renderPassBegin;
         vk::Rect2D area;
         vk::ClearValue color, depth;
@@ -137,42 +160,9 @@ void Renderer::Render(const Mesh* mesh)
                        .setClearValues(clearValues);
 
         m_CommandBuffer.beginRenderPass(renderPassBegin, {});
-        {
-            m_ViewportPipeline->Bind(m_CommandBuffer);
-            m_ViewportPipeline->BindDescriptorSets(m_CommandBuffer, {
-                                                       m_GlobalSet->GetDescriptorSet(), m_TextureSet->GetDescriptorSet()
-                                                   });
-
-            m_CommandBuffer.setViewport(0, m_Window->GetViewport());
-            m_CommandBuffer.setScissor(0, m_Window->GetScissor());
-
-            m_CommandBuffer.pushConstants(m_ViewportPipeline->GetLayout(), vk::ShaderStageFlagBits::eVertex, 0,
-                                          sizeof(PushConstant),
-                                          &pushConstant);
-            mesh->Bind(m_CommandBuffer);
-            mesh->Draw(m_CommandBuffer);
-
-            if (m_EnableImGui)
-                ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), m_CommandBuffer);
-        }
+        if (m_EnableImGui)
+            ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), m_CommandBuffer);
         m_CommandBuffer.endRenderPass();
-
-        // TODO: Testing only, remove
-        m_TestRenderTarget->Begin(m_CommandBuffer);
-        m_TestPipeline->Bind(m_CommandBuffer);
-        m_TestPipeline->BindDescriptorSets(m_CommandBuffer, {
-                                               m_GlobalSet->GetDescriptorSet(), m_TextureSet->GetDescriptorSet()
-                                           });
-
-        m_CommandBuffer.setViewport(0, m_Window->GetViewport());
-        m_CommandBuffer.setScissor(0, m_Window->GetScissor());
-
-        m_CommandBuffer.pushConstants(m_TestPipeline->GetLayout(), vk::ShaderStageFlagBits::eVertex, 0,
-                                      sizeof(PushConstant),
-                                      &pushConstant);
-        mesh->Bind(m_CommandBuffer);
-        mesh->Draw(m_CommandBuffer);
-        m_TestRenderTarget->End(m_CommandBuffer);
     }
     m_CommandBuffer.end();
 
@@ -194,7 +184,6 @@ void Renderer::Render(const Mesh* mesh)
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_Window->SwapchainOutdated())
     {
         m_Window->RecreateSwapchain(m_PresnetRenderPass->GetRenderPass());
-        m_Camera->Resize(m_Window->GetAspect());
     }
     else if (result != VK_SUCCESS)
     {
@@ -320,9 +309,13 @@ void Renderer::OnImGuiUpdate()
     ImGui::DockSpaceOverViewport(nullptr, ImGuiDockNodeFlags_PassthruCentralNode);
 
     ImGui::Begin("Viewport");
-    ImGui::Image(m_TestRenderTarget->GetRenderTexture()->GetTextureID(), {
-                     (float)m_TestRenderTarget->GetExtent().width,
-                     (float)m_TestRenderTarget->GetExtent().height
+    const ImVec2 viewportExtent = ImGui::GetContentRegionAvail();
+    m_ViewportExtent.setWidth((uint32_t)viewportExtent.x)
+                    .setHeight((uint32_t)viewportExtent.y);
+    m_Camera->Resize(viewportExtent.x / viewportExtent.y);
+    ImGui::Image(m_ViewportRenderTarget->GetRenderTexture()->GetTextureID(), {
+                     (float)m_ViewportRenderTarget->GetExtent().width,
+                     (float)m_ViewportRenderTarget->GetExtent().height
                  });
     ImGui::End();
 

@@ -40,10 +40,11 @@ private:
     bool m_EnableImGui = true;
 
     std::unique_ptr<RenderPass> m_PresnetRenderPass;
-    std::unique_ptr<Pipeline> m_ViewportPipeline;
+    std::unique_ptr<Pipeline> m_Pipeline;
 
-    std::unique_ptr<Pipeline> m_TestPipeline;
-    std::unique_ptr<RenderTarget> m_TestRenderTarget;
+    std::unique_ptr<Pipeline> m_ViewportPipeline;
+    std::unique_ptr<RenderTarget> m_ViewportRenderTarget;
+    vk::Extent2D m_ViewportExtent;
 
     vk::DescriptorPool m_ImGuiPool;
     vk::CommandBuffer m_CommandBuffer;

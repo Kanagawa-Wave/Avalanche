@@ -10,7 +10,7 @@ public:
     ~RenderTarget();
 
     vk::RenderPass GetRenderPass() const { return m_RenderPass->GetRenderPass(); }
-    Texture* GetRenderTexture() const { return m_Texture.get(); }
+    Texture* GetRenderTexture() const { return m_RenderTexture.get(); }
     vk::Extent2D GetExtent() const { return m_Extent; }
 
     void Begin(vk::CommandBuffer commandBuffer) const;
@@ -18,7 +18,7 @@ public:
 
 private:
     std::unique_ptr<RenderPass> m_RenderPass;
-    std::unique_ptr<Texture> m_Texture;
+    std::unique_ptr<Texture> m_RenderTexture, m_DepthTexture;
     vk::Framebuffer m_Framebuffer;
 
     vk::Extent2D m_Extent;

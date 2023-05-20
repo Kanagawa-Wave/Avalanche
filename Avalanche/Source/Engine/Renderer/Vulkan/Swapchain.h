@@ -21,7 +21,6 @@ private:
     void QueryInfo(uint32_t width, uint32_t height);
     void GetImages();
     void CreateImageViews();
-    void CreateDepthBuffer(uint32_t width, uint32_t height);
 
 private:
     struct SwapchainInfo
@@ -37,6 +36,5 @@ private:
     std::vector<vk::ImageView> m_ImageViews;
     std::vector<vk::Framebuffer> m_Framebuffers;
     
-    std::unique_ptr<Image> m_DepthStencil;
     SwapchainInfo m_SwapchainInfo;
 };

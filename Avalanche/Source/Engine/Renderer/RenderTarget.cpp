@@ -7,8 +7,14 @@ RenderTarget::RenderTarget(vk::Format format, vk::Extent2D extent, vk::Bool32 re
 {
     const auto& device = Context::Instance().GetDevice();
 
-    m_Texture = std::make_unique<Texture>(format, extent, vk::ImageUsageFlagBits::eColorAttachment |
-                                          vk::ImageUsageFlagBits::eSampled);
+    m_RenderTexture = std::make_unique<Texture>(format, extent, vk::ImageUsageFlagBits::eColorAttachment |
+                                                vk::ImageUsageFlagBits::eSampled);
+
+    if (renderDepth)
+    {
+        m_DepthTexture = std::make_unique<Texture>(vk::Format::eD32Sfloat, extent,
+                                                   vk::ImageUsageFlagBits::eDepthStencilAttachment);
+    }
 
     RenderPassCreateInfo renderPassInfo;
     renderPassInfo.setLoadOp(vk::AttachmentLoadOp::eClear)
@@ -21,7 +27,10 @@ RenderTarget::RenderTarget(vk::Format format, vk::Extent2D extent, vk::Bool32 re
     m_RenderPass = std::make_unique<RenderPass>(renderPassInfo);
 
     vk::FramebufferCreateInfo framebufferInfo;
-    std::array attachments = {m_Texture->GetView()};
+    std::vector attachments = {m_RenderTexture->GetView()};
+
+    if (renderDepth)
+        attachments.emplace_back(m_DepthTexture->GetView());
 
     framebufferInfo.setAttachments(attachments)
                    .setWidth(extent.width)
