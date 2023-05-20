@@ -3,7 +3,7 @@
 #include <vulkan/vulkan.hpp>
 
 #include "Buffers.h"
-#include "Texture.h"
+#include "Engine/Renderer/Texture.h"
 
 class DescriptorSet
 {

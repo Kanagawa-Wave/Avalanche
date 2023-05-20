@@ -1,10 +1,9 @@
 ﻿#pragma once
 
-#include "Engine/Vulkan/API/Buffers.h"
-
 #include <glm/glm.hpp>
 
-#include "Engine/Vulkan/API/Texture.h"
+#include "Engine/Renderer/Texture.h"
+#include "Engine/Renderer/Vulkan/Buffers.h"
 
 struct Vertex
 {

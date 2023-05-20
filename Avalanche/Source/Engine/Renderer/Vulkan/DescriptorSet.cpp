@@ -1,6 +1,6 @@
 ﻿#include "DescriptorSet.h"
 
-#include "Engine/Vulkan/Context.h"
+#include "Engine/Renderer/Context.h"
 
 DescriptorSet::DescriptorSet(vk::DescriptorPool pool, const vk::ArrayProxy<vk::DescriptorSetLayoutBinding>& bindings)
 {

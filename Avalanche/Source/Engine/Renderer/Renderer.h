@@ -4,10 +4,10 @@
 #include <glm/glm.hpp>
 
 #include "RenderTarget.h"
-#include "API/Pipeline.h"
-#include "API/RenderPass.h"
+
 #include "Engine/Scene/Components/Camera.h"
 #include "Engine/Scene/Components/Mesh.h"
+#include "Vulkan/Pipeline.h"
 
 class Window;
 

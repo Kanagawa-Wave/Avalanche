@@ -1,9 +1,8 @@
 ﻿#pragma once
 
+#include "Renderer/Renderer.h"
 #include "Scene/Components/Mesh.h"
 #include "Window/Window.h"
-#include "Vulkan/Context.h"
-#include "Vulkan/Renderer.h"
 
 class Application
 {

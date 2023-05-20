@@ -1,6 +1,6 @@
 ﻿#include "RenderPass.h"
 
-#include "Engine/Vulkan/Context.h"
+#include "Engine/Renderer/Context.h"
 
 RenderPass::RenderPass(const RenderPassCreateInfo& info)
 {
@@ -10,8 +10,8 @@ RenderPass::RenderPass(const RenderPassCreateInfo& info)
     vk::AttachmentDescription colorAttachment;
     std::vector<vk::AttachmentDescription> attachments;
     colorAttachment.setFormat(info.ColorFormat)
-                   .setInitialLayout(vk::ImageLayout::eUndefined)
-                   .setFinalLayout(vk::ImageLayout::ePresentSrcKHR)
+                   .setInitialLayout(info.InitialLayout)
+                   .setFinalLayout(info.FinalLayout)
                    .setLoadOp(info.LoadOp)
                    .setStoreOp(info.StoreOp)
                    .setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)

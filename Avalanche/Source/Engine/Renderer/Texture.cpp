@@ -2,10 +2,26 @@
 
 #include <stb_image.h>
 
-#include "Buffers.h"
+#include "Context.h"
+#include "ImmediateContext.h"
 #include "Engine/Core/Log.h"
-#include "Engine/Vulkan/Context.h"
-#include "Engine/Vulkan/ImmediateContext.h"
+#include "ImGui/imgui_impl_vulkan.h"
+#include "Vulkan/Buffers.h"
+
+Texture::Texture(vk::Format format, vk::Extent2D extent, vk::ImageUsageFlags usage)
+{
+    const auto& device = Context::Instance().GetDevice();
+    m_Image = std::make_unique<Image>(format, extent, usage);
+
+    vk::SamplerCreateInfo samplerInfo;
+    samplerInfo.setMagFilter(vk::Filter::eLinear)
+               .setMinFilter(vk::Filter::eLinear)
+               .setAddressModeU(vk::SamplerAddressMode::eRepeat)
+               .setAddressModeV(vk::SamplerAddressMode::eRepeat)
+               .setAddressModeW(vk::SamplerAddressMode::eRepeat);
+
+    m_Sampler = device.createSampler(samplerInfo);
+}
 
 Texture::Texture(const std::string& path)
 {
@@ -91,4 +107,10 @@ Texture::~Texture()
 
     device.waitIdle();
     device.destroySampler(m_Sampler);
+}
+
+void Texture::RegisterForImGui()
+{
+    m_DescriptorSet = ImGui_ImplVulkan_AddTexture(m_Sampler, m_Image->GetView(),
+                                                  VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }

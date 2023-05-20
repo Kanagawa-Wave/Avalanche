@@ -6,6 +6,8 @@ struct RenderPassCreateInfo
 {
     vk::Format ColorFormat = vk::Format::eUndefined, DepthFormat = vk::Format::eUndefined;
     vk::Bool32 EnableDepthAttachment = false;
+    vk::ImageLayout InitialLayout = vk::ImageLayout::eUndefined;
+    vk::ImageLayout FinalLayout = vk::ImageLayout::eUndefined;
     vk::AttachmentLoadOp LoadOp = vk::AttachmentLoadOp::eDontCare;
     vk::AttachmentStoreOp StoreOp = vk::AttachmentStoreOp::eDontCare;
 
@@ -36,6 +38,18 @@ struct RenderPassCreateInfo
     RenderPassCreateInfo& setStoreOp(vk::AttachmentStoreOp storeOp)
     {
         StoreOp = storeOp;
+        return *this;
+    }
+
+    RenderPassCreateInfo& setInitialLayout(vk::ImageLayout layout)
+    {
+        InitialLayout = layout;
+        return *this;
+    }
+
+    RenderPassCreateInfo& setFinalLayout(vk::ImageLayout layout)
+    {
+        FinalLayout = layout;
         return *this;
     }
 };

@@ -1,6 +1,6 @@
 ﻿#include "Image.h"
 
-#include "Engine/Vulkan/Context.h"
+#include "Engine/Renderer/Context.h"
 
 Image::Image(vk::Format format, vk::Extent2D extent, vk::ImageUsageFlags usage)
 {

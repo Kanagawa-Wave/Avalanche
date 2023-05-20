@@ -2,6 +2,7 @@
 
 #include "Core/Log.h"
 #include "Core/Timer.h"
+#include "Renderer/Context.h"
 
 std::unique_ptr<Application> Application::s_Instance = nullptr;
 

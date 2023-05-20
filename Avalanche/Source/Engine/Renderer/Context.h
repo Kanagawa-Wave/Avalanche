@@ -4,8 +4,6 @@
 #include <vk_mem_alloc.h>
 #include <optional>
 
-#include "API/Pipeline.h"
-#include "API/Swapchain.h"
 #include "CommandManager.h"
 
 struct GLFWwindow;

@@ -6,12 +6,12 @@
 #include "Engine/Window/Window.h"
 
 #include <imgui.h>
-#include <Engine/Vulkan/ImGui/imgui_impl_glfw.h>
-#include <Engine/Vulkan/ImGui/imgui_impl_vulkan.h>
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 
 #include "ImmediateContext.h"
+#include "ImGui/imgui_impl_glfw.h"
+#include "ImGui/imgui_impl_vulkan.h"
 
 Renderer::Renderer(Window* window, bool enableImGui)
     : m_Window(window), m_EnableImGui(enableImGui)
@@ -21,7 +21,9 @@ Renderer::Renderer(Window* window, bool enableImGui)
                   .setColorAttachmentFormat(window->GetSwapchain()->GetFormat())
                   .setDepthAttachmentFormat(vk::Format::eD32Sfloat)
                   .setLoadOp(vk::AttachmentLoadOp::eClear)
-                  .setStoreOp(vk::AttachmentStoreOp::eStore);
+                  .setStoreOp(vk::AttachmentStoreOp::eStore)
+                  .setInitialLayout(vk::ImageLayout::eUndefined)
+                  .setFinalLayout(vk::ImageLayout::ePresentSrcKHR);
     m_PresnetRenderPass = std::make_unique<RenderPass>(renderPassInfo);
 
     window->GetSwapchain()->CreateFramebuffers(window->GetWidth(), window->GetHeight(),
@@ -52,6 +54,7 @@ Renderer::Renderer(Window* window, bool enableImGui)
     // TODO: Testing only, remove
     m_TestRenderTarget = std::make_unique<RenderTarget>(window->GetSwapchain()->GetFormat(),
                                                         window->GetExtent(), false);
+    m_TestRenderTarget->GetRenderTexture()->RegisterForImGui();
 
     pipelineInfo.setRenderPass(m_TestRenderTarget->GetRenderPass());
     m_TestPipeline = std::make_unique<Pipeline>(pipelineInfo);
@@ -317,6 +320,10 @@ void Renderer::OnImGuiUpdate()
     ImGui::DockSpaceOverViewport(nullptr, ImGuiDockNodeFlags_PassthruCentralNode);
 
     ImGui::Begin("Viewport");
+    ImGui::Image(m_TestRenderTarget->GetRenderTexture()->GetTextureID(), {
+                     (float)m_TestRenderTarget->GetExtent().width,
+                     (float)m_TestRenderTarget->GetExtent().height
+                 });
     ImGui::End();
 
     ImGui::Render();

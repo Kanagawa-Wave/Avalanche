@@ -2,6 +2,7 @@
 
 #include "Context.h"
 #include "CommandManager.h"
+#include "Engine/Core/Log.h"
 
 vk::Fence ImmediateContext::m_Fence;
 vk::CommandBuffer ImmediateContext::m_CommandBuffer;

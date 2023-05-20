@@ -7,19 +7,21 @@ RenderTarget::RenderTarget(vk::Format format, vk::Extent2D extent, vk::Bool32 re
 {
     const auto& device = Context::Instance().GetDevice();
 
-    m_Image = std::make_unique<Image>(format, extent, vk::ImageUsageFlagBits::eColorAttachment |
-                                      vk::ImageUsageFlagBits::eSampled);
+    m_Texture = std::make_unique<Texture>(format, extent, vk::ImageUsageFlagBits::eColorAttachment |
+                                          vk::ImageUsageFlagBits::eSampled);
 
     RenderPassCreateInfo renderPassInfo;
     renderPassInfo.setLoadOp(vk::AttachmentLoadOp::eClear)
                   .setStoreOp(vk::AttachmentStoreOp::eStore)
                   .setColorAttachmentFormat(format)
                   .setEnableDepthAttachment(renderDepth)
-                  .setDepthAttachmentFormat(vk::Format::eD32Sfloat);
+                  .setDepthAttachmentFormat(vk::Format::eD32Sfloat)
+                  .setInitialLayout(vk::ImageLayout::eUndefined)
+                  .setFinalLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
     m_RenderPass = std::make_unique<RenderPass>(renderPassInfo);
 
     vk::FramebufferCreateInfo framebufferInfo;
-    std::array attachments = {m_Image->GetView()};
+    std::array attachments = {m_Texture->GetView()};
 
     framebufferInfo.setAttachments(attachments)
                    .setWidth(extent.width)
@@ -53,7 +55,7 @@ void RenderTarget::Begin(vk::CommandBuffer commandBuffer) const
                    .setFramebuffer(m_Framebuffer)
                    .setClearValues(clearValues)
                    .setRenderArea(area);
-    
+
     commandBuffer.beginRenderPass(renderPassBegin, vk::SubpassContents::eInline);
 }
 
