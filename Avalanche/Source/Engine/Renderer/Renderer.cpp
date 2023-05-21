@@ -37,7 +37,6 @@ Renderer::Renderer(Window* window, bool enableImGui)
 
     m_ViewportRenderTarget = std::make_unique<RenderTarget>(window->GetSwapchain()->GetFormat(),
                                                             window->GetExtent(), true);
-    m_ViewportRenderTarget->GetRenderTexture()->RegisterForImGui();
     
     PipelineCreateInfo pipelineInfo;
     pipelineInfo.setVertexShader("Shaders/Triangle.vert.spv")
@@ -47,6 +46,8 @@ Renderer::Renderer(Window* window, bool enableImGui)
                 .setPushConstantSize(sizeof(PushConstant))
                 .setVertexInputInfo(Vertex::Layout().GetVertexInputInfo());
     m_ViewportPipeline = std::make_unique<Pipeline>(pipelineInfo);
+
+    m_ViewportExtent = m_Window->GetExtent();
 
     AllocateCommandBuffer();
     CreateFence();
@@ -160,8 +161,7 @@ void Renderer::Render(const Mesh* mesh)
                        .setClearValues(clearValues);
 
         m_CommandBuffer.beginRenderPass(renderPassBegin, {});
-        if (m_EnableImGui)
-            ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), m_CommandBuffer);
+        ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), m_CommandBuffer);
         m_CommandBuffer.endRenderPass();
     }
     m_CommandBuffer.end();
@@ -308,17 +308,26 @@ void Renderer::OnImGuiUpdate()
 
     ImGui::DockSpaceOverViewport(nullptr, ImGuiDockNodeFlags_PassthruCentralNode);
 
+    ImGui::Begin("Config");
+    ImGui::End();
+    
+    ImGui::Begin("Details");
+    ImGui::End();
+
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
     ImGui::Begin("Viewport");
     const ImVec2 viewportExtent = ImGui::GetContentRegionAvail();
     m_ViewportExtent.setWidth((uint32_t)viewportExtent.x)
                     .setHeight((uint32_t)viewportExtent.y);
     m_Camera->Resize(viewportExtent.x / viewportExtent.y);
+    m_ViewportRenderTarget->Resize(m_ViewportExtent);
     ImGui::Image(m_ViewportRenderTarget->GetRenderTexture()->GetTextureID(), {
                      (float)m_ViewportRenderTarget->GetExtent().width,
                      (float)m_ViewportRenderTarget->GetExtent().height
                  });
     ImGui::End();
-
+    ImGui::PopStyleVar();
+    
     ImGui::Render();
     ImGui::EndFrame();
 }

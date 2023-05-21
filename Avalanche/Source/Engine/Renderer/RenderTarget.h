@@ -15,11 +15,14 @@ public:
 
     void Begin(vk::CommandBuffer commandBuffer) const;
     void End(vk::CommandBuffer commandBuffer) const;
+    void Resize(vk::Extent2D extent);
 
 private:
     std::unique_ptr<RenderPass> m_RenderPass;
     std::unique_ptr<Texture> m_RenderTexture, m_DepthTexture;
     vk::Framebuffer m_Framebuffer;
 
+    vk::Format m_Format;
     vk::Extent2D m_Extent;
+    vk::Bool32 m_RenderDepth;
 };

@@ -3,7 +3,7 @@
 #include "Context.h"
 
 RenderTarget::RenderTarget(vk::Format format, vk::Extent2D extent, vk::Bool32 renderDepth)
-    : m_Extent(extent)
+    : m_Format(format), m_Extent(extent), m_RenderDepth(renderDepth)
 {
     const auto& device = Context::Instance().GetDevice();
 
@@ -38,6 +38,8 @@ RenderTarget::RenderTarget(vk::Format format, vk::Extent2D extent, vk::Bool32 re
                    .setRenderPass(m_RenderPass->GetRenderPass())
                    .setLayers(1);
     m_Framebuffer = device.createFramebuffer(framebufferInfo);
+
+    m_RenderTexture->RegisterForImGui();
 }
 
 RenderTarget::~RenderTarget()
@@ -71,4 +73,41 @@ void RenderTarget::Begin(vk::CommandBuffer commandBuffer) const
 void RenderTarget::End(vk::CommandBuffer commandBuffer) const
 {
     commandBuffer.endRenderPass();
+}
+
+void RenderTarget::Resize(vk::Extent2D extent)
+{
+    if (m_Extent == extent)
+        return;
+    
+    const auto& device = Context::Instance().GetDevice();
+    
+    m_Extent = extent;
+    m_RenderTexture.reset();
+    m_DepthTexture.reset();
+    device.destroyFramebuffer(m_Framebuffer);
+
+    m_RenderTexture = std::make_unique<Texture>(m_Format, m_Extent, vk::ImageUsageFlagBits::eColorAttachment |
+                                                vk::ImageUsageFlagBits::eSampled);
+
+    if (m_RenderDepth)
+    {
+        m_DepthTexture = std::make_unique<Texture>(vk::Format::eD32Sfloat, extent,
+                                                   vk::ImageUsageFlagBits::eDepthStencilAttachment);
+    }
+
+    vk::FramebufferCreateInfo framebufferInfo;
+    std::vector attachments = {m_RenderTexture->GetView()};
+
+    if (m_RenderDepth)
+        attachments.emplace_back(m_DepthTexture->GetView());
+
+    framebufferInfo.setAttachments(attachments)
+                   .setWidth(extent.width)
+                   .setHeight(extent.height)
+                   .setRenderPass(m_RenderPass->GetRenderPass())
+                   .setLayers(1);
+    m_Framebuffer = device.createFramebuffer(framebufferInfo);
+
+    m_RenderTexture->RegisterForImGui();
 }
