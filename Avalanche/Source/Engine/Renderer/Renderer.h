@@ -24,7 +24,7 @@ public:
 
     void Begin();
     void Render(const Mesh* mesh);
-    void Update(float deltaTime);
+    void OnUpdate(float deltaTime);
 
 private:
     void AllocateCommandBuffer();

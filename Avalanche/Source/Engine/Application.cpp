@@ -45,7 +45,7 @@ void Application::Run()
     while (m_Window->Running())
     {
         m_Window->PollEvents();
-        m_Renderer->Update(Timer::Elapsed());
+        m_Renderer->OnUpdate(Timer::Elapsed());
         Timer::Reset();
         Render();
     }

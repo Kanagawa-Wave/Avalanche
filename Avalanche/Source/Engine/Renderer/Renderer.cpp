@@ -53,7 +53,14 @@ Renderer::Renderer(Window* window, bool enableImGui)
     CreateFence();
     CreateSemaphores();
 
-    InitCamera(m_Window->GetAspect());
+    m_Camera = std::make_unique<Camera>(m_ViewportExtent, 30.0f, 0.001f, 100.0f);
+    m_CameraBuffer = std::make_unique<Buffer>(vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU,
+                                              sizeof(CameraData));
+    m_GlobalSet->UpdateUniformBuffer(m_CameraBuffer.get(), 0);
+
+    m_TestBuffer = std::make_unique<Buffer>(vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU,
+                                            sizeof(TestData));
+    m_GlobalSet->UpdateUniformBuffer(m_TestBuffer.get(), 1);
 }
 
 Renderer::~Renderer()
@@ -107,7 +114,6 @@ void Renderer::Render(const Mesh* mesh)
     if (result == VK_ERROR_OUT_OF_DATE_KHR)
     {
         m_Window->RecreateSwapchain(m_PresnetRenderPass->GetRenderPass());
-        m_Camera->Resize(m_Window->GetAspect());
         return;
     }
     if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
@@ -191,7 +197,7 @@ void Renderer::Render(const Mesh* mesh)
     }
 }
 
-void Renderer::Update(float deltaTime)
+void Renderer::OnUpdate(float deltaTime)
 {
     m_Camera->OnUpdate(deltaTime);
 
@@ -233,18 +239,6 @@ void Renderer::CreateDescriptorSets()
         {0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}
     };
     m_TextureSet = std::make_unique<DescriptorSet>(pool, textureSetBindings);
-}
-
-void Renderer::InitCamera(float aspect)
-{
-    m_Camera = std::make_unique<Camera>(30.0f, aspect, 0.001f, 100.0f);
-    m_CameraBuffer = std::make_unique<Buffer>(vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU,
-                                              sizeof(CameraData));
-    m_GlobalSet->UpdateUniformBuffer(m_CameraBuffer.get(), 0);
-
-    m_TestBuffer = std::make_unique<Buffer>(vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU,
-                                            sizeof(TestData));
-    m_GlobalSet->UpdateUniformBuffer(m_TestBuffer.get(), 1);
 }
 
 void Renderer::InitImGui()
@@ -319,7 +313,7 @@ void Renderer::OnImGuiUpdate()
     const ImVec2 viewportExtent = ImGui::GetContentRegionAvail();
     m_ViewportExtent.setWidth((uint32_t)viewportExtent.x)
                     .setHeight((uint32_t)viewportExtent.y);
-    m_Camera->Resize(viewportExtent.x / viewportExtent.y);
+    m_Camera->Resize(m_ViewportExtent);
     m_ViewportRenderTarget->Resize(m_ViewportExtent);
     ImGui::Image(m_ViewportRenderTarget->GetRenderTexture()->GetTextureID(), {
                      (float)m_ViewportRenderTarget->GetExtent().width,

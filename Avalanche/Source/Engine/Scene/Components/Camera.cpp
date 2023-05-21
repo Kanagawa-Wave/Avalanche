@@ -2,17 +2,14 @@
 
 #include "Engine/Core/Input.h"
 
-#define GLM_ENABLE_EXPERIMENTAL
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#define GLM_FORCE_LEFT_HANDED
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
 
-Camera::Camera(float fov, float aspect, float nearClip, float farClip)
-    : m_FOV(fov), m_NearClip(nearClip), m_FarClip(farClip)
+Camera::Camera(vk::Extent2D extent, float fov, float nearClip, float farClip)
+    : m_Extent(extent), m_FOV(fov), m_NearClip(nearClip), m_FarClip(farClip)
 {
-    m_Projection = glm::perspective(glm::radians(fov), aspect, nearClip, farClip);
+    m_Projection = glm::perspective(glm::radians(fov), (float)extent.width / (float)extent.height, nearClip, farClip);
     RecalculateView();
 }
 
@@ -90,9 +87,14 @@ bool Camera::OnUpdate(float deltaTime)
     return moved;
 }
 
-void Camera::Resize(float aspect)
+void Camera::Resize(vk::Extent2D extent)
 {
-    m_Projection = glm::perspective(glm::radians(m_FOV), aspect, m_NearClip, m_FarClip);
+    if (m_Extent == extent)
+        return;
+
+    m_Extent = extent;
+    m_Projection = glm::perspective(glm::radians(m_FOV), (float)extent.width / (float)extent.height, m_NearClip,
+                                    m_FarClip);
     RecalculateView();
 }
 
