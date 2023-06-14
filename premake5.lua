@@ -18,7 +18,7 @@ rule "CompileShaders"
 
 workspace "Avalanche"
     architecture "x64"
-    startproject "Avalanche"
+    startproject "Editor"
     
     configurations
     {
@@ -57,8 +57,66 @@ Libraries = {}
 Libraries["OpenGL"] = "opengl32.lib"
 Libraries["Vulkan"] = "vulkan-1.lib"
 
-project "Avalanche"
+project "Editor"
     kind "ConsoleApp"
+    location "Avalanche"
+    language "C++"
+    cppdialect "C++17"
+    staticruntime "off"
+
+    targetdir ("%{wks.location}/Binaries/" .. outputdir .. "/%{prj.name}")
+    objdir ("%{wks.location}/Intermediates/" .. outputdir .. "/%{prj.name}")
+
+    files
+    {  
+        "%{prj.name}/Source/**.h",
+        "%{prj.name}/Source/**.cpp",
+    }
+
+    includedirs
+    {
+        "%{IncludeDir.Source}",
+        "%{IncludeDir.GLM}",
+        "%{IncludeDir.SPDLOG}",
+        "%{IncludeDir.VulkanSDK}",
+        "%{IncludeDir.VMA}",
+    }
+
+    links
+    {
+        "Shcore.lib",
+        "Avalanche",
+    }
+
+    ignoredefaultlibraries
+    {
+        "LIBCMTD",
+    }
+    
+    filter "system:windows"
+        systemversion "latest"
+        postbuildcommands
+        {
+            "{COPYDIR} %{wks.location}Avalanche/Content %{wks.location}Binaries/" .. outputdir .. "/%{prj.name}/Content",
+        }
+    
+    filter "configurations:Debug"
+        defines "_DEBUG"
+        runtime "Debug"
+        symbols "on"
+    
+    filter "configurations:Release"
+        defines "_RELEASE"
+        runtime "Release"
+        optimize "on"
+    
+    filter "configurations:Dist"
+        defines "_DIST"
+        runtime "Release"
+        optimize "on"
+
+project "Avalanche"
+    kind "StaticLib"
     location "Avalanche"
     language "C++"
     cppdialect "C++17"
