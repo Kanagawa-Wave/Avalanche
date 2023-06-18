@@ -77,6 +77,7 @@ project "Editor"
     {
         "%{IncludeDir.Source}",
         "%{IncludeDir.GLM}",
+        "%{IncludeDir.IMGUI}",
         "%{IncludeDir.SPDLOG}",
         "%{IncludeDir.VulkanSDK}",
         "%{IncludeDir.VMA}",

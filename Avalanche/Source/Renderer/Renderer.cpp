@@ -47,13 +47,10 @@ Renderer::Renderer(Window* window, bool enableImGui)
                 .setVertexInputInfo(Vertex::Layout().GetVertexInputInfo());
     m_ViewportPipeline = std::make_unique<Pipeline>(pipelineInfo);
 
-    m_ViewportExtent = m_Window->GetExtent();
-
     AllocateCommandBuffer();
     CreateFence();
     CreateSemaphores();
-
-    m_Camera = std::make_unique<Camera>(m_ViewportExtent.width, m_ViewportExtent.height, 30.0f, 0.001f, 100.0f);
+    
     m_CameraBuffer = std::make_unique<Buffer>(vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU,
                                               sizeof(CameraData));
     m_GlobalSet->UpdateUniformBuffer(m_CameraBuffer.get(), 0);
@@ -80,6 +77,16 @@ Renderer::~Renderer()
     device.destroyFence(m_Fence);
 }
 
+void Renderer::SetCameraPtr(const Camera* camera)
+{
+    m_pCamera = camera;
+}
+
+void Renderer::SetExtentPtr(const vk::Extent2D* extent)
+{
+    m_pExtent = extent;
+}
+
 void Renderer::AppendToDrawList(const Mesh* mesh)
 {
     m_DrawList.push_back(mesh);
@@ -92,7 +99,7 @@ void Renderer::OnRender()
     PushConstant pushConstant;
     pushConstant.model = model;
 
-    m_CameraData.SetData(m_Camera->GetProjection(), m_Camera->GetView());
+    m_CameraData.SetData(m_pCamera->GetProjection(), m_pCamera->GetView());
     m_CameraBuffer->SetData(&m_CameraData);
     m_TestBuffer->SetData(&m_TestData);
 
@@ -136,13 +143,13 @@ void Renderer::OnRender()
         vk::Viewport viewport;
         vk::Rect2D scissor;
         viewport.setX(0.f)
-                .setY((float)m_ViewportExtent.height)
-                .setWidth((float)m_ViewportExtent.width)
-                .setHeight(-(float)m_ViewportExtent.height)
+                .setY((float)m_pExtent->height)
+                .setWidth((float)m_pExtent->width)
+                .setHeight(-(float)m_pExtent->height)
                 .setMinDepth(0.f)
                 .setMaxDepth(1.f);
         scissor.setOffset({0, 0})
-               .setExtent(m_ViewportExtent);
+               .setExtent(*m_pExtent);
         m_CommandBuffer.setViewport(0, viewport);
         m_CommandBuffer.setScissor(0, scissor);
 
@@ -198,12 +205,14 @@ void Renderer::OnRender()
     }
 }
 
-void Renderer::OnUpdate(float deltaTime)
+void Renderer::ResizeViewport(vk::Extent2D extent) const
 {
-    //m_Camera->OnUpdate(deltaTime);
+    m_ViewportRenderTarget->Resize(extent);
+}
 
-    if (m_EnableImGui)
-        OnImGuiUpdate();
+void* Renderer::GetViewportTextureID() const
+{
+    return m_ViewportRenderTarget->GetRenderTexture()->GetTextureID();
 }
 
 void Renderer::AllocateCommandBuffer()
@@ -292,37 +301,4 @@ void Renderer::InitImGui()
     });
 
     ImGui_ImplVulkan_DestroyFontUploadObjects();
-}
-
-void Renderer::OnImGuiUpdate()
-{
-    ImGui_ImplGlfw_NewFrame();
-    ImGui_ImplVulkan_NewFrame();
-
-    ImGui::NewFrame();
-
-    ImGui::DockSpaceOverViewport(nullptr, ImGuiDockNodeFlags_PassthruCentralNode);
-
-    ImGui::Begin("Config");
-    ImGui::End();
-    
-    ImGui::Begin("Details");
-    ImGui::End();
-
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-    ImGui::Begin("Viewport");
-    const ImVec2 viewportExtent = ImGui::GetContentRegionAvail();
-    m_ViewportExtent.setWidth((uint32_t)viewportExtent.x)
-                    .setHeight((uint32_t)viewportExtent.y);
-    m_Camera->Resize(m_ViewportExtent.width, m_ViewportExtent.height);
-    m_ViewportRenderTarget->Resize(m_ViewportExtent);
-    ImGui::Image(m_ViewportRenderTarget->GetRenderTexture()->GetTextureID(), {
-                     (float)m_ViewportRenderTarget->GetExtent().width,
-                     (float)m_ViewportRenderTarget->GetExtent().height
-                 });
-    ImGui::End();
-    ImGui::PopStyleVar();
-    
-    ImGui::Render();
-    ImGui::EndFrame();
 }

@@ -27,7 +27,7 @@ Application::~Application()
     Context::Instance().Destroy();
 }
 
-void Application::Run() const
+void Application::Run()
 {
     while (m_Window->Running())
     {

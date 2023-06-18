@@ -9,9 +9,9 @@ public:
     Application();
     virtual ~Application();
 
-    virtual void Update() const = 0;
+    virtual void Update() = 0;
     virtual void Render() const = 0;
-    void Run() const;
+    void Run();
 
     Window* GetWindow() const { return m_Window.get(); }
     static Application* Instance() { return s_Application; }

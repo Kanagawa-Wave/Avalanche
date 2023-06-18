@@ -22,9 +22,13 @@ public:
     Renderer(Window* window, bool enableImGui);
     ~Renderer();
 
+    void SetCameraPtr(const Camera* camera);
+    void SetExtentPtr(const vk::Extent2D* extent);
     void AppendToDrawList(const Mesh* mesh);
     void OnRender();
-    void OnUpdate(float deltaTime);
+
+    void ResizeViewport(vk::Extent2D extent) const;
+    void* GetViewportTextureID() const;
 
 private:
     void AllocateCommandBuffer();
@@ -32,7 +36,6 @@ private:
     void CreateFence();
     void CreateDescriptorSets();
     void InitImGui();
-    void OnImGuiUpdate();
 
 private:
     Window* m_Window;
@@ -43,7 +46,6 @@ private:
 
     std::unique_ptr<Pipeline> m_ViewportPipeline;
     std::unique_ptr<RenderTarget> m_ViewportRenderTarget;
-    vk::Extent2D m_ViewportExtent;
 
     vk::DescriptorPool m_ImGuiPool;
     vk::CommandBuffer m_CommandBuffer;
@@ -69,7 +71,8 @@ private:
         float test = 1.f;
     } m_TestData;
     
-    std::unique_ptr<Camera> m_Camera;
+    const Camera* m_pCamera = nullptr;
+    const vk::Extent2D* m_pExtent = nullptr;
     std::unique_ptr<Buffer> m_CameraBuffer, m_TestBuffer;
 
     std::unique_ptr<DescriptorSet> m_GlobalSet, m_TextureSet;

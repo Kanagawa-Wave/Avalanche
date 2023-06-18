@@ -7,10 +7,13 @@ class Editor : public Application
 {
 public:
     Editor();
-    virtual void Update() const override;
+    virtual void Update() override;
     virtual void Render() const override;
 
 private:
+
+    void OnImGuiUpdate();
+    
     vk::Extent2D m_ViewportExtent;
 
     std::unique_ptr<Mesh> m_TestMesh;
