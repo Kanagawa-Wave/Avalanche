@@ -186,7 +186,8 @@ void Renderer::OnRender()
           .setWaitSemaphores(m_PresentSemaphore)
           .setWaitDstStageMask(flags)
           .setSignalSemaphores(m_RenderSemaphore);
-    Context::Instance().GetGraphicsQueue().submit(submit, m_Fence);
+    // Context::Instance().GetGraphicsQueue().submit(submit, m_Fence);
+    result = vkQueueSubmit(Context::Instance().GetGraphicsQueue(), 1, (VkSubmitInfo*)&submit, m_Fence);
 
     vk::PresentInfoKHR present;
     present.setWaitSemaphores(m_RenderSemaphore)

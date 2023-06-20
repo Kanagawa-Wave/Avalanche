@@ -47,12 +47,12 @@ Context::Context(GLFWwindow* window)
 
 void Context::CreateInstance(GLFWwindow* window)
 {
-#ifdef _DEBUG
-    std::vector<const char*> layers = {"VK_LAYER_KHRONOS_validation"};
-#else
-    std::vector<const char*> layers;
-#endif
-
+    #ifdef _DEBUG
+        std::vector<const char*> layers = {"VK_LAYER_KHRONOS_validation"};
+    #else
+        std::vector<const char*> layers;
+    #endif
+    
     uint32_t count;
     const char** extensions = glfwGetRequiredInstanceExtensions(&count);
 

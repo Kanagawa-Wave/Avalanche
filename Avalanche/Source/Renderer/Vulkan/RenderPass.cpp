@@ -7,7 +7,7 @@ RenderPass::RenderPass(const RenderPassCreateInfo& info)
     const auto& device = Context::Instance().GetDevice();
 
     vk::RenderPassCreateInfo renderPassInfo;
-    vk::AttachmentDescription colorAttachment;
+    vk::AttachmentDescription colorAttachment, depthAttachment;
     std::vector<vk::AttachmentDescription> attachments;
     colorAttachment.setFormat(info.ColorFormat)
                    .setInitialLayout(info.InitialLayout)
@@ -21,7 +21,6 @@ RenderPass::RenderPass(const RenderPassCreateInfo& info)
 
     if (info.EnableDepthAttachment)
     {
-        vk::AttachmentDescription depthAttachment;
         depthAttachment.setFormat(info.DepthFormat)
                        .setInitialLayout(vk::ImageLayout::eUndefined)
                        .setFinalLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal)
@@ -36,14 +35,13 @@ RenderPass::RenderPass(const RenderPassCreateInfo& info)
     renderPassInfo.setAttachments(attachments);
 
     vk::SubpassDescription subpass;
-    vk::AttachmentReference colorRef;
+    vk::AttachmentReference colorRef, depthRef;
     colorRef.setLayout(vk::ImageLayout::eColorAttachmentOptimal)
             .setAttachment(0);
     subpass.setPipelineBindPoint(vk::PipelineBindPoint::eGraphics)
            .setColorAttachments(colorRef);
     if (info.EnableDepthAttachment)
     {
-        vk::AttachmentReference depthRef;
         depthRef.setLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal)
                 .setAttachment(1);
         subpass.setPDepthStencilAttachment(&depthRef);
