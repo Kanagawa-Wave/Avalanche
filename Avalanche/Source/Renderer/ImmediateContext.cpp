@@ -10,7 +10,7 @@ std::unique_ptr<CommandManager> ImmediateContext::m_CommandManager = nullptr;
 
 void ImmediateContext::Init()
 {
-    auto& device = Context::Instance().GetDevice();
+    const auto& device = Context::Instance().GetDevice();
     vk::FenceCreateInfo fenceInfo;
     fenceInfo.setFlags(vk::FenceCreateFlagBits::eSignaled);
     m_Fence = device.createFence(fenceInfo);
@@ -21,8 +21,8 @@ void ImmediateContext::Init()
 
 void ImmediateContext::Submit(std::function<void(vk::CommandBuffer commandBuffer)>&& function)
 {
-    auto& ctx = Context::Instance();
-    auto& device = Context::Instance().GetDevice();
+    const auto& ctx = Context::Instance();
+    const auto& device = Context::Instance().GetDevice();
 
     m_CommandManager->ResetCommands();
     device.resetFences(m_Fence);
@@ -48,7 +48,7 @@ void ImmediateContext::Submit(std::function<void(vk::CommandBuffer commandBuffer
 
 void ImmediateContext::Shutdown()
 {
-    auto& device = Context::Instance().GetDevice();
+    const auto& device = Context::Instance().GetDevice();
 
     device.destroyFence(m_Fence);
     m_CommandManager.reset();
@@ -56,7 +56,7 @@ void ImmediateContext::Shutdown()
 
 void ImmediateContext::Begin()
 {
-    auto& device = Context::Instance().GetDevice();
+    const auto& device = Context::Instance().GetDevice();
 
     m_CommandManager->ResetCommands();
     device.resetFences(m_Fence);
@@ -69,8 +69,8 @@ void ImmediateContext::Begin()
 
 void ImmediateContext::End()
 {
-    auto& ctx = Context::Instance();
-    auto& device = Context::Instance().GetDevice();
+    const auto& ctx = Context::Instance();
+    const auto& device = Context::Instance().GetDevice();
     
     m_CommandBuffer.end();
 

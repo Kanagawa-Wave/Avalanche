@@ -13,7 +13,7 @@ rule "CompileShaders"
     }
     
     buildmessage "Compiling %(Filename) with GLSL-SPV"
-    buildcommands "glslangValidator -V -o $(OutDir)/%(Identity).spv %(Identity)"
+    buildcommands "glslangValidator -V -o $(OutDir)%(Identity).spv %(Identity)"
     buildoutputs "$(OutDir)/%(Identity).spv"
 
 workspace "Avalanche"
@@ -61,7 +61,7 @@ project "Editor"
     kind "ConsoleApp"
     location "Avalanche"
     language "C++"
-    cppdialect "C++17"
+    cppdialect "C++20"
     staticruntime "off"
 
     targetdir ("%{wks.location}/Binaries/" .. outputdir .. "/%{prj.name}")
@@ -120,7 +120,7 @@ project "Avalanche"
     kind "StaticLib"
     location "Avalanche"
     language "C++"
-    cppdialect "C++17"
+    cppdialect "C++20"
     staticruntime "off"
 
     targetdir ("%{wks.location}/Binaries/" .. outputdir .. "/%{prj.name}")

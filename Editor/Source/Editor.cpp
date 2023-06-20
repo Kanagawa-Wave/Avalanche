@@ -45,10 +45,20 @@ void Editor::OnImGuiUpdate()
 
     ImGui::DockSpaceOverViewport(nullptr, ImGuiDockNodeFlags_PassthruCentralNode);
 
+    ImGui::Begin("Outliner");
+    ImGui::End();
+    
     ImGui::Begin("Config");
     ImGui::End();
     
     ImGui::Begin("Details");
+    ImGui::End();
+
+    ImGui::Begin("Content Browser");
+    if (ImGui::SmallButton("Open"))
+    {
+        FileHelper::OpenFile();
+    }
     ImGui::End();
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
