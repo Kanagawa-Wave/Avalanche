@@ -1,30 +1,15 @@
 ﻿#pragma once
-#include <chrono>
 
 class Timer
 {
 public:
-    static void Init()
-    {
-        Reset();
-    }
+    static void Init();
 
-    static void Reset()
-    {
-        m_Start = std::chrono::high_resolution_clock::now();
-    }
+    static void NewFrame();
 
-    static float Elapsed()
-    {
-        return (float)std::chrono::duration_cast<std::chrono::nanoseconds>(
-            std::chrono::high_resolution_clock::now() - m_Start).count() * 0.001f * 0.001f * 0.001f;
-    }
-
-    static float ElapsedMillis()
-    {
-        return Elapsed() * 1000.0f;
-    }
+    static float GetDeltaTime();
+    static float GetDeltaTimeInMillliseconds();
 
 private:
-    static std::chrono::time_point<std::chrono::high_resolution_clock> m_Start;
+    static float m_Time, m_LastFrameTime, m_DeltaTime;
 };

@@ -2,9 +2,9 @@
 
 VULKAN_SDK = os.getenv("VULKAN_SDK")
 
-rule "CompileShaders"
+rule "CompileGLSLShaders"
     location "Rules"
-    display "GLSL Shader Compiler"
+    display "GLSLC Shader Compiler"
     fileextension
     {
         ".frag",
@@ -15,6 +15,25 @@ rule "CompileShaders"
     buildmessage "Compiling %(Filename) with GLSL-SPV"
     buildcommands "glslangValidator -V -o $(OutDir)%(Identity).spv %(Identity)"
     buildoutputs "$(OutDir)/%(Identity).spv"
+    
+rule "CompileHLSLShaders"
+    location "Rules"
+    display "DXC Shader Compiler"
+    fileextension
+    {
+        ".hlsl",
+    }
+    
+    buildmessage "Compiling %(Filename) with HLSL-SPV"
+    buildcommands "%{VULKAN_SDK}/Bin/dxc.exe -spirv -T [ShaderType] -E main %(Identity) -Fo $(OutDir)%(Identity).spv"
+    buildoutputs "$(OutDir)/%(Identity).spv"
+    
+    propertydefinition {
+        name = "ShaderType",
+        kind = "string",
+        display = "ShaderType Target",
+    }
+
 
 workspace "Avalanche"
     architecture "x64"
@@ -34,7 +53,7 @@ workspace "Avalanche"
 
     outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
     
-    debugdir ("Binaries/" .. outputdir .. "/Avalanche")
+    debugdir ("Binaries/" .. outputdir .. "/Editor")
 
 -- Include directories relative to root folder (solution directory)
 IncludeDir = {}
@@ -99,6 +118,7 @@ project "Editor"
         postbuildcommands
         {
             "{COPYDIR} %{wks.location}Avalanche/Content %{wks.location}Binaries/" .. outputdir .. "/%{prj.name}/Content",
+            "{COPYDIR} %{wks.location}Binaries/" .. outputdir .. "/Avalanche/Shaders %{wks.location}Binaries/" .. outputdir .. "/%{prj.name}/Shaders",
         }
     
     filter "configurations:Debug"
@@ -122,6 +142,8 @@ project "Avalanche"
     language "C++"
     cppdialect "C++20"
     staticruntime "off"
+    
+    rules { "CompileGLSLShaders", "CompileHLSLShaders"}
 
     targetdir ("%{wks.location}/Binaries/" .. outputdir .. "/%{prj.name}")
     objdir ("%{wks.location}/Intermediates/" .. outputdir .. "/%{prj.name}")
@@ -131,6 +153,7 @@ project "Avalanche"
         "%{prj.name}/Shaders/**.vert",
         "%{prj.name}/Shaders/**.frag",
         "%{prj.name}/Shaders/**.comp",
+        "%{prj.name}/Shaders/**.hlsl",
         
         "%{prj.name}/Source/**.h",
         "%{prj.name}/Source/**.cpp",
@@ -186,13 +209,21 @@ project "Avalanche"
     
     filter "system:windows"
         systemversion "latest"
-        rules { "CompileShaders" }
 
         defines
         {
             "_PLATFORM_WINDOWS"
         }
-
+        
+    filter "files:**.vert.hlsl"
+        compileHLSLShadersVars {
+            ShaderType = "vs_6_0"
+        }
+        
+    filter "files:**.frag.hlsl"
+        compileHLSLShadersVars {
+            ShaderType = "ps_6_0"
+        }
     
     filter "configurations:Debug"
         defines "_DEBUG"

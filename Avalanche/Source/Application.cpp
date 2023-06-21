@@ -31,8 +31,9 @@ void Application::Run()
 {
     while (m_Window->Running())
     {
+        Timer::NewFrame();
+        
         Update();
         Render();
-        Timer::Reset();
     }
 }

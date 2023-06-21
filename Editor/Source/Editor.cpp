@@ -28,7 +28,7 @@ void Editor::Update()
 {
     m_Window->PollEvents();
     OnImGuiUpdate();
-    m_EditorCamera->OnUpdate(Timer::Elapsed());
+    m_EditorCamera->OnUpdate(Timer::GetDeltaTime());
 }
 
 void Editor::Render() const
@@ -52,6 +52,11 @@ void Editor::OnImGuiUpdate()
     ImGui::End();
     
     ImGui::Begin("Details");
+    ImGui::End();
+
+    ImGui::Begin("Stats");
+    ImGui::Text("FPS: %d", (int)(1.0 / (double)Timer::GetDeltaTime()));
+    ImGui::Text("Frametime: %.3f ms", (float)Timer::GetDeltaTimeInMillliseconds());
     ImGui::End();
 
     ImGui::Begin("Content Browser");
