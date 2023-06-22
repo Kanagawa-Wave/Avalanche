@@ -39,8 +39,8 @@ Renderer::Renderer(Window* window, bool enableImGui)
                                                             window->GetExtent(), true);
     
     PipelineCreateInfo pipelineInfo;
-    pipelineInfo.setVertexShader("Shaders/Triangle.vert.spv")
-                .setFragmentShader("Shaders/Triangle.frag.spv")
+    pipelineInfo.setVertexShader("Shaders/Unlit.vert.hlsl.spv")
+                .setFragmentShader("Shaders/Unlit.frag.hlsl.spv")
                 .setRenderPass(m_ViewportRenderTarget->GetRenderPass())
                 .setDescriptorSetLayouts({m_GlobalSet->GetLayout(), m_TextureSet->GetLayout()})
                 .setPushConstantSize(sizeof(PushConstant))
