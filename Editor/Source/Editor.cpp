@@ -3,8 +3,6 @@
 #include <imgui.h>
 
 
-
-
 Application* CreateApplication()
 {
     return new Editor();
@@ -56,7 +54,7 @@ void Editor::OnImGuiUpdate()
 
     ImGui::Begin("Stats");
     ImGui::Text("FPS: %d", (int)(1.0 / (double)Timer::GetDeltaTime()));
-    ImGui::Text("Frametime: %.3f ms", (float)Timer::GetDeltaTimeInMillliseconds());
+    ImGui::Text("Frametime: %.3f ms", Timer::GetDeltaTimeInMillliseconds());
     ImGui::End();
 
     ImGui::Begin("Content Browser");
@@ -82,4 +80,5 @@ void Editor::OnImGuiUpdate()
     
     ImGui::Render();
     ImGui::EndFrame();
+    ImGui::UpdatePlatformWindows();
 }
