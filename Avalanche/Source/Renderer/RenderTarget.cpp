@@ -79,6 +79,9 @@ void RenderTarget::Resize(vk::Extent2D extent)
 {
     if (m_Extent == extent)
         return;
+
+    if (extent.width == 0 || extent.height == 0)
+        return;
     
     const auto& device = Context::Instance().GetDevice();
     

@@ -22,3 +22,6 @@
 [submodule "Avalanche/ThirdParty/stb"]
 	path = Avalanche/ThirdParty/stb
 	url = https://github.com/nothings/stb.git
+[submodule "Avalanche/ThirdParty/entt"]
+	path = Avalanche/ThirdParty/entt
+	url = https://github.com/skypjack/entt.git

@@ -5,8 +5,9 @@
 #include "Core/Timer.h"
 #include "Core/FileHelper.h"
 
-#include "Scene/Components/Camera.h"
-#include "Scene/Components/Mesh.h"
+#include "Scene/Scene.h"
+#include "Scene/Entity.h"
+#include "Scene/Components/Components.h"
 
 #include "Renderer/Renderer.h"
 

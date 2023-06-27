@@ -24,10 +24,13 @@ Image::Image(vk::Format format, vk::Extent2D extent, vk::ImageUsageFlags usage)
     }
     else
     {
-        allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+        allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
+        allocInfo.requiredFlags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
     }
 
-    vmaCreateImage(Context::Instance().GetAllocator(), (VkImageCreateInfo*)&imageInfo, &allocInfo, (VkImage*)&m_Image,
+    vmaCreateImage(Context::Instance().GetAllocator(), (VkImageCreateInfo*)&imageInfo, &allocInfo,
+                   (VkImage*)
+                   &m_Image,
                    &m_Allocation, nullptr);
 
     vk::ImageViewCreateInfo imageViewInfo;

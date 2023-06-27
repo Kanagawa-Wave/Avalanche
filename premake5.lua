@@ -65,7 +65,7 @@ IncludeDir["SPDLOG"] = "Avalanche/ThirdParty/spdlog/include"
 IncludeDir["IMGUI"] = "Avalanche/ThirdParty/imgui"
 IncludeDir["STB"] = "Avalanche/ThirdParty/stb"
 IncludeDir["TINYOBJLOADER"] = "Avalanche/ThirdParty/tinyobjloader"
-IncludeDir["ENTT"] = "Avalanche/ThirdParty/entt"
+IncludeDir["ENTT"] = "Avalanche/ThirdParty/entt/single_include/entt"
 IncludeDir["VKBOOTSTRAP"] = "Avalanche/ThirdParty/vk-bootstrap/src"
 IncludeDir["VMA"] = "Avalanche/ThirdParty/VulkanMemoryAllocator/include"
 
@@ -100,6 +100,7 @@ project "Editor"
         "%{IncludeDir.SPDLOG}",
         "%{IncludeDir.VulkanSDK}",
         "%{IncludeDir.VMA}",
+        "%{IncludeDir.ENTT}",
     }
 
     links
@@ -174,6 +175,7 @@ project "Avalanche"
         "%{IncludeDir.VMA}",
         "%{IncludeDir.TINYOBJLOADER}",
         "%{IncludeDir.STB}",
+        "%{IncludeDir.ENTT}",
     }
     
     links

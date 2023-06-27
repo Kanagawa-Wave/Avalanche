@@ -11,15 +11,18 @@ Application* CreateApplication()
 Editor::Editor()
 {
     m_ViewportExtent = m_Window->GetExtent();
-    
+
     m_Renderer = std::make_unique<Renderer>(m_Window.get(), true);
     m_EditorCamera = std::make_unique<Camera>(m_ViewportExtent.width, m_ViewportExtent.height, 30.0f, 0.1f, 1000.0f);
     m_Renderer->SetCameraPtr(m_EditorCamera.get());
     m_Renderer->SetExtentPtr(&m_ViewportExtent);
+
+    m_Scene = std::make_unique<Scene>();
+    auto bunny = m_Scene->CreateEntity("bunny");
+    bunny.AddComponent<MeshComponent>("Content/bunny.obj")
+         .AddTexture("Content/bunny.png");
     
-    m_TestMesh = std::make_unique<Mesh>("Content/bunny.obj");
-    m_TestMesh->AddTexture("Content/bunny.png");
-    m_Renderer->AppendToDrawList(m_TestMesh.get());
+    m_Renderer->AppendToDrawList(&bunny.GetComponent<MeshComponent>().StaticMesh);
 }
 
 void Editor::Update()
@@ -45,10 +48,10 @@ void Editor::OnImGuiUpdate()
 
     ImGui::Begin("Outliner");
     ImGui::End();
-    
+
     ImGui::Begin("Config");
     ImGui::End();
-    
+
     ImGui::Begin("Details");
     ImGui::End();
 
@@ -77,8 +80,10 @@ void Editor::OnImGuiUpdate()
                  });
     ImGui::End();
     ImGui::PopStyleVar();
-    
+
     ImGui::Render();
     ImGui::EndFrame();
-    ImGui::UpdatePlatformWindows();
+
+    // ImGui::UpdatePlatformWindows();
+    // ImGui::RenderPlatformWindowsDefault();
 }

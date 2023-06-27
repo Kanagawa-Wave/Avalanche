@@ -35,6 +35,7 @@ struct Vertex
 class Mesh
 {
 public:
+    Mesh() = default;
     Mesh(const std::string& meshPath);
 
     void Bind(vk::CommandBuffer commandBuffer) const;

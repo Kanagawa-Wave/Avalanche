@@ -5,6 +5,7 @@
 class Camera
 {
 public:
+    Camera() = default;
     Camera(uint32_t width, uint32_t height, float fov, float nearClip, float farClip);
 
     glm::mat4 GetViewProjection() const { return m_Projection * m_View; }
@@ -20,6 +21,6 @@ private:
     glm::vec3 m_Position{0, 0, 6}, m_Forward{0, 0, -1};
     glm::mat4 m_View{1.0}, m_Projection{1.0};
 
-    uint32_t m_Width, m_Height;
-    float m_FOV, m_NearClip, m_FarClip;
+    uint32_t m_Width, m_Height = 0;
+    float m_FOV, m_NearClip, m_FarClip = 0.f;
 };
