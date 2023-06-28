@@ -2,6 +2,8 @@
 
 #include <imgui.h>
 
+#include "Panels/Outliner.h"
+
 Application* CreateApplication()
 {
     return new Editor();
@@ -21,6 +23,8 @@ Editor::Editor()
     bunny.GetComponent<TransformComponent>().Scale = {20.f, 20.f, 20.f};
     
     m_Renderer->SubmitScene(m_Scene.get());
+
+    m_Outliner = std::make_unique<Outliner>(m_Scene.get());
 }
 
 void Editor::Update()
@@ -44,18 +48,12 @@ void Editor::OnImGuiUpdate()
 
     ImGui::DockSpaceOverViewport(nullptr, ImGuiDockNodeFlags_PassthruCentralNode);
 
-    ImGui::Begin("Outliner");
-    ImGui::End();
-
     ImGui::Begin("Config");
-    ImGui::End();
-
-    ImGui::Begin("Details");
     ImGui::End();
 
     ImGui::Begin("Stats");
     ImGui::Text("FPS: %d", (int)(1.0 / (double)Timer::GetDeltaTime()));
-    ImGui::Text("Frametime: %.3f ms", Timer::GetDeltaTimeInMillliseconds());
+    ImGui::Text("Frametime: %.3f ms", (float)Timer::GetDeltaTimeInMillliseconds());
     ImGui::End();
 
     ImGui::Begin("Content Browser");
@@ -78,6 +76,8 @@ void Editor::OnImGuiUpdate()
                  });
     ImGui::End();
     ImGui::PopStyleVar();
+
+    m_Outliner->OnImGuiUpdate();
 
     ImGui::Render();
     ImGui::EndFrame();

@@ -52,8 +52,8 @@ private:
 
     std::unique_ptr<Texture> m_Texture = nullptr;
     
-    std::vector<Vertex> m_Vertices;
-    std::vector<uint32_t> m_Indices;
+    std::vector<Vertex> m_Vertices{};
+    std::vector<uint32_t> m_Indices{};
     
     std::unique_ptr<VertexBuffer> m_VertexBuffer = nullptr;
     std::unique_ptr<IndexBuffer> m_IndexBuffer = nullptr;

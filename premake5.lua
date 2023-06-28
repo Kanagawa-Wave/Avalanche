@@ -78,7 +78,7 @@ Libraries["Vulkan"] = "vulkan-1.lib"
 
 project "Editor"
     kind "ConsoleApp"
-    location "Avalanche"
+    location "Editor"
     language "C++"
     cppdialect "C++20"
     staticruntime "off"

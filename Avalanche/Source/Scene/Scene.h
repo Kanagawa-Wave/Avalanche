@@ -44,4 +44,5 @@ private:
     uint32_t currentID = 0;
 
     friend class Entity;
+    friend class Outliner;
 };

@@ -126,7 +126,7 @@ struct TransformComponent
 
 struct CameraComponent
 {
-    Camera Camera{};
+    Camera AttachedCamera{};
 
     CameraComponent() = default;
     CameraComponent(const CameraComponent&) = default;
@@ -140,7 +140,7 @@ struct PointLightComponent
 
 struct MeshComponent
 {
-    Mesh StaticMesh;
+    Mesh StaticMesh{};
 
     MeshComponent() = default;
 
