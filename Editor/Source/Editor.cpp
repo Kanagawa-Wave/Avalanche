@@ -2,7 +2,6 @@
 
 #include <imgui.h>
 
-
 Application* CreateApplication()
 {
     return new Editor();
@@ -11,18 +10,17 @@ Application* CreateApplication()
 Editor::Editor()
 {
     m_ViewportExtent = m_Window->GetExtent();
-
-    m_Renderer = std::make_unique<Renderer>(m_Window.get(), true);
     m_EditorCamera = std::make_unique<Camera>(m_ViewportExtent.width, m_ViewportExtent.height, 30.0f, 0.1f, 1000.0f);
-    m_Renderer->SetCameraPtr(m_EditorCamera.get());
-    m_Renderer->SetExtentPtr(&m_ViewportExtent);
+
+    m_Renderer = std::make_unique<Renderer>(m_Window.get(), m_EditorCamera.get(), m_ViewportExtent);
 
     m_Scene = std::make_unique<Scene>();
     auto bunny = m_Scene->CreateEntity("bunny");
     bunny.AddComponent<MeshComponent>("Content/bunny.obj")
          .AddTexture("Content/bunny.png");
+    bunny.GetComponent<TransformComponent>().Scale = {20.f, 20.f, 20.f};
     
-    m_Renderer->AppendToDrawList(&bunny.GetComponent<MeshComponent>().StaticMesh);
+    m_Renderer->SubmitScene(m_Scene.get());
 }
 
 void Editor::Update()

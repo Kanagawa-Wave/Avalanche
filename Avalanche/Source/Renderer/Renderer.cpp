@@ -12,9 +12,11 @@
 #include "ImmediateContext.h"
 #include "ImGui/imgui_impl_glfw.h"
 #include "ImGui/imgui_impl_vulkan.h"
+#include "Scene/Entity.h"
+#include "Scene/Components/Components.h"
 
-Renderer::Renderer(Window* window, bool enableImGui)
-    : m_Window(window), m_EnableImGui(enableImGui)
+Renderer::Renderer(Window* window, const Camera* camera, const vk::Extent2D& viewportExtent)
+    : m_Window(window), m_pCamera(camera), m_pExtent(&viewportExtent)
 {
     RenderPassCreateInfo renderPassInfo;
     renderPassInfo.setEnableDepthAttachment(false)
@@ -24,11 +26,8 @@ Renderer::Renderer(Window* window, bool enableImGui)
                   .setInitialLayout(vk::ImageLayout::eUndefined)
                   .setFinalLayout(vk::ImageLayout::ePresentSrcKHR);
     m_PresnetRenderPass = std::make_unique<RenderPass>(renderPassInfo);
-    
-    if (m_EnableImGui)
-    {
-        InitImGui();
-    }
+
+    InitImGui();
 
     window->GetSwapchain()->CreateFramebuffers(window->GetWidth(), window->GetHeight(),
                                                m_PresnetRenderPass->GetRenderPass());
@@ -37,7 +36,7 @@ Renderer::Renderer(Window* window, bool enableImGui)
 
     m_ViewportRenderTarget = std::make_unique<RenderTarget>(window->GetSwapchain()->GetFormat(),
                                                             window->GetExtent(), true);
-    
+
     PipelineCreateInfo pipelineInfo;
     pipelineInfo.setVertexShader("Shaders/Unlit.vert.hlsl.spv")
                 .setFragmentShader("Shaders/Unlit.frag.hlsl.spv")
@@ -50,7 +49,7 @@ Renderer::Renderer(Window* window, bool enableImGui)
     AllocateCommandBuffer();
     CreateFence();
     CreateSemaphores();
-    
+
     m_CameraBuffer = std::make_unique<Buffer>(vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU,
                                               sizeof(CameraData));
     m_GlobalSet->UpdateUniformBuffer(m_CameraBuffer.get(), 0);
@@ -65,11 +64,8 @@ Renderer::~Renderer()
     const auto& device = Context::Instance().GetDevice();
     device.waitIdle();
 
-    if (m_EnableImGui)
-    {
-        ImGui_ImplVulkan_Shutdown();
-        ImGui_ImplGlfw_Shutdown();
-    }
+    ImGui_ImplVulkan_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
 
     device.destroyDescriptorPool(m_ImGuiPool);
     device.destroySemaphore(m_RenderSemaphore);
@@ -77,28 +73,19 @@ Renderer::~Renderer()
     device.destroyFence(m_Fence);
 }
 
-void Renderer::SetCameraPtr(const Camera* camera)
+void Renderer::SubmitScene(Scene* scene)
 {
-    m_pCamera = camera;
-}
-
-void Renderer::SetExtentPtr(const vk::Extent2D* extent)
-{
-    m_pExtent = extent;
-}
-
-void Renderer::AppendToDrawList(const Mesh* mesh)
-{
-    m_DrawList.push_back(mesh);
+    for (const auto obj : scene->GetAllEntitiesWith<MeshComponent>())
+    {
+        Entity entity(obj, scene);
+        m_DrawList.push_back({
+            &entity.GetComponent<MeshComponent>().StaticMesh, &entity.GetComponent<TransformComponent>()
+        });
+    }
 }
 
 void Renderer::OnRender()
 {
-    const glm::mat4 model = glm::scale(glm::mat4(1.f), glm::vec3(10, 10, 10));
-
-    PushConstant pushConstant;
-    pushConstant.model = model;
-
     m_CameraData.SetData(m_pCamera->GetProjection(), m_pCamera->GetView());
     m_CameraBuffer->SetData(&m_CameraData);
     m_TestBuffer->SetData(&m_TestData);
@@ -111,8 +98,6 @@ void Renderer::OnRender()
     }
     device.resetFences(m_Fence);
     m_CommandBuffer.reset();
-
-    m_TextureSet->UpdateTexture(m_DrawList[0]->GetTexture(), 0);
 
     uint32_t imageIndex;
     VkResult result = vkAcquireNextImageKHR(device, m_Window->GetSwapchain()->GetSwapchain(),
@@ -152,12 +137,19 @@ void Renderer::OnRender()
                .setExtent(*m_pExtent);
         m_CommandBuffer.setViewport(0, viewport);
         m_CommandBuffer.setScissor(0, scissor);
+        
+        for (auto [mesh, transform] : m_DrawList)
+        {
+            PushConstant pushConstant;
+            pushConstant.model = transform->GetModelMat();
+            m_CommandBuffer.pushConstants(m_ViewportPipeline->GetLayout(), vk::ShaderStageFlagBits::eVertex, 0,
+                              sizeof(PushConstant),
+                              &pushConstant);
+            m_TextureSet->UpdateTexture(mesh->GetTexture(), 0);
+            mesh->Bind(m_CommandBuffer);
+            mesh->Draw(m_CommandBuffer);
+        }
 
-        m_CommandBuffer.pushConstants(m_ViewportPipeline->GetLayout(), vk::ShaderStageFlagBits::eVertex, 0,
-                                      sizeof(PushConstant),
-                                      &pushConstant);
-        m_DrawList[0]->Bind(m_CommandBuffer);
-        m_DrawList[0]->Draw(m_CommandBuffer);
         m_ViewportRenderTarget->End(m_CommandBuffer);
 
         // Pass #2: Render ImGui
@@ -282,16 +274,17 @@ void Renderer::InitImGui()
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
 
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
+    ImGuiIO& io = ImGui::GetIO();
+    (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Enable Docking
     //io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
     //io.ConfigFlags |= ImGuiConfigFlags_ViewportsNoTaskBarIcons;
     //io.ConfigFlags |= ImGuiConfigFlags_ViewportsNoMerge;
-    
+
     const float DPI_MULTIPLIER = (float)GetDpiForSystem() / 96.f;
-    float fontSize = 18.0f * DPI_MULTIPLIER;// *2.0f;
+    float fontSize = 18.0f * DPI_MULTIPLIER; // *2.0f;
     io.Fonts->AddFontFromFileTTF("Content/SF-Mono-Light.otf", fontSize);
     io.FontDefault = io.Fonts->AddFontFromFileTTF("Content/SF-Mono-Regular.otf", fontSize);
 
@@ -308,35 +301,35 @@ void Renderer::InitImGui()
     }
 
     auto& colors = ImGui::GetStyle().Colors;
-    colors[ImGuiCol_WindowBg] = ImVec4{ 0.1f, 0.105f, 0.11f, 1.0f };
+    colors[ImGuiCol_WindowBg] = ImVec4{0.1f, 0.105f, 0.11f, 1.0f};
 
     // Headers
-    colors[ImGuiCol_Header] = ImVec4{ 0.2f, 0.205f, 0.21f, 1.0f };
-    colors[ImGuiCol_HeaderHovered] = ImVec4{ 0.3f, 0.305f, 0.31f, 1.0f };
-    colors[ImGuiCol_HeaderActive] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
-		
+    colors[ImGuiCol_Header] = ImVec4{0.2f, 0.205f, 0.21f, 1.0f};
+    colors[ImGuiCol_HeaderHovered] = ImVec4{0.3f, 0.305f, 0.31f, 1.0f};
+    colors[ImGuiCol_HeaderActive] = ImVec4{0.15f, 0.1505f, 0.151f, 1.0f};
+
     // Buttons
-    colors[ImGuiCol_Button] = ImVec4{ 0.2f, 0.205f, 0.21f, 1.0f };
-    colors[ImGuiCol_ButtonHovered] = ImVec4{ 0.3f, 0.305f, 0.31f, 1.0f };
-    colors[ImGuiCol_ButtonActive] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
+    colors[ImGuiCol_Button] = ImVec4{0.2f, 0.205f, 0.21f, 1.0f};
+    colors[ImGuiCol_ButtonHovered] = ImVec4{0.3f, 0.305f, 0.31f, 1.0f};
+    colors[ImGuiCol_ButtonActive] = ImVec4{0.15f, 0.1505f, 0.151f, 1.0f};
 
     // Frame BG
-    colors[ImGuiCol_FrameBg] = ImVec4{ 0.2f, 0.205f, 0.21f, 1.0f };
-    colors[ImGuiCol_FrameBgHovered] = ImVec4{ 0.3f, 0.305f, 0.31f, 1.0f };
-    colors[ImGuiCol_FrameBgActive] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
+    colors[ImGuiCol_FrameBg] = ImVec4{0.2f, 0.205f, 0.21f, 1.0f};
+    colors[ImGuiCol_FrameBgHovered] = ImVec4{0.3f, 0.305f, 0.31f, 1.0f};
+    colors[ImGuiCol_FrameBgActive] = ImVec4{0.15f, 0.1505f, 0.151f, 1.0f};
 
     // Tabs
-    colors[ImGuiCol_Tab] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
-    colors[ImGuiCol_TabHovered] = ImVec4{ 0.38f, 0.3805f, 0.381f, 1.0f };
-    colors[ImGuiCol_TabActive] = ImVec4{ 0.28f, 0.2805f, 0.281f, 1.0f };
-    colors[ImGuiCol_TabUnfocused] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
-    colors[ImGuiCol_TabUnfocusedActive] = ImVec4{ 0.2f, 0.205f, 0.21f, 1.0f };
+    colors[ImGuiCol_Tab] = ImVec4{0.15f, 0.1505f, 0.151f, 1.0f};
+    colors[ImGuiCol_TabHovered] = ImVec4{0.38f, 0.3805f, 0.381f, 1.0f};
+    colors[ImGuiCol_TabActive] = ImVec4{0.28f, 0.2805f, 0.281f, 1.0f};
+    colors[ImGuiCol_TabUnfocused] = ImVec4{0.15f, 0.1505f, 0.151f, 1.0f};
+    colors[ImGuiCol_TabUnfocusedActive] = ImVec4{0.2f, 0.205f, 0.21f, 1.0f};
 
     // Title
-    colors[ImGuiCol_TitleBg] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
-    colors[ImGuiCol_TitleBgActive] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
-    colors[ImGuiCol_TitleBgCollapsed] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
-    
+    colors[ImGuiCol_TitleBg] = ImVec4{0.15f, 0.1505f, 0.151f, 1.0f};
+    colors[ImGuiCol_TitleBgActive] = ImVec4{0.15f, 0.1505f, 0.151f, 1.0f};
+    colors[ImGuiCol_TitleBgCollapsed] = ImVec4{0.15f, 0.1505f, 0.151f, 1.0f};
+
     ImGui_ImplGlfw_InitForVulkan(m_Window->GetGLFWWindow(), true);
 
     ImGui_ImplVulkan_InitInfo imguiInfo{};

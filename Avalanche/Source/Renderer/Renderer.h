@@ -4,11 +4,13 @@
 #include <glm/glm.hpp>
 
 #include "RenderTarget.h"
+#include "Scene/Scene.h"
 
 #include "Scene/Components/Camera.h"
 #include "Scene/Components/Mesh.h"
 #include "Vulkan/Pipeline.h"
 
+struct TransformComponent;
 class Window;
 
 struct PushConstant
@@ -19,12 +21,10 @@ struct PushConstant
 class Renderer
 {
 public:
-    Renderer(Window* window, bool enableImGui);
+    Renderer(Window* window, const Camera* camera, const vk::Extent2D& viewportExtent);
     ~Renderer();
-
-    void SetCameraPtr(const Camera* camera);
-    void SetExtentPtr(const vk::Extent2D* extent);
-    void AppendToDrawList(const Mesh* mesh);
+    
+    void SubmitScene(Scene* scene);
     void OnRender();
 
     void ResizeViewport(vk::Extent2D extent) const;
@@ -39,7 +39,6 @@ private:
 
 private:
     Window* m_Window;
-    bool m_EnableImGui = true;
 
     std::unique_ptr<RenderPass> m_PresnetRenderPass;
     std::unique_ptr<Pipeline> m_Pipeline;
@@ -77,5 +76,10 @@ private:
 
     std::unique_ptr<DescriptorSet> m_GlobalSet, m_TextureSet;
 
-    std::vector<const Mesh*> m_DrawList;
+    struct DrawableObject
+    {
+        const Mesh* pMesh = nullptr;
+        const TransformComponent* pTransform = nullptr;
+    };
+    std::vector<DrawableObject> m_DrawList;
 };
