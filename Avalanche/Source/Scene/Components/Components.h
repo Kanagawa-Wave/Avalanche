@@ -37,6 +37,7 @@ struct IDComponent
 struct TransformComponent
 {
     glm::vec3 Translation = {0.0f, 0.0f, 0.0f};
+    // Stored as degrees
     glm::vec3 Rotation = {0.0f, 0.0f, 0.0f};
     glm::vec3 Scale = {1.0f, 1.0f, 1.0f};
 
@@ -64,12 +65,14 @@ struct TransformComponent
 
     glm::mat4 GetModelMat() const
     {
-        const float c3 = glm::cos(Rotation.z);
-        const float s3 = glm::sin(Rotation.z);
-        const float c2 = glm::cos(Rotation.x);
-        const float s2 = glm::sin(Rotation.x);
-        const float c1 = glm::cos(Rotation.y);
-        const float s1 = glm::sin(Rotation.y);
+        // convert to radians
+        const glm::vec3 rotation = glm::radians(Rotation);
+        const float c3 = glm::cos(rotation.z);
+        const float s3 = glm::sin(rotation.z);
+        const float c2 = glm::cos(rotation.x);
+        const float s2 = glm::sin(rotation.x);
+        const float c1 = glm::cos(rotation.y);
+        const float s1 = glm::sin(rotation.y);
         return glm::mat4{
             {
                 Scale.x * (c1 * c3 + s1 * s2 * s3),
@@ -95,12 +98,14 @@ struct TransformComponent
 
     glm::mat4 GetNormalMat() const
     {
-        const float c3 = glm::cos(Rotation.z);
-        const float s3 = glm::sin(Rotation.z);
-        const float c2 = glm::cos(Rotation.x);
-        const float s2 = glm::sin(Rotation.x);
-        const float c1 = glm::cos(Rotation.y);
-        const float s1 = glm::sin(Rotation.y);
+        // convert to radians
+        const glm::vec3 rotation = glm::radians(Rotation);
+        const float c3 = glm::cos(rotation.z);
+        const float s3 = glm::sin(rotation.z);
+        const float c2 = glm::cos(rotation.x);
+        const float s2 = glm::sin(rotation.x);
+        const float c1 = glm::cos(rotation.y);
+        const float s1 = glm::sin(rotation.y);
 
         const glm::vec3 inverseScale = 1.0f / Scale;
 
@@ -151,9 +156,9 @@ struct MeshComponent
 
     MeshComponent(const MeshComponent&) = default;
 
-    void AddTexture(const std::string& texturePath)
+    void SetTexture(const std::string& texturePath)
     {
-        StaticMesh.AddTexture(texturePath);
+        StaticMesh.SetTexture(texturePath);
     }
 };
 

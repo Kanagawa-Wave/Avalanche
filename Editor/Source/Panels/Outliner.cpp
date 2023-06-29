@@ -31,8 +31,9 @@ void Outliner::OnImGuiUpdate()
 
 void Outliner::DrawEntityNode(Entity entity)
 {
-    ImGuiTreeNodeFlags flags = ((m_SelectedEntity == entity) ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow;
-    
+    ImGuiTreeNodeFlags flags = ((m_SelectedEntity == entity) ? ImGuiTreeNodeFlags_Selected : 0) |
+        ImGuiTreeNodeFlags_OpenOnArrow;
+
     std::string tag = entity.GetComponent<TagComponent>().Tag;
     bool opened = ImGui::TreeNodeEx((void*)(uint64_t)(uint32_t)entity, flags, tag.c_str());
 
@@ -70,12 +71,40 @@ void Outliner::DrawComponents(Entity entity)
 
     if (entity.HasComponent<TransformComponent>())
     {
-        if (ImGui::TreeNodeEx((void*)typeid(TransformComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen, "Transform"))
+        if (ImGui::TreeNodeEx((void*)typeid(TransformComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen,
+                              "Transform"))
         {
+            if (ImGui::SmallButton("Reset"))
+            {
+                entity.RemoveComponent<TransformComponent>();
+                entity.AddComponent<TransformComponent>();
+            }
             auto& transform = entity.GetComponent<TransformComponent>();
             ImGui::DragFloat3("Position", glm::value_ptr(transform.Translation), 0.1f);
-            ImGui::DragFloat3("Rotation", glm::value_ptr(transform.Rotation), 0.1f);
+            ImGui::DragFloat3("Rotation", glm::value_ptr(transform.Rotation), 1.f);
             ImGui::DragFloat3("Scale", glm::value_ptr(transform.Scale), 0.1f);
+            ImGui::TreePop();
+            ImGui::Separator();
+        }
+    }
+
+    if (entity.HasComponent<MeshComponent>())
+    {
+        if (ImGui::TreeNodeEx((void*)typeid(MeshComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen, "Mesh"))
+        {
+            const auto meshPath = entity.GetComponent<MeshComponent>().StaticMesh.GetMeshPath().c_str();
+            const auto texturePath = entity.GetComponent<MeshComponent>().StaticMesh.GetTexturePath().c_str();
+            ImGui::TextWrapped("Mesh Path: %s", meshPath);
+            if (ImGui::Button("Load Mesh"))
+            {
+                entity.RemoveComponent<MeshComponent>();
+                entity.AddComponent<MeshComponent>(FileHelper::OpenFile(".obj")).SetTexture("Content/white.png");
+            }
+            ImGui::TextWrapped("Texture Path: %s", texturePath);
+            if (ImGui::Button("Load Texture"))
+            {
+                entity.GetComponent<MeshComponent>().SetTexture(FileHelper::OpenFile(".png"));
+            }
             ImGui::TreePop();
             ImGui::Separator();
         }

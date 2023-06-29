@@ -19,8 +19,8 @@ Editor::Editor()
     m_Scene = std::make_unique<Scene>();
     auto bunny = m_Scene->CreateEntity("bunny");
     bunny.AddComponent<MeshComponent>("Content/bunny.obj")
-         .AddTexture("Content/bunny.png");
-    bunny.GetComponent<TransformComponent>().Scale = {20.f, 20.f, 20.f};
+         .SetTexture("Content/bunny.png");
+    bunny.GetComponent<TransformComponent>().Scale = {10.f, 10.f, 10.f};
     
     m_Renderer->SubmitScene(m_Scene.get());
 
@@ -57,7 +57,7 @@ void Editor::OnImGuiUpdate()
     ImGui::End();
 
     ImGui::Begin("Content Browser");
-    if (ImGui::SmallButton("Open"))
+    if (ImGui::SmallButton("Import"))
     {
         FileHelper::OpenFile();
     }

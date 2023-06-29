@@ -41,14 +41,20 @@ public:
     void Bind(vk::CommandBuffer commandBuffer) const;
     void Draw(vk::CommandBuffer commandBuffer) const;
 
-    void AddTexture(const std::string& path);
+    void SetTexture(const std::string& path);
     
     Texture* GetTexture() const { return m_Texture.get(); }
     VertexBuffer* GetVertexBuffer() const { return m_VertexBuffer.get(); }
     IndexBuffer* GetIndexBuffer() const { return m_IndexBuffer.get(); }
 
+    const std::string& GetMeshPath() const { return m_MeshPath; }
+    const std::string& GetTexturePath() const { return m_TexturePath; }
+
 private:
     void LoadObjFromFile(const std::string& path);
+
+    std::string m_MeshPath{};
+    std::string m_TexturePath{};
 
     std::unique_ptr<Texture> m_Texture = nullptr;
     

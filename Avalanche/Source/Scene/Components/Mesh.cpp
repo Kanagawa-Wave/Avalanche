@@ -26,6 +26,7 @@ namespace std
 }
 
 Mesh::Mesh(const std::string& meshPath)
+    : m_MeshPath(meshPath)
 {
     LoadObjFromFile(meshPath);
     
@@ -46,9 +47,11 @@ void Mesh::Draw(vk::CommandBuffer commandBuffer) const
     commandBuffer.drawIndexed(m_IndexBuffer->GetCount(), 1, 0, 0, 0);
 }
 
-void Mesh::AddTexture(const std::string& path)
+void Mesh::SetTexture(const std::string& path)
 {
+    m_Texture.reset();
     m_Texture = std::make_unique<Texture>(path);
+    m_TexturePath = path;
 }
 
 void Mesh::LoadObjFromFile(const std::string& path)
