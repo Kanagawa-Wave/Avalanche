@@ -16,6 +16,15 @@ void Outliner::SetContext(Scene* scene)
 void Outliner::OnImGuiUpdate()
 {
     ImGui::Begin("Outliner");
+    ImGui::BeginTabBar("OutlinerTabBar");
+    if (ImGui::TabItemButton("+"))
+    {
+        m_SelectedEntity = m_Context->CreateEntity();
+    }
+    if (ImGui::TabItemButton("-"))
+    {
+    }
+    ImGui::EndTabBar();
     m_Context->m_Registry.each([&](auto enttHandle)
     {
         Entity entity(enttHandle, m_Context);
@@ -31,25 +40,25 @@ void Outliner::OnImGuiUpdate()
 
 void Outliner::DrawEntityNode(Entity entity)
 {
-    ImGuiTreeNodeFlags flags = ((m_SelectedEntity == entity) ? ImGuiTreeNodeFlags_Selected : 0) |
-        ImGuiTreeNodeFlags_OpenOnArrow;
-
+    ImGuiTreeNodeFlags flags = ((m_SelectedEntity == entity) ? ImGuiTreeNodeFlags_Selected : 0); // | ImGuiTreeNodeFlags_OpenOnArrow;
     std::string tag = entity.GetComponent<TagComponent>().Tag;
     bool opened = ImGui::TreeNodeEx((void*)(uint64_t)(uint32_t)entity, flags, tag.c_str());
-
+    
     if (ImGui::IsItemClicked())
     {
         m_SelectedEntity = entity;
     }
 
+    // if (opened)
+    // {
+    //     ImGuiTreeNodeFlags flagsChild = ImGuiTreeNodeFlags_OpenOnArrow;
+    //     bool openedChild = ImGui::TreeNodeEx((void*)9817239, flagsChild, tag.c_str());
+    //     if (openedChild)
+    //         ImGui::TreePop();
+    //     ImGui::TreePop();
+    // }
     if (opened)
-    {
-        ImGuiTreeNodeFlags flagsChild = ImGuiTreeNodeFlags_OpenOnArrow;
-        bool openedChild = ImGui::TreeNodeEx((void*)9817239, flagsChild, tag.c_str());
-        if (openedChild)
-            ImGui::TreePop();
         ImGui::TreePop();
-    }
 }
 
 void Outliner::DrawComponents(Entity entity)
@@ -97,13 +106,21 @@ void Outliner::DrawComponents(Entity entity)
             ImGui::TextWrapped("Mesh Path: %s", meshPath);
             if (ImGui::Button("Load Mesh"))
             {
-                entity.RemoveComponent<MeshComponent>();
-                entity.AddComponent<MeshComponent>(FileHelper::OpenFile(".obj")).SetTexture("Content/white.png");
+                const std::string path = FileHelper::OpenFile("3D Model (*.obj)\0*.obj\0");
+                if (!path.empty())
+                {
+                    entity.RemoveComponent<MeshComponent>();
+                    entity.AddComponent<MeshComponent>(path).SetTexture("Content/white.png");
+                }
             }
             ImGui::TextWrapped("Texture Path: %s", texturePath);
             if (ImGui::Button("Load Texture"))
             {
-                entity.GetComponent<MeshComponent>().SetTexture(FileHelper::OpenFile(".png"));
+                const std::string path = FileHelper::OpenFile("Image File (*.png)\0*.png\0");
+                if (!path.empty())
+                {
+                    entity.GetComponent<MeshComponent>().SetTexture(path);
+                }
             }
             ImGui::TreePop();
             ImGui::Separator();

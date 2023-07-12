@@ -17,13 +17,14 @@ Editor::Editor()
     m_Renderer = std::make_unique<Renderer>(m_Window.get(), m_EditorCamera.get(), m_ViewportExtent);
 
     m_Scene = std::make_unique<Scene>();
+    
     auto bunny = m_Scene->CreateEntity("bunny");
     bunny.AddComponent<MeshComponent>("Content/bunny.obj")
          .SetTexture("Content/bunny.png");
     bunny.GetComponent<TransformComponent>().Scale = {10.f, 10.f, 10.f};
-    
-    m_Renderer->SubmitScene(m_Scene.get());
 
+    m_Renderer->SubmitScene(m_Scene.get());
+    
     m_Outliner = std::make_unique<Outliner>(m_Scene.get());
 }
 
