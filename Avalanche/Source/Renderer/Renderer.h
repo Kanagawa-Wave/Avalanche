@@ -21,7 +21,8 @@ struct PushConstant
 class Renderer
 {
 public:
-    Renderer(Window* window, const Camera* camera, const vk::Extent2D& viewportExtent);
+    Renderer() = default;
+    Renderer(Window* window, const Camera& camera, const vk::Extent2D& viewportExtent);
     ~Renderer();
     
     void SubmitScene(Scene* scene);
@@ -38,18 +39,18 @@ private:
     void InitImGui();
 
 private:
-    Window* m_Window;
+    Window* m_Window = nullptr;
 
-    std::unique_ptr<RenderPass> m_PresnetRenderPass;
-    std::unique_ptr<Pipeline> m_Pipeline;
+    std::unique_ptr<RenderPass> m_PresnetRenderPass = nullptr;
+    std::unique_ptr<Pipeline> m_Pipeline = nullptr;
 
-    std::unique_ptr<Pipeline> m_ViewportPipeline;
-    std::unique_ptr<RenderTarget> m_ViewportRenderTarget;
+    std::unique_ptr<Pipeline> m_ViewportPipeline = nullptr;
+    std::unique_ptr<RenderTarget> m_ViewportRenderTarget = nullptr;
 
-    vk::DescriptorPool m_ImGuiPool;
-    vk::CommandBuffer m_CommandBuffer;
-    vk::Semaphore m_RenderSemaphore, m_PresentSemaphore;
-    vk::Fence m_Fence;
+    vk::DescriptorPool m_ImGuiPool = VK_NULL_HANDLE;
+    vk::CommandBuffer m_CommandBuffer = VK_NULL_HANDLE;
+    vk::Semaphore m_RenderSemaphore = VK_NULL_HANDLE, m_PresentSemaphore = VK_NULL_HANDLE;
+    vk::Fence m_Fence = VK_NULL_HANDLE;
     
     struct CameraData
     {
@@ -72,14 +73,14 @@ private:
     
     const Camera* m_pCamera = nullptr;
     const vk::Extent2D* m_pExtent = nullptr;
-    std::unique_ptr<Buffer> m_CameraBuffer, m_TestBuffer;
+    std::unique_ptr<Buffer> m_CameraBuffer = nullptr, m_TestBuffer = nullptr;
 
-    std::unique_ptr<DescriptorSet> m_GlobalSet, m_TextureSet;
+    std::unique_ptr<DescriptorSet> m_GlobalSet = nullptr, m_TextureSet = nullptr;
 
     struct DrawableObject
     {
         const Mesh* pMesh = nullptr;
         const TransformComponent* pTransform = nullptr;
     };
-    std::vector<DrawableObject> m_DrawList;
+    std::vector<DrawableObject> m_DrawList{};
 };

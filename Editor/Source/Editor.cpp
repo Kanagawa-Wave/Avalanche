@@ -12,9 +12,9 @@ Application* CreateApplication()
 Editor::Editor()
 {
     m_ViewportExtent = m_Window->GetExtent();
-    m_EditorCamera = std::make_unique<Camera>(m_ViewportExtent.width, m_ViewportExtent.height, 30.0f, 0.1f, 1000.0f);
+    m_EditorCamera = Camera(m_ViewportExtent.width, m_ViewportExtent.height, 30.0f, 0.1f, 1000.0f);
 
-    m_Renderer = std::make_unique<Renderer>(m_Window.get(), m_EditorCamera.get(), m_ViewportExtent);
+    m_Renderer = std::make_unique<Renderer>(m_Window.get(), m_EditorCamera, m_ViewportExtent);
 
     m_Scene = std::make_unique<Scene>();
     
@@ -32,7 +32,7 @@ void Editor::Update()
 {
     m_Window->PollEvents();
     OnImGuiUpdate();
-    m_EditorCamera->OnUpdate(Timer::GetDeltaTime());
+    m_EditorCamera.OnUpdate(Timer::GetDeltaTime());
 }
 
 void Editor::Render() const
@@ -69,7 +69,7 @@ void Editor::OnImGuiUpdate()
     const ImVec2 viewportExtent = ImGui::GetContentRegionAvail();
     m_ViewportExtent.setWidth((uint32_t)viewportExtent.x)
                     .setHeight((uint32_t)viewportExtent.y);
-    m_EditorCamera->Resize(m_ViewportExtent.width, m_ViewportExtent.height);
+    m_EditorCamera.Resize(m_ViewportExtent.width, m_ViewportExtent.height);
     m_Renderer->ResizeViewport(m_ViewportExtent);
     ImGui::Image(m_Renderer->GetViewportTextureID(), {
                      (float)m_ViewportExtent.width,

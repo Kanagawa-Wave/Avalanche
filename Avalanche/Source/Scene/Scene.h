@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include <entt.hpp>
+#include <entt/entt.hpp>
 
 class Entity;
 
@@ -9,8 +9,8 @@ class Scene
 public:
     using Map = std::unordered_map<uint32_t, entt::entity>;
     
-    Scene();
-    ~Scene();
+    Scene() = default;
+    ~Scene() = default;
     
     Entity CreateEntity(const std::string& name = std::string());
     Entity CreateEntityWithUUID(uint32_t uuid, const std::string& name = std::string());
@@ -33,13 +33,13 @@ public:
     }
     
 private:
-    entt::registry m_Registry;
+    entt::registry m_Registry{};
     uint32_t m_ViewportWidth = 0, m_ViewportHeight = 0;
     bool m_IsRunning = false;
     bool m_IsPaused = false;
     int m_StepFrames = 0;
 
-    Map m_EntityMap;
+    Map m_EntityMap{};
 
     uint32_t currentID = 0;
 

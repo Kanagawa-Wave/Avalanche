@@ -13,8 +13,8 @@
 #include "Scene/Entity.h"
 #include "Scene/Components/Components.h"
 
-Renderer::Renderer(Window* window, const Camera* camera, const vk::Extent2D& viewportExtent)
-    : m_Window(window), m_pCamera(camera), m_pExtent(&viewportExtent)
+Renderer::Renderer(Window* window, const Camera& camera, const vk::Extent2D& viewportExtent)
+    : m_Window(window), m_pCamera(&camera), m_pExtent(&viewportExtent)
 {
     RenderPassCreateInfo renderPassInfo;
     renderPassInfo.setEnableDepthAttachment(false)

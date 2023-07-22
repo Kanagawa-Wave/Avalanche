@@ -62,5 +62,5 @@ private:
 
     GLFWwindow* m_Window = nullptr;
 
-    std::unique_ptr<Swapchain> m_Swapchain;
+    std::unique_ptr<Swapchain> m_Swapchain = nullptr;
 };

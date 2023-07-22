@@ -3,7 +3,7 @@
 #include "Scene.h"
 #include "Components/Components.h"
 
-#include <entt.hpp>
+#include <entt/entt.hpp>
 
 class Entity
 {

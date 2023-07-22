@@ -65,16 +65,19 @@ IncludeDir["SPDLOG"] = "Avalanche/ThirdParty/spdlog/include"
 IncludeDir["IMGUI"] = "Avalanche/ThirdParty/imgui"
 IncludeDir["STB"] = "Avalanche/ThirdParty/stb"
 IncludeDir["TINYOBJLOADER"] = "Avalanche/ThirdParty/tinyobjloader"
-IncludeDir["ENTT"] = "Avalanche/ThirdParty/entt/single_include/entt"
+IncludeDir["ENTT"] = "Avalanche/ThirdParty/entt/single_include"
 IncludeDir["VKBOOTSTRAP"] = "Avalanche/ThirdParty/vk-bootstrap/src"
 IncludeDir["VMA"] = "Avalanche/ThirdParty/VulkanMemoryAllocator/include"
+IncludeDir["Assimp"] = "Avalanche/ThirdParty/Assimp/include"
 
 LibraryDir = {}
 LibraryDir["VulkanSDK"] = "%{VULKAN_SDK}/Lib"
+LibraryDir["Assimp"] = "Avalanche/ThirdParty/Assimp/lib/x64"
 
 Libraries = {}
 Libraries["OpenGL"] = "opengl32.lib"
 Libraries["Vulkan"] = "vulkan-1.lib"
+Libraries["Assimp"] = "assimp-vc143-mt.lib"
 
 project "Editor"
     kind "ConsoleApp"
@@ -176,6 +179,7 @@ project "Avalanche"
         "%{IncludeDir.TINYOBJLOADER}",
         "%{IncludeDir.STB}",
         "%{IncludeDir.ENTT}",
+        "%{IncludeDir.Assimp}",
     }
     
     links
@@ -183,6 +187,7 @@ project "Avalanche"
         "Shcore.lib",
         "Imm32.lib",
         "%{Libraries.Vulkan}",
+        "%{Libraries.Assimp}",
         "GLFW",
         "ImGui",
         "VkBootstrap",
@@ -196,6 +201,7 @@ project "Avalanche"
     libdirs
     {
         "%{LibraryDir.VulkanSDK}",
+        "%{LibraryDir.Assimp}",
     }
     
     defines

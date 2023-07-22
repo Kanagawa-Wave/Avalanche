@@ -21,6 +21,6 @@ private:
     glm::vec3 m_Position{0, 0, 6}, m_Forward{0, 0, -1};
     glm::mat4 m_View{1.0}, m_Projection{1.0};
 
-    uint32_t m_Width, m_Height = 0;
-    float m_FOV, m_NearClip, m_FarClip = 0.f;
+    uint32_t m_Width = 0, m_Height = 0;
+    float m_FOV = 0.f, m_NearClip = 0.f, m_FarClip = 0.f;
 };
