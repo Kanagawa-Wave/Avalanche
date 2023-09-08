@@ -23,6 +23,8 @@ Editor::Editor()
          .SetTexture("Content/bunny.png");
     bunny.GetComponent<TransformComponent>().Scale = {10.f, 10.f, 10.f};
 
+    Model test("Content/bunny.obj");
+
     m_Renderer->SubmitScene(m_Scene.get());
     
     m_Outliner = std::make_unique<Outliner>(m_Scene.get());

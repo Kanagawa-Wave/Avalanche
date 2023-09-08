@@ -5,6 +5,10 @@
 #include "Renderer/Texture.h"
 #include "Renderer/Vulkan/Buffers.h"
 
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+
 struct Vertex
 {
     glm::vec3 position{};
@@ -37,6 +41,7 @@ class Mesh
 public:
     Mesh() = default;
     Mesh(const std::string& meshPath);
+    Mesh(const aiMesh* mesh);
 
     void Bind(vk::CommandBuffer commandBuffer) const;
     void Draw(vk::CommandBuffer commandBuffer) const;

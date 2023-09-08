@@ -7,6 +7,7 @@
 #include <glm/gtx/quaternion.hpp>
 
 #include "Camera.h"
+#include "Model.h"
 #include "Mesh.h"
 
 struct TagComponent
