@@ -1,5 +1,7 @@
 ﻿#include "Scene.h"
+
 #include "Entity.h"
+#include "Renderer/Renderer.h"
 
 Entity Scene::CreateEntity(const std::string& name)
 {
@@ -33,7 +35,7 @@ Entity Scene::FindEntityByName(std::string_view name)
     {
         const TagComponent& tc = view.get<TagComponent>(entity);
         if (tc.Tag == name)
-            return {entity,this};
+            return {entity, this};
     }
     return {};
 }
@@ -41,7 +43,7 @@ Entity Scene::FindEntityByName(std::string_view name)
 Entity Scene::GetEntityByUUID(uint32_t uuid)
 {
     if (m_EntityMap.find(uuid) != m_EntityMap.end())
-        return { m_EntityMap.at(uuid), this };
+        return {m_EntityMap.at(uuid), this};
 
     return {};
 }

@@ -6,10 +6,16 @@ Model::Model(const std::string& path)
     LoadModelAssimp(path);
 }
 
+Model::~Model()
+{
+    for (const auto mesh : m_Meshes)
+        delete mesh;
+}
+
 void Model::LoadModelAssimp(const std::string& path)
 {
     Assimp::Importer importer;
-    const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_GenNormals);
+    const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenNormals);
 
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
     {
@@ -24,7 +30,7 @@ void Model::ProcessNode(const aiScene* scene, const aiNode* node)
     // Process all meshes in this node
     for (uint32_t i = 0; i < node->mNumMeshes; i++)
     {
-        m_Meshes.emplace_back(Mesh(scene->mMeshes[node->mMeshes[i]]));
+        m_Meshes.emplace_back(new Mesh(scene->mMeshes[node->mMeshes[i]]));
     }
 
     // Process all child nodes of this node
@@ -33,3 +39,11 @@ void Model::ProcessNode(const aiScene* scene, const aiNode* node)
         ProcessNode(scene, node->mChildren[i]);
     }
 }
+
+void Model::SetTexture(const std::string& path)
+{
+    ASSERT(m_Meshes.size() == 1, "Only works with Model with one mesh")
+    m_Meshes[0]->SetTexture(path);
+}
+
+

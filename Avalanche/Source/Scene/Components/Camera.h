@@ -13,7 +13,7 @@ public:
     glm::mat4 GetProjection() const { return m_Projection; }
     
     bool OnUpdate(float deltaTime);
-    void Resize(uint32_t width, uint32_t height);
+    void OnResize(uint32_t width, uint32_t height);
 private:
     void RecalculateView();
     

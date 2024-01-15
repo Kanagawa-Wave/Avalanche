@@ -144,22 +144,16 @@ struct PointLightComponent
     PointLightComponent(const PointLightComponent&) = default;
 };
 
-struct MeshComponent
+struct StaticMeshComponent
 {
-    Mesh StaticMesh{};
-
-    MeshComponent() = default;
-
-    MeshComponent(const std::string& meshPath)
+    Mesh StaticMesh;
+    
+    StaticMeshComponent() = default;
+    StaticMeshComponent(const StaticMeshComponent&) = default;
+    
+    StaticMeshComponent(const std::string& path)
+	    : StaticMesh(path)
     {
-        StaticMesh = Mesh(meshPath);
-    }
-
-    MeshComponent(const MeshComponent&) = default;
-
-    void SetTexture(const std::string& texturePath)
-    {
-        StaticMesh.SetTexture(texturePath);
     }
 };
 
@@ -168,5 +162,5 @@ struct ComponentGroup
 {
 };
 
-using AllComponents = ComponentGroup<IDComponent, TagComponent, TransformComponent, CameraComponent,
-                                     MeshComponent>;
+using AllComponents = ComponentGroup<IDComponent, TagComponent, TransformComponent, CameraComponent, StaticMeshComponent
+                                     >;

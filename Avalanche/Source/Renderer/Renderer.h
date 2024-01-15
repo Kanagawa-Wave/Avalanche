@@ -5,9 +5,8 @@
 
 #include "RenderTarget.h"
 #include "Scene/Scene.h"
+#include "Scene/Components/Components.h"
 
-#include "Scene/Components/Camera.h"
-#include "Scene/Components/Mesh.h"
 #include "Vulkan/Pipeline.h"
 
 struct TransformComponent;
@@ -22,13 +21,15 @@ class Renderer
 {
 public:
     Renderer() = default;
-    Renderer(Window* window, const Camera& camera, const vk::Extent2D& viewportExtent);
+    Renderer(Window* window, const vk::Extent2D& viewportExtent);
     ~Renderer();
-    
-    void SubmitScene(Scene* scene);
-    void OnRender();
 
-    void ResizeViewport(vk::Extent2D extent) const;
+    void Begin(const Camera& camera);
+    void DrawModel(const TransformComponent& transform, const StaticMeshComponent& mesh) const;
+    void End();
+    void Render(const Camera& camera, const Scene& scene);
+
+    void OnResize(vk::Extent2D extent) const;
     void* GetViewportTextureID() const;
 
 private:
@@ -40,6 +41,8 @@ private:
 
 private:
     Window* m_Window = nullptr;
+
+    uint32_t m_ImageIndex = 0;
 
     std::unique_ptr<RenderPass> m_PresnetRenderPass = nullptr;
     std::unique_ptr<Pipeline> m_Pipeline = nullptr;
@@ -70,8 +73,7 @@ private:
     {
         float test = 1.f;
     } m_TestData;
-    
-    const Camera* m_pCamera = nullptr;
+
     const vk::Extent2D* m_pExtent = nullptr;
     std::unique_ptr<Buffer> m_CameraBuffer = nullptr, m_TestBuffer = nullptr;
 

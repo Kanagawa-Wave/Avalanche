@@ -16,7 +16,7 @@ private:
     
     vk::Extent2D m_ViewportExtent;
     
-    Camera m_EditorCamera;
+    std::unique_ptr<Camera> m_EditorCamera;
     
     std::unique_ptr<Scene> m_Scene;
     

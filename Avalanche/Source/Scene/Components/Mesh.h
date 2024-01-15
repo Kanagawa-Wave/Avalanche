@@ -39,7 +39,6 @@ struct Vertex
 class Mesh
 {
 public:
-    Mesh() = default;
     Mesh(const std::string& meshPath);
     Mesh(const aiMesh* mesh);
 
@@ -58,10 +57,10 @@ public:
 private:
     void LoadObjFromFile(const std::string& path);
 
-    std::string m_MeshPath{};
-    std::string m_TexturePath{};
+    std::string m_MeshPath;
+    std::string m_TexturePath;
 
-    std::unique_ptr<Texture> m_Texture = nullptr;
+    std::unique_ptr<Texture> m_Texture;
     
     std::vector<Vertex> m_Vertices{};
     std::vector<uint32_t> m_Indices{};

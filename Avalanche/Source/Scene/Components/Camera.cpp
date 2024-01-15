@@ -87,7 +87,7 @@ bool Camera::OnUpdate(float deltaTime)
     return moved;
 }
 
-void Camera::Resize(uint32_t width, uint32_t height)
+void Camera::OnResize(uint32_t width, uint32_t height)
 {
     if (m_Width == width && m_Height == height)
         return;

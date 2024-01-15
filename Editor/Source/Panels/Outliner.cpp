@@ -97,33 +97,33 @@ void Outliner::DrawComponents(Entity entity)
         }
     }
 
-    if (entity.HasComponent<MeshComponent>())
-    {
-        if (ImGui::TreeNodeEx((void*)typeid(MeshComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen, "Mesh"))
-        {
-            const auto meshPath = entity.GetComponent<MeshComponent>().StaticMesh.GetMeshPath().c_str();
-            const auto texturePath = entity.GetComponent<MeshComponent>().StaticMesh.GetTexturePath().c_str();
-            ImGui::TextWrapped("Mesh Path: %s", meshPath);
-            if (ImGui::Button("Load Mesh"))
-            {
-                const std::string path = FileHelper::OpenFile("3D Model (*.obj)\0*.obj\0");
-                if (!path.empty())
-                {
-                    entity.RemoveComponent<MeshComponent>();
-                    entity.AddComponent<MeshComponent>(path).SetTexture("Content/white.png");
-                }
-            }
-            ImGui::TextWrapped("Texture Path: %s", texturePath);
-            if (ImGui::Button("Load Texture"))
-            {
-                const std::string path = FileHelper::OpenFile("Image File (*.png)\0*.png\0");
-                if (!path.empty())
-                {
-                    entity.GetComponent<MeshComponent>().SetTexture(path);
-                }
-            }
-            ImGui::TreePop();
-            ImGui::Separator();
-        }
-    }
+    // if (entity.HasComponent<MeshComponent>())
+    // {
+    //     if (ImGui::TreeNodeEx((void*)typeid(MeshComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen, "Mesh"))
+    //     {
+    //         const auto meshPath = entity.GetComponent<MeshComponent>().StaticMesh.GetMeshPath().c_str();
+    //         const auto texturePath = entity.GetComponent<MeshComponent>().StaticMesh.GetTexturePath().c_str();
+    //         ImGui::TextWrapped("Mesh Path: %s", meshPath);
+    //         if (ImGui::Button("Load Mesh"))
+    //         {
+    //             const std::string path = FileHelper::OpenFile("3D Model (*.obj)\0*.obj\0");
+    //             if (!path.empty())
+    //             {
+    //                 entity.RemoveComponent<MeshComponent>();
+    //                 entity.AddComponent<MeshComponent>(path).SetTexture("Content/white.png");
+    //             }
+    //         }
+    //         ImGui::TextWrapped("Texture Path: %s", texturePath);
+    //         if (ImGui::Button("Load Texture"))
+    //         {
+    //             const std::string path = FileHelper::OpenFile("Image File (*.png)\0*.png\0");
+    //             if (!path.empty())
+    //             {
+    //                 entity.GetComponent<MeshComponent>().SetTexture(path);
+    //             }
+    //         }
+    //         ImGui::TreePop();
+    //         ImGui::Separator();
+    //     }
+    // }
 }

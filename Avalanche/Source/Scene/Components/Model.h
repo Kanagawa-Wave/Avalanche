@@ -6,10 +6,14 @@ class Model
 public:
     Model() = default;
     Model(const std::string& path);
+    ~Model();
+
+    Model(const Model&) = default;
     
-    std::vector<Mesh> m_Meshes;
+    void SetTexture(const std::string& path);
+
+    std::vector<Mesh*> m_Meshes;
 private:
     void LoadModelAssimp(const std::string& path);
     void ProcessNode(const aiScene* scene, const aiNode* node);
-    
 };
