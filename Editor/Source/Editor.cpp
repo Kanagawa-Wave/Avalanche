@@ -23,7 +23,9 @@ Editor::Editor()
 	bunny.GetComponent<TransformComponent>().Scale = { 10.f, 10.f, 10.f };
 
 	auto light = m_Scene->CreateEntity("point light");
-	light.AddComponent<PointLightComponent>().Color = {1.f, 0.f, 1.f};
+	PointLightComponent& pointLight = light.AddComponent<PointLightComponent>();
+	pointLight.Color = {1.f, 1.f, 1.f};
+	pointLight.Position = {24.f, 3.f, 30.f};
 
 	m_Outliner = std::make_unique<Outliner>(m_Scene.get());
 }

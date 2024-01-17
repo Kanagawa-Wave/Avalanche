@@ -70,10 +70,11 @@ private:
         }
     } m_CameraData;
 
-    struct TestData
+    struct PointLightData
     {
-        float test = 1.f;
-    } m_TestData;
+        glm::vec3 Position{};
+        glm::vec3 Color{};
+    } m_PointLightData;
 
     const vk::Extent2D* m_pExtent = nullptr;
     std::unique_ptr<Buffer> m_CameraBuffer = nullptr, m_PointLightBuffer = nullptr;

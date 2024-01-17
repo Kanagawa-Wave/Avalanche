@@ -140,8 +140,9 @@ struct CameraComponent
 
 struct PointLightComponent
 {
-    glm::vec3 Position{};
-    glm::vec3 Color{};
+    // TODO: remove alignas
+    alignas(16) glm::vec3 Position{};
+    alignas(16) glm::vec3 Color{};
 
     PointLightComponent() = default;
     PointLightComponent(const PointLightComponent&) = default;
