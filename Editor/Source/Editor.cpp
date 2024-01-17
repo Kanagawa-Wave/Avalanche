@@ -19,9 +19,11 @@ Editor::Editor()
 	m_Scene = std::make_unique<Scene>();
 
 	auto bunny = m_Scene->CreateEntity("bunny");
-	bunny.AddComponent<StaticMeshComponent>("Content/bunny.obj")
-		.StaticMesh.SetTexture("Content/bunny.png");
+	bunny.AddComponent<StaticMeshComponent>("Content/bunny.obj").StaticMesh.SetTexture("Content/bunny.png");
 	bunny.GetComponent<TransformComponent>().Scale = { 10.f, 10.f, 10.f };
+
+	auto light = m_Scene->CreateEntity("point light");
+	light.AddComponent<PointLightComponent>().Color = {1.f, 0.f, 1.f};
 
 	m_Outliner = std::make_unique<Outliner>(m_Scene.get());
 }

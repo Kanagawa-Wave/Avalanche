@@ -14,7 +14,8 @@ class Window;
 
 struct PushConstant
 {
-    glm::mat4 model{1.0};
+    glm::mat4 model{};
+    glm::mat4 normalMat{};
 };
 
 class Renderer
@@ -24,7 +25,7 @@ public:
     Renderer(Window* window, const vk::Extent2D& viewportExtent);
     ~Renderer();
 
-    void Begin(const Camera& camera);
+    void Begin(const Camera& camera, const Scene& scene);
     void DrawModel(const TransformComponent& transform, const StaticMeshComponent& mesh) const;
     void End();
     void Render(const Camera& camera, const Scene& scene);
@@ -75,7 +76,7 @@ private:
     } m_TestData;
 
     const vk::Extent2D* m_pExtent = nullptr;
-    std::unique_ptr<Buffer> m_CameraBuffer = nullptr, m_TestBuffer = nullptr;
+    std::unique_ptr<Buffer> m_CameraBuffer = nullptr, m_PointLightBuffer = nullptr;
 
     std::unique_ptr<DescriptorSet> m_GlobalSet = nullptr, m_TextureSet = nullptr;
 

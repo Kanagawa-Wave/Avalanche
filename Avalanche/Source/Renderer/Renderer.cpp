@@ -36,8 +36,8 @@ Renderer::Renderer(Window* window, const vk::Extent2D& viewportExtent)
 		window->GetExtent(), true);
 
 	PipelineCreateInfo pipelineInfo;
-	pipelineInfo.setVertexShader("Shaders/Unlit.vert.hlsl.spv")
-		.setFragmentShader("Shaders/Unlit.frag.hlsl.spv")
+	pipelineInfo.setVertexShader("Shaders/Phong.vert.hlsl.spv")
+		.setFragmentShader("Shaders/Phong.frag.hlsl.spv")
 		.setRenderPass(m_ViewportRenderTarget->GetRenderPass())
 		.setDescriptorSetLayouts({ m_GlobalSet->GetLayout(), m_TextureSet->GetLayout() })
 		.setPushConstantSize(sizeof(PushConstant))
@@ -52,9 +52,9 @@ Renderer::Renderer(Window* window, const vk::Extent2D& viewportExtent)
 		sizeof(CameraData));
 	m_GlobalSet->UpdateUniformBuffer(m_CameraBuffer.get(), 0);
 
-	m_TestBuffer = std::make_unique<Buffer>(vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU,
-		sizeof(TestData));
-	m_GlobalSet->UpdateUniformBuffer(m_TestBuffer.get(), 1);
+	m_PointLightBuffer = std::make_unique<Buffer>(vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU,
+		sizeof(PointLightComponent));
+	m_GlobalSet->UpdateUniformBuffer(m_PointLightBuffer.get(), 1);
 }
 
 Renderer::~Renderer()
@@ -71,11 +71,17 @@ Renderer::~Renderer()
 	device.destroyFence(m_Fence);
 }
 
-void Renderer::Begin(const Camera& camera)
+void Renderer::Begin(const Camera& camera, const Scene& scene)
 {
 	m_CameraData.SetData(camera.GetProjection(), camera.GetView());
 	m_CameraBuffer->SetData(&m_CameraData);
-	m_TestBuffer->SetData(&m_TestData);
+
+	auto view = scene.m_Registry.view<PointLightComponent>();
+	for (auto entity : view)
+	{
+		auto pointLights = view.get<PointLightComponent>(entity);
+		m_PointLightBuffer->SetData(&pointLights);
+	}
 
 	const auto& device = Context::Instance().GetDevice();
 
@@ -128,7 +134,9 @@ void Renderer::Begin(const Camera& camera)
 void Renderer::DrawModel(const TransformComponent& transform, const StaticMeshComponent& mesh) const
 {
 	PushConstant pushConstant;
+
 	pushConstant.model = transform.GetModelMat();
+	pushConstant.normalMat = glm::transpose(glm::inverse(pushConstant.model));
 	m_CommandBuffer.pushConstants(m_ViewportPipeline->GetLayout(), vk::ShaderStageFlagBits::eVertex, 0,
 		sizeof(PushConstant),
 		&pushConstant);
@@ -189,7 +197,7 @@ void Renderer::End()
 
 void Renderer::Render(const Camera& camera, const Scene& scene)
 {
-	Begin(camera);
+	Begin(camera, scene);
 	auto view = scene.m_Registry.view<TransformComponent, StaticMeshComponent>();
 	for (auto entity : view)
 	{

@@ -140,6 +140,9 @@ struct CameraComponent
 
 struct PointLightComponent
 {
+    glm::vec3 Position{};
+    glm::vec3 Color{};
+
     PointLightComponent() = default;
     PointLightComponent(const PointLightComponent&) = default;
 };
@@ -162,5 +165,5 @@ struct ComponentGroup
 {
 };
 
-using AllComponents = ComponentGroup<IDComponent, TagComponent, TransformComponent, CameraComponent, StaticMeshComponent
+using AllComponents = ComponentGroup<IDComponent, TagComponent, TransformComponent, CameraComponent, StaticMeshComponent, PointLightComponent
                                      >;
