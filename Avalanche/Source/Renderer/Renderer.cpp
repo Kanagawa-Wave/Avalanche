@@ -1,4 +1,8 @@
 ﻿#include "Renderer.h"
+#include "Renderer.h"
+#include "Renderer.h"
+#include "Renderer.h"
+#include "Renderer.h"
 
 #include "Context.h"
 #include "Core/Log.h"
@@ -30,31 +34,33 @@ Renderer::Renderer(Window* window, const vk::Extent2D& viewportExtent)
 	window->GetSwapchain()->CreateFramebuffers(window->GetWidth(), window->GetHeight(),
 		m_PresnetRenderPass->GetRenderPass());
 
-	CreateDescriptorSets();
-
 	m_ViewportRenderTarget = std::make_unique<RenderTarget>(window->GetSwapchain()->GetFormat(),
 		window->GetExtent(), true);
 
+	const ShaderDataLayout staticSetLayout[] = {
+		{0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex, sizeof(CameraDataVert)},
+		{1, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eFragment, sizeof(PointLightData)},
+		{2, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eFragment, sizeof(CameraDataFrag)}
+	};
+
+	constexpr vk::DescriptorSetLayoutBinding dynamicSetLayout[] = {
+		{0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}
+	};
+
 	PipelineCreateInfo pipelineInfo;
 	pipelineInfo.setVertexShader("Shaders/Phong.vert.hlsl.spv")
-		.setFragmentShader("Shaders/Phong.frag.hlsl.spv")
-		.setRenderPass(m_ViewportRenderTarget->GetRenderPass())
-		.setDescriptorSetLayouts({ m_GlobalSet->GetLayout(), m_TextureSet->GetLayout() })
-		.setPushConstantSize(sizeof(PushConstant))
-		.setVertexInputInfo(Vertex::Layout().GetVertexInputInfo());
+				.setFragmentShader("Shaders/Phong.frag.hlsl.spv")
+				.setStaticSetLayout(staticSetLayout)
+				.setDynamicSetLayout(dynamicSetLayout)
+				.setRenderPass(m_ViewportRenderTarget->GetRenderPass())
+				.setPushConstantSize(sizeof(PushConstant))
+				.setVertexInputInfo(Vertex::Layout().GetVertexInputInfo());
+
 	m_ViewportPipeline = std::make_unique<Pipeline>(pipelineInfo);
 
 	AllocateCommandBuffer();
 	CreateFence();
 	CreateSemaphores();
-
-	m_CameraBuffer = std::make_unique<Buffer>(vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU,
-		sizeof(CameraData));
-	m_GlobalSet->UpdateUniformBuffer(m_CameraBuffer.get(), 0);
-
-	m_PointLightBuffer = std::make_unique<Buffer>(vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU,
-		sizeof(PointLightComponent));
-	m_GlobalSet->UpdateUniformBuffer(m_PointLightBuffer.get(), 1);
 }
 
 Renderer::~Renderer()
@@ -73,15 +79,21 @@ Renderer::~Renderer()
 
 void Renderer::Begin(const Camera& camera, const Scene& scene)
 {
-	m_CameraData.SetData(camera.GetProjection(), camera.GetView());
-	m_CameraBuffer->SetData(&m_CameraData);
+	//m_CameraBufferVert->SetData(&m_CameraDataVert);
 
-	auto view = scene.m_Registry.view<PointLightComponent>();
+	m_CameraDataVert.SetData(camera.GetProjection(), camera.GetView());
+	m_ViewportPipeline->SetShaderBufferData(0, &m_CameraDataVert);
+
+	auto view = scene.m_Registry.view<PointLightComponent, TransformComponent>();
 	for (auto entity : view)
 	{
-		auto pointLights = view.get<PointLightComponent>(entity);
-		m_PointLightBuffer->SetData(&pointLights);
+		auto [pointLight, transform] = view.get<PointLightComponent, TransformComponent>(entity);
+		m_PointLightData.SetData(transform.Translation, pointLight.Color);
+		m_ViewportPipeline->SetShaderBufferData(1, &m_PointLightData);
 	}
+
+	m_CameraDataFrag.SetData(camera.GetPosition());
+	m_ViewportPipeline->SetShaderBufferData(2, &m_CameraDataFrag);
 
 	const auto& device = Context::Instance().GetDevice();
 
@@ -113,9 +125,6 @@ void Renderer::Begin(const Camera& camera, const Scene& scene)
 	// Pass #1: Render to viewport
 	m_ViewportRenderTarget->Begin(m_CommandBuffer);
 	m_ViewportPipeline->Bind(m_CommandBuffer);
-	m_ViewportPipeline->BindDescriptorSets(m_CommandBuffer, {
-											   m_GlobalSet->GetDescriptorSet(), m_TextureSet->GetDescriptorSet()
-		});
 
 	vk::Viewport viewport;
 	vk::Rect2D scissor;
@@ -140,7 +149,7 @@ void Renderer::DrawModel(const TransformComponent& transform, const StaticMeshCo
 	m_CommandBuffer.pushConstants(m_ViewportPipeline->GetLayout(), vk::ShaderStageFlagBits::eVertex, 0,
 		sizeof(PushConstant),
 		&pushConstant);
-	m_TextureSet->UpdateTexture(mesh.StaticMesh.GetTexture(), 0);
+	m_ViewportPipeline->AttachTextureToShader(mesh.StaticMesh.GetTexture(), 0);
 	mesh.StaticMesh.Bind(m_CommandBuffer);
 	mesh.StaticMesh.Draw(m_CommandBuffer);
 }
@@ -235,22 +244,6 @@ void Renderer::CreateFence()
 	vk::FenceCreateInfo fenceInfo;
 	fenceInfo.setFlags(vk::FenceCreateFlagBits::eSignaled);
 	m_Fence = Context::Instance().GetDevice().createFence(fenceInfo);
-}
-
-void Renderer::CreateDescriptorSets()
-{
-	const auto& pool = Context::Instance().GetDescriptorPool();
-
-	vk::DescriptorSetLayoutBinding globalSetBindings[] = {
-		{0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex},
-		{1, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eFragment}
-	};
-	m_GlobalSet = std::make_unique<DescriptorSet>(pool, globalSetBindings);
-
-	vk::DescriptorSetLayoutBinding textureSetBindings[] = {
-		{0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}
-	};
-	m_TextureSet = std::make_unique<DescriptorSet>(pool, textureSetBindings);
 }
 
 void Renderer::InitImGui()

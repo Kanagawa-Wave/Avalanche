@@ -100,7 +100,7 @@ void Outliner::DrawComponents(Entity entity)
 	if (entity.HasComponent<PointLightComponent>())
 	{
 		if (ImGui::TreeNodeEx((void*)typeid(PointLightComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen,
-			"Transform"))
+			"Point Light"))
 		{
 			if (ImGui::SmallButton("Reset"))
 			{
@@ -108,8 +108,7 @@ void Outliner::DrawComponents(Entity entity)
 				entity.AddComponent<PointLightComponent>();
 			}
 			auto& pointLight = entity.GetComponent<PointLightComponent>();
-			ImGui::DragFloat3("Position", glm::value_ptr(pointLight.Position), 0.1f);
-			ImGui::DragFloat3("Color", glm::value_ptr(pointLight.Color), 0.1f, 0.f, 1.f);
+			ImGui::ColorPicker3("Color", glm::value_ptr(pointLight.Color));
 			ImGui::TreePop();
 			ImGui::Separator();
 		}

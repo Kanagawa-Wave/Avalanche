@@ -37,7 +37,6 @@ private:
     void AllocateCommandBuffer();
     void CreateSemaphores();
     void CreateFence();
-    void CreateDescriptorSets();
     void InitImGui();
 
 private:
@@ -56,7 +55,7 @@ private:
     vk::Semaphore m_RenderSemaphore = VK_NULL_HANDLE, m_PresentSemaphore = VK_NULL_HANDLE;
     vk::Fence m_Fence = VK_NULL_HANDLE;
     
-    struct CameraData
+    struct CameraDataVert
     {
         glm::mat4 Projection{};
         glm::mat4 View{};
@@ -64,27 +63,33 @@ private:
 
         void SetData(const glm::mat4& projection, const glm::mat4& view)
         {
-            this->Projection = projection;
-            this->View = view;
-            this->ViewProjection = projection * view;
+            Projection = projection;
+            View = view;
+            ViewProjection = projection * view;
         }
-    } m_CameraData;
+    } m_CameraDataVert;
+
+    struct CameraDataFrag
+    {
+	    alignas(16) glm::vec3 Position{};
+
+        void SetData(const glm::vec3& position)
+        {
+	        Position = position;
+        }
+    } m_CameraDataFrag;
 
     struct PointLightData
     {
-        glm::vec3 Position{};
-        glm::vec3 Color{};
+        alignas(16) glm::vec3 Position{};
+        alignas(16) glm::vec3 Color{};
+
+        void SetData(const glm::vec3& position, const glm::vec3& color)
+        {
+	        Position = position;
+            Color = color;
+        }
     } m_PointLightData;
 
     const vk::Extent2D* m_pExtent = nullptr;
-    std::unique_ptr<Buffer> m_CameraBuffer = nullptr, m_PointLightBuffer = nullptr;
-
-    std::unique_ptr<DescriptorSet> m_GlobalSet = nullptr, m_TextureSet = nullptr;
-
-    struct DrawableObject
-    {
-        const Mesh* pMesh = nullptr;
-        const TransformComponent* pTransform = nullptr;
-    };
-    std::vector<DrawableObject> m_DrawList{};
 };

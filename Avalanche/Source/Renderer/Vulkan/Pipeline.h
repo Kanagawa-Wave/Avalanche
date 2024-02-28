@@ -8,8 +8,7 @@
 
 struct PipelineCreateInfo
 {
-    std::string VertexShader;
-    std::string FragmentShader;
+    ShaderCreateInfo ShaderInfo;
     uint32_t PushConstantSize = 0;
     VertexInputInfo VertexInput;
     vk::RenderPass RenderPass;
@@ -17,13 +16,25 @@ struct PipelineCreateInfo
 
     PipelineCreateInfo& setVertexShader(const std::string& vertexShader)
     {
-        VertexShader = vertexShader;
+        ShaderInfo.VertPath = vertexShader;
         return *this;
     }
 
     PipelineCreateInfo& setFragmentShader(const std::string& fragmentShader)
     {
-        FragmentShader = fragmentShader;
+        ShaderInfo.FragPath = fragmentShader;
+        return *this;
+    }
+
+	PipelineCreateInfo& setStaticSetLayout(const vk::ArrayProxy<ShaderDataLayout>& layout)
+    {
+	    ShaderInfo.setStaticSetLayout(layout);
+        return *this;
+    }
+
+    PipelineCreateInfo& setDynamicSetLayout(const vk::ArrayProxy<vk::DescriptorSetLayoutBinding>& layout)
+    {
+	    ShaderInfo.setDynamicSetLayout(layout);
         return *this;
     }
 
@@ -66,6 +77,10 @@ public:
     void BindDescriptorSets(vk::CommandBuffer commandBuffer,
                             const vk::ArrayProxy<vk::DescriptorSet>& descriptorSets,
                             uint32_t firstSet = 0) const;
+
+
+	void SetShaderBufferData(uint32_t binding, const void* data) const;
+    void AttachTextureToShader(const Texture* texture, uint32_t binding) const;
 
 private:
     void CreateLayout(uint32_t pushConstantSize, const std::vector<vk::DescriptorSetLayout>& layouts);

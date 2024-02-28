@@ -4,63 +4,63 @@
 
 DescriptorSet::DescriptorSet(vk::DescriptorPool pool, const vk::ArrayProxy<vk::DescriptorSetLayoutBinding>& bindings)
 {
-    const auto& device = Context::Instance().GetDevice();
+	const auto& device = Context::Instance().GetDevice();
 
-    vk::DescriptorSetLayoutCreateInfo layoutInfo;
-    layoutInfo.setBindings(bindings);
+	vk::DescriptorSetLayoutCreateInfo layoutInfo;
+	layoutInfo.setBindings(bindings);
 
-    m_DescriptorSetLayout = device.createDescriptorSetLayout(layoutInfo);
+	m_DescriptorSetLayout = device.createDescriptorSetLayout(layoutInfo);
 
-    vk::DescriptorSetAllocateInfo allocateInfo;
-    allocateInfo.setDescriptorPool(pool)
-                .setSetLayouts(m_DescriptorSetLayout)
-                .setDescriptorSetCount(1);
+	vk::DescriptorSetAllocateInfo allocateInfo;
+	allocateInfo.setDescriptorPool(pool)
+		.setSetLayouts(m_DescriptorSetLayout)
+		.setDescriptorSetCount(1);
 
-    m_DescriptorSet = device.allocateDescriptorSets(allocateInfo).front();
+	m_DescriptorSet = device.allocateDescriptorSets(allocateInfo).front();
 }
 
 DescriptorSet::~DescriptorSet()
 {
-    const auto& device = Context::Instance().GetDevice();
+	const auto& device = Context::Instance().GetDevice();
 
-    device.waitIdle();
-    device.destroyDescriptorSetLayout(m_DescriptorSetLayout);
+	device.waitIdle();
+	device.destroyDescriptorSetLayout(m_DescriptorSetLayout);
 }
 
-void DescriptorSet::UpdateUniformBuffer(const Buffer* buffer, uint32_t binding) const
+void DescriptorSet::AttachUniformBuffer(const Buffer* buffer, uint32_t binding) const
 {
-    const auto& device = Context::Instance().GetDevice();
+	const auto& device = Context::Instance().GetDevice();
 
-    vk::DescriptorBufferInfo bufferInfo;
-    bufferInfo.setBuffer(buffer->GetBuffer())
-              .setOffset(0)
-              .setRange(buffer->GetSize());
+	vk::DescriptorBufferInfo bufferInfo;
+	bufferInfo.setBuffer(buffer->GetBuffer())
+		.setOffset(0)
+		.setRange(buffer->GetSize());
 
-    vk::WriteDescriptorSet writeInfo;
-    writeInfo.setDescriptorCount(1)
-             .setDescriptorType(vk::DescriptorType::eUniformBuffer)
-             .setBufferInfo(bufferInfo)
-             .setDstBinding(binding)
-             .setDstSet(m_DescriptorSet);
+	vk::WriteDescriptorSet writeInfo;
+	writeInfo.setDescriptorCount(1)
+		.setDescriptorType(vk::DescriptorType::eUniformBuffer)
+		.setBufferInfo(bufferInfo)
+		.setDstBinding(binding)
+		.setDstSet(m_DescriptorSet);
 
-    device.updateDescriptorSets(writeInfo, nullptr);
+	device.updateDescriptorSets(writeInfo, nullptr);
 }
 
-void DescriptorSet::UpdateTexture(const Texture* texture, uint32_t binding) const
+void DescriptorSet::AttachTexture(const Texture* texture, uint32_t binding) const
 {
-    const auto& device = Context::Instance().GetDevice();
+	const auto& device = Context::Instance().GetDevice();
 
-    vk::DescriptorImageInfo imageInfo;
-    imageInfo.setSampler(texture->GetSampler())
-             .setImageView(texture->GetView())
-             .setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
+	vk::DescriptorImageInfo imageInfo;
+	imageInfo.setSampler(texture->GetSampler())
+		.setImageView(texture->GetView())
+		.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
 
-    vk::WriteDescriptorSet writeInfo;
-    writeInfo.setDescriptorCount(1)
-             .setDescriptorType(vk::DescriptorType::eCombinedImageSampler)
-             .setImageInfo(imageInfo)
-             .setDstBinding(binding)
-             .setDstSet(m_DescriptorSet);
+	vk::WriteDescriptorSet writeInfo;
+	writeInfo.setDescriptorCount(1)
+		.setDescriptorType(vk::DescriptorType::eCombinedImageSampler)
+		.setImageInfo(imageInfo)
+		.setDstBinding(binding)
+		.setDstSet(m_DescriptorSet);
 
-    device.updateDescriptorSets(writeInfo, nullptr);
+	device.updateDescriptorSets(writeInfo, nullptr);
 }

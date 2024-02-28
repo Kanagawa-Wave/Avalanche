@@ -3,10 +3,10 @@
 #include "Core/Log.h"
 #include "Renderer/Context.h"
 
-Shader::Shader(const std::string& vertPath, const std::string& fragPath)
+Shader::Shader(const ShaderCreateInfo& info)
 {
-    const auto vertSource = LoadSPVFromFile(vertPath);
-    const auto fragSource = LoadSPVFromFile(fragPath);
+    const auto vertSource = LoadSPVFromFile(info.VertPath);
+    const auto fragSource = LoadSPVFromFile(info.FragPath);
 
     vk::ShaderModuleCreateInfo shaderInfo;
     shaderInfo.setPCode(reinterpret_cast<const uint32_t*>(vertSource.data()))
@@ -18,12 +18,50 @@ Shader::Shader(const std::string& vertPath, const std::string& fragPath)
     m_FragmentShader = Context::Instance().GetDevice().createShaderModule(shaderInfo);
 
     InitPipelineShaderStageCreateInfo();
+
+    SetStaticDescriptorLayout(info.StaticLayout);
+    SetDynamicDescriptorLayout(info.DynamicLayout);
 }
 
 Shader::~Shader()
 {
     Context::Instance().GetDevice().destroyShaderModule(m_VertexShader);
     Context::Instance().GetDevice().destroyShaderModule(m_FragmentShader);
+}
+
+void Shader::SetBufferData(uint32_t binding, const void* data) const
+{
+    m_UniformBuffers[binding]->SetData(data);
+}
+
+void Shader::SetStaticDescriptorLayout(const vk::ArrayProxy<ShaderDataLayout>& layout)
+{
+    std::vector<vk::DescriptorSetLayoutBinding> descriptorLayout;
+    for (const auto& element : layout)
+    {
+        descriptorLayout.emplace_back(element.Binding, element.Type, element.Count, element.Stage);
+    }
+    m_StaticSet = std::make_unique<DescriptorSet>(Context::Instance().GetDescriptorPool(), descriptorLayout);
+
+    for (const auto& element : layout)
+    {
+	    m_UniformBuffers.emplace_back(std::make_unique<Buffer>(vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU, element.Size));
+    }
+
+    for (int binding = 0; binding < m_UniformBuffers.size(); binding++)
+    {
+	    m_StaticSet->AttachUniformBuffer(m_UniformBuffers[binding].get(), binding);
+    }
+}
+
+void Shader::SetDynamicDescriptorLayout(const vk::ArrayProxy<vk::DescriptorSetLayoutBinding>& layout)
+{
+    m_DynamicSet = std::make_unique<DescriptorSet>(Context::Instance().GetDescriptorPool(), layout);
+}
+
+void Shader::AttachTexture(const Texture* texture, uint32_t binding) const
+{
+    m_DynamicSet->AttachTexture(texture, binding);
 }
 
 std::vector<char> Shader::LoadSPVFromFile(const std::string& path)

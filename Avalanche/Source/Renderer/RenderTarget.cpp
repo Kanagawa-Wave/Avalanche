@@ -80,7 +80,7 @@ void RenderTarget::Resize(vk::Extent2D extent)
     if (m_Extent == extent)
         return;
 
-    if (extent.width == 0 || extent.height == 0)
+    if (extent.width <= 0 || extent.height <= 0 || extent.width == UINT_MAX || extent.height == UINT_MAX)
         return;
     
     const auto& device = Context::Instance().GetDevice();
