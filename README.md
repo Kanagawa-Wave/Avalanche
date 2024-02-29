@@ -26,10 +26,12 @@ If the repository was cloned non-recursively previously, use `git submodule upda
 - Model loading
 - Editor interface based on ImGui
 - Blinn-Phong shading
+- Point Lights
 - Entity-Component System based on entt
 - Abstraction layer for Vulkan API
 ### Short-term goals (Before Fall 2024)
 - Shadow Maps
+- More types of lights (area lights / spot lights)
 - PBR support
 - Cubemaps
 - Post-processing
@@ -40,3 +42,12 @@ If the repository was cloned non-recursively previously, use `git submodule upda
 - Ambient Occulsion (SSAO, GTAO)
 - Mesh shading pipeline
 - Vulkan Ray tracing
+
+***
+
+## Inspirations & References
+- Hazel Engine by TheCherno
+- Walnut by StudioCherno
+- DirectX-Graphics-Samples by Microsoft
+- Vulkan Guide by Victor Blanco
+- LittleVulkanEngine by Thibault Fievez
