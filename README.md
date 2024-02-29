@@ -2,6 +2,9 @@
 
 This is an ongoing personal game engine project still in early stage of development. The purpose of this project is to learn the Vulkan API and test out computer graphics knowledges.
 
+![ScreenShot](https://github.com/Kanagawa-Wave/Avalanche/blob/main/ScreenShot.png)
+_<center>A Screen Shot of the Editor Layout</center>_
+
 ***
 
 ## Getting Started
