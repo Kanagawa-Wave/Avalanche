@@ -146,6 +146,16 @@ struct PointLightComponent
     PointLightComponent(const PointLightComponent&) = default;
 };
 
+struct ShadowMapComponent
+{
+	uint32_t ShadowMapWidth = 1024;
+    uint32_t ShadowMapHeight = 1024;
+    glm::mat4 Projection, View;
+
+	ShadowMapComponent() = default;
+    ShadowMapComponent(const ShadowMapComponent&) = default;
+};
+
 struct StaticMeshComponent
 {
     Mesh StaticMesh;

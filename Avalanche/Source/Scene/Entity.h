@@ -12,6 +12,8 @@ public:
     Entity(entt::entity handle, Scene* scene);
     Entity(const Entity& other) = default;
 
+    virtual void OnUpdate() {}
+
     template <typename T, typename... Args>
     T& AddComponent(Args&&... args)
     {

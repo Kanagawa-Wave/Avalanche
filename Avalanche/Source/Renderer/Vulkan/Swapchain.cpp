@@ -63,7 +63,7 @@ void Swapchain::QueryInfo(uint32_t width, uint32_t height)
     for (const auto format : formats)
     {
         if (format.format == vk::Format::eR8G8B8A8Srgb &&
-            format.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear)
+            format.colorSpace == vk::ColorSpaceKHR::eHdr10St2084EXT)
         {
             m_SwapchainInfo.Format = format;
             break;

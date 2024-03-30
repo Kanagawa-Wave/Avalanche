@@ -50,5 +50,18 @@ Entity Scene::GetEntityByUUID(uint32_t uuid)
 
 void Scene::Step(int frames)
 {
+    for (const auto& [uuid, entity] : m_EntityMap)
+    {
+	    Entity e(entity, this);
+        e.OnUpdate();
+    }
     m_StepFrames = frames;
+}
+
+void Scene::SetUpEntity(Entity entity, const std::string& name)
+{
+	entity.AddComponent<IDComponent>(currentID++);
+    entity.AddComponent<TransformComponent>();
+    auto& tag = entity.AddComponent<TagComponent>();
+    tag.Tag = name.empty() ? "Entity" : name;
 }
