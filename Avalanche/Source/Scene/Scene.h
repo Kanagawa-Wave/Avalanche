@@ -14,9 +14,9 @@ public:
 
 	Entity CreateEntity(const std::string& name = std::string());
 	Entity CreateEntityWithUUID(uint32_t uuid, const std::string& name = std::string());
-	template<typename T>
-	T CreateEntity(const std::string& name = std::string());
 	void DestroyEntity(Entity entity);
+
+	Entity CreatePointLight(const std::string& name = std::string());
 
 	Entity FindEntityByName(std::string_view name);
 	Entity GetEntityByUUID(uint32_t uuid);
@@ -57,16 +57,5 @@ private:
 	friend class Outliner;
 	friend class Renderer;
 };
-
-template <typename T>
-T Scene::CreateEntity(const std::string& name)
-{
-	T entity = T(m_Registry.create(), this);
-	SetUpEntity(entity, name);
-
-    m_EntityMap[currentID] = entity;
-
-    return entity;
-}
 
 

@@ -27,6 +27,13 @@ void Scene::DestroyEntity(Entity entity)
     m_Registry.destroy(entity);
 }
 
+Entity Scene::CreatePointLight(const std::string& name)
+{
+    Entity entity = CreateEntity(name.empty() ? "PointLight" : name);
+    entity.AddComponent<PointLightComponent>();
+    return entity;
+}
+
 
 Entity Scene::FindEntityByName(std::string_view name)
 {

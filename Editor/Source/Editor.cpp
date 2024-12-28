@@ -3,7 +3,6 @@
 #include <imgui.h>
 
 #include "Panels/Outliner.h"
-#include "Scene/Prefabs/PointLight.h"
 
 Application* CreateApplication()
 {
@@ -23,8 +22,10 @@ Editor::Editor()
 	bunny.AddComponent<StaticMeshComponent>("Content/bunny.obj").StaticMesh.SetTexture("Content/bunny.png");
 	bunny.GetComponent<TransformComponent>().Scale = { 10.f, 10.f, 10.f };
 
-	auto light = m_Scene->CreateEntity<PointLight>("point light");
-	light.GetComponent<TransformComponent>().Translation = {24.f, 3.f, 30.f};
+	auto light1 = m_Scene->CreatePointLight();
+	light1.GetComponent<TransformComponent>().Translation = {24.f, 3.f, 30.f};
+	auto light2 = m_Scene->CreatePointLight();
+	light2.GetComponent<TransformComponent>().Translation = {-24.f, 3.f, 30.f};
 
 	m_Outliner = std::make_unique<Outliner>(m_Scene.get());
 }

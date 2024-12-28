@@ -81,13 +81,18 @@ private:
 
     struct PointLightData
     {
-        alignas(16) glm::vec3 Position{};
-        alignas(16) glm::vec3 Color{};
+        struct PointLight
+        {
+            alignas(16) glm::vec3 Position{};
+            alignas(16) glm::vec3 Color{};
+        } m_PointLights[16];
+        uint32_t m_PointLightCount = 0;
 
         void SetData(const glm::vec3& position, const glm::vec3& color)
         {
-	        Position = position;
-            Color = color;
+	        m_PointLights[m_PointLightCount].Position = position;
+            m_PointLights[m_PointLightCount].Color = color;
+            m_PointLightCount++;
         }
     } m_PointLightData;
 

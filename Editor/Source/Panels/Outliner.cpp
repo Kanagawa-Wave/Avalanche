@@ -21,8 +21,10 @@ void Outliner::OnImGuiUpdate()
 	{
 		m_SelectedEntity = m_Context->CreateEntity();
 	}
-	if (ImGui::TabItemButton("-"))
+	if (ImGui::TabItemButton("-") && m_SelectedEntity)
 	{
+		m_Context->DestroyEntity(m_SelectedEntity);
+		m_SelectedEntity = Entity();
 	}
 	ImGui::EndTabBar();
 	m_Context->m_Registry.each([&](auto enttHandle)
@@ -34,7 +36,24 @@ void Outliner::OnImGuiUpdate()
 
 	ImGui::Begin("Details");
 	if (m_SelectedEntity)
+	{
+		ImGui::BeginTabBar("OutlinerTabBar");
+		if (ImGui::TabItemButton("Add Component"))
+		{
+			ImGui::OpenPopup("OutlinerPopup");
+		}
+	
+		if (ImGui::BeginPopup("OutlinerPopup"))
+		{
+			if (ImGui::MenuItem("PointLight Component"))
+			{
+				m_SelectedEntity.AddOrReplaceComponent<PointLightComponent>();
+			}
+			ImGui::EndPopup();
+		}
+		ImGui::EndTabBar();
 		DrawComponents(m_SelectedEntity);
+	}
 	ImGui::End();
 }
 
@@ -83,15 +102,35 @@ void Outliner::DrawComponents(Entity entity)
 		if (ImGui::TreeNodeEx((void*)typeid(TransformComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen,
 			"Transform"))
 		{
-			if (ImGui::SmallButton("Reset"))
+			ImGui::SameLine();
+			if (ImGui::SmallButton("Reset##1"))
 			{
 				entity.RemoveComponent<TransformComponent>();
 				entity.AddComponent<TransformComponent>();
 			}
 			auto& transform = entity.GetComponent<TransformComponent>();
+			
+			if (ImGui::SmallButton("Reset##2"))
+			{
+				transform.Translation = glm::vec3(0, 0, 0);
+			}
+			ImGui::SameLine();
 			ImGui::DragFloat3("Position", glm::value_ptr(transform.Translation), 0.1f);
+			
+			if (ImGui::SmallButton("Reset##3"))
+			{
+				transform.Rotation = glm::vec3(0, 0, 0);
+			}
+			ImGui::SameLine();
 			ImGui::DragFloat3("Rotation", glm::value_ptr(transform.Rotation), 1.f);
+			
+			if (ImGui::SmallButton("Reset##4"))
+			{
+				transform.Scale = glm::vec3(1, 1, 1);
+			}
+			ImGui::SameLine();
 			ImGui::DragFloat3("Scale", glm::value_ptr(transform.Scale), 0.1f);
+			
 			ImGui::TreePop();
 			ImGui::Separator();
 		}
@@ -102,13 +141,16 @@ void Outliner::DrawComponents(Entity entity)
 		if (ImGui::TreeNodeEx((void*)typeid(PointLightComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen,
 			"Point Light"))
 		{
-			if (ImGui::SmallButton("Reset"))
+			ImGui::SameLine();
+			if (ImGui::SmallButton("Remove"))
 			{
 				entity.RemoveComponent<PointLightComponent>();
-				entity.AddComponent<PointLightComponent>();
 			}
-			auto& pointLight = entity.GetComponent<PointLightComponent>();
-			ImGui::ColorPicker3("Color", glm::value_ptr(pointLight.Color));
+			if (entity.HasComponent<PointLightComponent>())
+			{
+				auto& pointLight = entity.GetComponent<PointLightComponent>();
+				ImGui::ColorPicker3("Color", glm::value_ptr(pointLight.Color));
+			}
 			ImGui::TreePop();
 			ImGui::Separator();
 		}

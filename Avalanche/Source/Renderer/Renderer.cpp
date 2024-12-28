@@ -85,12 +85,13 @@ void Renderer::Begin(const Camera& camera, const Scene& scene)
 	m_ViewportPipeline->SetShaderBufferData(0, &m_CameraDataVert);
 
 	const auto view = scene.GetAllEntitiesWith<PointLightComponent, TransformComponent>();
+	m_PointLightData.m_PointLightCount = 0;
 	for (const auto entity : view)
 	{
 		auto [pointLight, transform] = view.get<PointLightComponent, TransformComponent>(entity);
 		m_PointLightData.SetData(transform.Translation, pointLight.Color);
-		m_ViewportPipeline->SetShaderBufferData(1, &m_PointLightData);
 	}
+	m_ViewportPipeline->SetShaderBufferData(1, &m_PointLightData);
 
 	m_CameraDataFrag.SetData(camera.GetPosition());
 	m_ViewportPipeline->SetShaderBufferData(2, &m_CameraDataFrag);
