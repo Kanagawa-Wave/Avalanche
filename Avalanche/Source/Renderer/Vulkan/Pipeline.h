@@ -32,12 +32,6 @@ struct PipelineCreateInfo
         return *this;
     }
 
-    PipelineCreateInfo& setDynamicSetLayout(const vk::ArrayProxy<vk::DescriptorSetLayoutBinding>& layout)
-    {
-	    ShaderInfo.setDynamicSetLayout(layout);
-        return *this;
-    }
-
     PipelineCreateInfo& setPushConstantSize(uint32_t size)
     {
         PushConstantSize = size;

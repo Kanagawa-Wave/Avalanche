@@ -5,10 +5,11 @@
 
 Pipeline::Pipeline(const PipelineCreateInfo& pipelineCreateInfo)
 {
+	const Context& context = Context::Instance();
 	m_Shader.reset(new Shader(pipelineCreateInfo.ShaderInfo));
 
-	const std::vector layouts = {m_Shader->m_StaticSet->GetLayout(), m_Shader->m_DynamicSet->GetLayout()};
-	CreateLayout(pipelineCreateInfo.PushConstantSize, layouts);
+	// const std::vector layouts = {m_Shader->m_StaticSet->GetLayout(), m_Shader->m_DynamicSet->GetLayout()};
+	CreateLayout(pipelineCreateInfo.PushConstantSize, context.GetDescriptorSetBuilder()->GetDescriptorSetLayouts());
 	CreatePipeline(pipelineCreateInfo.VertexInput, pipelineCreateInfo.RenderPass);
 }
 
@@ -122,7 +123,7 @@ void Pipeline::CreatePipeline(const VertexInputInfo& vertexInputInfo,
 void Pipeline::Bind(vk::CommandBuffer commandBuffer) const
 {
 	commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_Pipeline);
-	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_Layout, 0, {m_Shader->m_StaticSet->GetDescriptorSet(), m_Shader->m_DynamicSet->GetDescriptorSet()}, nullptr);
+	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_Layout, 0, {m_Shader->m_StaticSet->GetDescriptorSet()}, nullptr);
 }
 
 void Pipeline::BindDescriptorSets(vk::CommandBuffer commandBuffer,

@@ -9,6 +9,8 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
+#include "Renderer/Vulkan/DescriptorSet.h"
+
 struct Vertex
 {
     glm::vec3 position{};
@@ -42,7 +44,7 @@ public:
     Mesh(const std::string& meshPath);
     Mesh(const aiMesh* mesh);
 
-    void Bind(vk::CommandBuffer commandBuffer) const;
+    void Bind(vk::CommandBuffer commandBuffer, const vk::PipelineLayout& layout) const;
     void Draw(vk::CommandBuffer commandBuffer) const;
 
     void SetTexture(const std::string& path);
@@ -61,6 +63,7 @@ private:
     std::string m_TexturePath;
 
     std::unique_ptr<Texture> m_Texture;
+    std::shared_ptr<DescriptorSet> m_DescriptorSet;
     
     std::vector<Vertex> m_Vertices{};
     std::vector<uint32_t> m_Indices{};

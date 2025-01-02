@@ -13,3 +13,4 @@ riderModule.iml
 /Binaries
 /.idea
 .vs/
+*.user

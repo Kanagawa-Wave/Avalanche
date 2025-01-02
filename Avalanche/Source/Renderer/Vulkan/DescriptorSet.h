@@ -8,7 +8,7 @@
 class DescriptorSet
 {
 public:
-    DescriptorSet(vk::DescriptorPool pool, const vk::ArrayProxy<vk::DescriptorSetLayoutBinding>& bindings);
+    DescriptorSet(vk::DescriptorPool pool, vk::DescriptorSetLayout layout);
     ~DescriptorSet();
 
     void AttachUniformBuffer(const Buffer* buffer, uint32_t binding) const;

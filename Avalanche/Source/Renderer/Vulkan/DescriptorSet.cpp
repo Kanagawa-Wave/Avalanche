@@ -2,14 +2,11 @@
 
 #include "Renderer/Context.h"
 
-DescriptorSet::DescriptorSet(vk::DescriptorPool pool, const vk::ArrayProxy<vk::DescriptorSetLayoutBinding>& bindings)
+DescriptorSet::DescriptorSet(vk::DescriptorPool pool, vk::DescriptorSetLayout layout)
 {
 	const auto& device = Context::Instance().GetDevice();
 
-	vk::DescriptorSetLayoutCreateInfo layoutInfo;
-	layoutInfo.setBindings(bindings);
-
-	m_DescriptorSetLayout = device.createDescriptorSetLayout(layoutInfo);
+	m_DescriptorSetLayout = layout;
 
 	vk::DescriptorSetAllocateInfo allocateInfo;
 	allocateInfo.setDescriptorPool(pool)
@@ -19,13 +16,7 @@ DescriptorSet::DescriptorSet(vk::DescriptorPool pool, const vk::ArrayProxy<vk::D
 	m_DescriptorSet = device.allocateDescriptorSets(allocateInfo).front();
 }
 
-DescriptorSet::~DescriptorSet()
-{
-	const auto& device = Context::Instance().GetDevice();
-
-	device.waitIdle();
-	device.destroyDescriptorSetLayout(m_DescriptorSetLayout);
-}
+DescriptorSet::~DescriptorSet() = default;
 
 void DescriptorSet::AttachUniformBuffer(const Buffer* buffer, uint32_t binding) const
 {

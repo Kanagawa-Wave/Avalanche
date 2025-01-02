@@ -49,6 +49,10 @@ void Outliner::OnImGuiUpdate()
 			{
 				m_SelectedEntity.AddOrReplaceComponent<PointLightComponent>();
 			}
+			if (ImGui::MenuItem("Static Mesh Component"))
+			{
+				m_SelectedEntity.AddOrReplaceComponent<StaticMeshComponent>();
+			}
 			ImGui::EndPopup();
 		}
 		ImGui::EndTabBar();
@@ -102,12 +106,6 @@ void Outliner::DrawComponents(Entity entity)
 		if (ImGui::TreeNodeEx((void*)typeid(TransformComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen,
 			"Transform"))
 		{
-			ImGui::SameLine();
-			if (ImGui::SmallButton("Reset##1"))
-			{
-				entity.RemoveComponent<TransformComponent>();
-				entity.AddComponent<TransformComponent>();
-			}
 			auto& transform = entity.GetComponent<TransformComponent>();
 			
 			if (ImGui::SmallButton("Reset##2"))
@@ -156,33 +154,53 @@ void Outliner::DrawComponents(Entity entity)
 		}
 	}
 
-	// if (entity.HasComponent<MeshComponent>())
-	// {
-	//     if (ImGui::TreeNodeEx((void*)typeid(MeshComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen, "Mesh"))
-	//     {
-	//         const auto meshPath = entity.GetComponent<MeshComponent>().StaticMesh.GetMeshPath().c_str();
-	//         const auto texturePath = entity.GetComponent<MeshComponent>().StaticMesh.GetTexturePath().c_str();
-	//         ImGui::TextWrapped("Mesh Path: %s", meshPath);
-	//         if (ImGui::Button("Load Mesh"))
-	//         {
-	//             const std::string path = FileHelper::OpenFile("3D Model (*.obj)\0*.obj\0");
-	//             if (!path.empty())
-	//             {
-	//                 entity.RemoveComponent<MeshComponent>();
-	//                 entity.AddComponent<MeshComponent>(path).SetTexture("Content/white.png");
-	//             }
-	//         }
-	//         ImGui::TextWrapped("Texture Path: %s", texturePath);
-	//         if (ImGui::Button("Load Texture"))
-	//         {
-	//             const std::string path = FileHelper::OpenFile("Image File (*.png)\0*.png\0");
-	//             if (!path.empty())
-	//             {
-	//                 entity.GetComponent<MeshComponent>().SetTexture(path);
-	//             }
-	//         }
-	//         ImGui::TreePop();
-	//         ImGui::Separator();
-	//     }
-	// }
+	if (entity.HasComponent<StaticMeshComponent>())
+	{
+	    if (ImGui::TreeNodeEx((void*)typeid(StaticMeshComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen, "Mesh"))
+	    {
+	    	ImGui::SameLine();
+	    	if (ImGui::SmallButton("Remove"))
+	    	{
+	    		entity.RemoveComponent<StaticMeshComponent>();
+	    	}
+	    	if (entity.HasComponent<StaticMeshComponent>())
+	    	{
+	    		auto& mesh = entity.GetComponent<StaticMeshComponent>();
+
+	    		if (mesh.StaticMesh)
+	    		{
+	    			ImGui::Checkbox("Visible", &mesh.Visible);
+	    		}
+	    	
+	    		std::string meshPath = "NULL", texturePath = "NULL";
+	    		if (mesh.StaticMesh)
+	    		{
+	    			meshPath = entity.GetComponent<StaticMeshComponent>().StaticMesh->GetMeshPath();
+	    			texturePath = entity.GetComponent<StaticMeshComponent>().StaticMesh->GetTexturePath();
+	    		}
+	    		ImGui::TextWrapped("Mesh: %s", meshPath.c_str());
+	    		if (ImGui::Button("Load Mesh"))
+	    		{
+	    			const std::string path = FileHelper::OpenFile("3D Model (*.obj)\0*.obj\0");
+	    			if (!path.empty())
+	    			{
+	    				mesh.StaticMesh = std::make_shared<Mesh>(path);
+	    				mesh.Visible = true;
+	    				mesh.StaticMesh->SetTexture("Content/white.png");
+	    			}
+	    		}
+	    		ImGui::TextWrapped("Texture: %s", texturePath.c_str());
+	    		if (ImGui::Button("Load Texture"))
+	    		{
+	    			const std::string path = FileHelper::OpenFile("Image File (*.png)\0*.png\0");
+	    			if (!path.empty() && mesh.StaticMesh)
+	    			{
+	    				mesh.StaticMesh->SetTexture(path);
+	    			}
+	    		}
+	    	}
+	        ImGui::TreePop();
+	        ImGui::Separator();
+	    }
+	}
 }

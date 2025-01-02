@@ -20,6 +20,8 @@
 Renderer::Renderer(Window* window, const vk::Extent2D& viewportExtent)
 	: m_Window(window), m_pExtent(&viewportExtent)
 {
+	CreateLayout();
+
 	RenderPassCreateInfo renderPassInfo;
 	renderPassInfo.setEnableDepthAttachment(false)
 		.setColorAttachmentFormat(window->GetSwapchain()->GetFormat())
@@ -43,15 +45,10 @@ Renderer::Renderer(Window* window, const vk::Extent2D& viewportExtent)
 		{2, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eFragment, sizeof(CameraDataFrag)}
 	};
 
-	constexpr vk::DescriptorSetLayoutBinding dynamicSetLayout[] = {
-		{0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}
-	};
-
 	PipelineCreateInfo pipelineInfo;
 	pipelineInfo.setVertexShader("Shaders/Phong.vert.hlsl.spv")
 				.setFragmentShader("Shaders/Phong.frag.hlsl.spv")
 				.setStaticSetLayout(staticSetLayout)
-				.setDynamicSetLayout(dynamicSetLayout)
 				.setRenderPass(m_ViewportRenderTarget->GetRenderPass())
 				.setPushConstantSize(sizeof(PushConstant))
 				.setVertexInputInfo(Vertex::Layout().GetVertexInputInfo());
@@ -150,9 +147,8 @@ void Renderer::DrawModel(const TransformComponent& transform, const StaticMeshCo
 	m_CommandBuffer.pushConstants(m_ViewportPipeline->GetLayout(), vk::ShaderStageFlagBits::eVertex, 0,
 		sizeof(PushConstant),
 		&pushConstant);
-	m_ViewportPipeline->AttachTextureToShader(mesh.StaticMesh.GetTexture(), 0);
-	mesh.StaticMesh.Bind(m_CommandBuffer);
-	mesh.StaticMesh.Draw(m_CommandBuffer);
+	mesh.StaticMesh->Bind(m_CommandBuffer, m_ViewportPipeline->GetLayout());
+	mesh.StaticMesh->Draw(m_CommandBuffer);
 }
 
 void Renderer::End()
@@ -212,7 +208,10 @@ void Renderer::Render(const Camera& camera, const Scene& scene)
 	for (auto entity : view)
 	{
 		auto [transform, model] = view.get<TransformComponent, StaticMeshComponent>(entity);
-		DrawModel(transform, model);
+		if (model.Visible)
+		{
+			DrawModel(transform, model);
+		}
 	}
 	End();
 }
@@ -245,6 +244,25 @@ void Renderer::CreateFence()
 	vk::FenceCreateInfo fenceInfo;
 	fenceInfo.setFlags(vk::FenceCreateFlagBits::eSignaled);
 	m_Fence = Context::Instance().GetDevice().createFence(fenceInfo);
+}
+
+void Renderer::CreateLayout()
+{
+	Context& instance = Context::Instance();
+	
+	constexpr vk::DescriptorSetLayoutBinding globalBinding[] = {
+		{0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex},
+		{1, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eFragment},
+		{2, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eFragment}
+	};
+
+	constexpr vk::DescriptorSetLayoutBinding perModelBinding[] = {
+		{0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}
+	};
+	
+	instance.InitDescriptorSetBuilder(2);
+	instance.GetDescriptorSetBuilder()->SetLayout(GLOBAL, globalBinding);
+	instance.GetDescriptorSetBuilder()->SetLayout(PER_MODEL, perModelBinding);
 }
 
 void Renderer::InitImGui()

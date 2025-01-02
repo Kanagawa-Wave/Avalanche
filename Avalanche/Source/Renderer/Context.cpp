@@ -20,6 +20,7 @@ void Context::Destroy()
     m_Device.waitIdle();
     ImmediateContext::Shutdown();
     m_CommandManager.reset();
+    m_DescriptorSetBuilder.reset();
     m_Device.destroyDescriptorPool(m_DescriptorPool);
     m_Instance.destroySurfaceKHR(m_Surface);
     vmaDestroyAllocator(m_Allocator);
@@ -173,6 +174,11 @@ void Context::InitAllocator()
 void Context::InitCommandManager()
 {
     m_CommandManager = std::make_unique<CommandManager>();
+}
+
+void Context::InitDescriptorSetBuilder(uint32_t numLayouts)
+{
+    m_DescriptorSetBuilder = std::make_unique<DescriptorSetBuilder>(numLayouts);
 }
 
 Context::~Context()

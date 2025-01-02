@@ -37,6 +37,7 @@ private:
     void AllocateCommandBuffer();
     void CreateSemaphores();
     void CreateFence();
+    void CreateLayout();
     void InitImGui();
 
 private:
@@ -54,6 +55,9 @@ private:
     vk::CommandBuffer m_CommandBuffer = VK_NULL_HANDLE;
     vk::Semaphore m_RenderSemaphore = VK_NULL_HANDLE, m_PresentSemaphore = VK_NULL_HANDLE;
     vk::Fence m_Fence = VK_NULL_HANDLE;
+
+    std::vector<vk::DescriptorSetLayout> m_DescriptorSetLayouts = {};
+    static constexpr int GLOBAL = 0, PER_MODEL = 1;
     
     struct CameraDataVert
     {

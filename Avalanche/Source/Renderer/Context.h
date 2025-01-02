@@ -5,6 +5,7 @@
 #include <optional>
 
 #include "CommandManager.h"
+#include "DescriptorSetBuilder.h"
 
 struct GLFWwindow;
 
@@ -19,6 +20,7 @@ public:
 
 public:
     void InitCommandManager();
+    void InitDescriptorSetBuilder(uint32_t numLayouts);
 
     vk::Instance GetInstance() const { return m_Instance; }
     vk::SurfaceKHR GetSurface() const { return m_Surface; }
@@ -29,6 +31,7 @@ public:
     vk::DescriptorPool GetDescriptorPool() const { return m_DescriptorPool; }
     VmaAllocator GetAllocator() const { return m_Allocator; }
     CommandManager* GetCommandManager() const { return m_CommandManager.get(); }
+    DescriptorSetBuilder* GetDescriptorSetBuilder() const { return m_DescriptorSetBuilder.get(); }
     uint32_t GetGraphicsQueueFamilyIndex() const { return m_QueueFamilyIndices.GraphicsQueue.value(); }
     uint32_t GetPresentQueueFamilyIndex() const { return m_QueueFamilyIndices.PresentQueue.value(); }
         
@@ -65,7 +68,9 @@ private:
     vk::SurfaceKHR m_Surface;
     vk::DescriptorPool m_DescriptorPool;
     VmaAllocator m_Allocator = VK_NULL_HANDLE;
+    
     std::unique_ptr<CommandManager> m_CommandManager;
+    std::unique_ptr<DescriptorSetBuilder> m_DescriptorSetBuilder;
     
     QueueFamilyIndices m_QueueFamilyIndices;
 };

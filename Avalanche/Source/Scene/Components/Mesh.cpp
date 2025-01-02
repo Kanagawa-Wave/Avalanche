@@ -4,6 +4,8 @@
 #include <glm/gtx/hash.hpp>
 #include <tiny_obj_loader.h>
 
+#include "Renderer/Context.h"
+
 template <typename T, typename... Rest>
 void hashCombine(std::size_t& seed, const T& v, const Rest&... rest)
 {
@@ -63,8 +65,9 @@ Mesh::Mesh(const aiMesh* mesh)
 	m_IndexBuffer = std::make_unique<IndexBuffer>(m_Indices.data(), m_Indices.size());
 }
 
-void Mesh::Bind(vk::CommandBuffer commandBuffer) const
+void Mesh::Bind(vk::CommandBuffer commandBuffer, const vk::PipelineLayout& layout) const
 {
+	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, layout, 1, {m_DescriptorSet->GetDescriptorSet()}, nullptr);
 	m_VertexBuffer->Bind(commandBuffer);
 	m_IndexBuffer->Bind(commandBuffer);
 }
@@ -78,6 +81,12 @@ void Mesh::SetTexture(const std::string& path)
 {
 	m_Texture = std::make_unique<Texture>(path);
 	m_TexturePath = path;
+
+	if (!m_DescriptorSet)
+	{
+		m_DescriptorSet = Context::Instance().GetDescriptorSetBuilder()->CreateDescriptorSet(1);
+	}
+	m_DescriptorSet->AttachTexture(m_Texture.get(), 0);
 }
 
 void Mesh::LoadObjFromFile(const std::string& path)

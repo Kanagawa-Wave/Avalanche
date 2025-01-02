@@ -158,15 +158,19 @@ struct ShadowMapComponent
 
 struct StaticMeshComponent
 {
-    Mesh StaticMesh;
+    std::shared_ptr<Mesh> StaticMesh = nullptr;
+    bool Visible = false;
     
     StaticMeshComponent() = default;
     StaticMeshComponent(const StaticMeshComponent&) = default;
     
     StaticMeshComponent(const std::string& path)
-	    : StaticMesh(path)
     {
+        StaticMesh = std::make_shared<Mesh>(path);
+        Visible = true;
     }
+    StaticMeshComponent(std::shared_ptr<Mesh> mesh)
+        : StaticMesh(mesh), Visible(true) {}
 };
 
 template <typename... Component>

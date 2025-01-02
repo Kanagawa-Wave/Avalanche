@@ -20,7 +20,6 @@ Shader::Shader(const ShaderCreateInfo& info)
     InitPipelineShaderStageCreateInfo();
 
     SetStaticDescriptorLayout(info.StaticLayout);
-    SetDynamicDescriptorLayout(info.DynamicLayout);
 }
 
 Shader::~Shader()
@@ -41,7 +40,7 @@ void Shader::SetStaticDescriptorLayout(const vk::ArrayProxy<ShaderDataLayout>& l
     {
         descriptorLayout.emplace_back(element.Binding, element.Type, element.Count, element.Stage);
     }
-    m_StaticSet = std::make_unique<DescriptorSet>(Context::Instance().GetDescriptorPool(), descriptorLayout);
+    m_StaticSet = Context::Instance().GetDescriptorSetBuilder()->CreateDescriptorSet(0);
 
     for (const auto& element : layout)
     {
@@ -52,11 +51,6 @@ void Shader::SetStaticDescriptorLayout(const vk::ArrayProxy<ShaderDataLayout>& l
     {
 	    m_StaticSet->AttachUniformBuffer(m_UniformBuffers[binding].get(), binding);
     }
-}
-
-void Shader::SetDynamicDescriptorLayout(const vk::ArrayProxy<vk::DescriptorSetLayoutBinding>& layout)
-{
-    m_DynamicSet = std::make_unique<DescriptorSet>(Context::Instance().GetDescriptorPool(), layout);
 }
 
 void Shader::AttachTexture(const Texture* texture, uint32_t binding) const
