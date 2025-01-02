@@ -123,7 +123,7 @@ void Pipeline::CreatePipeline(const VertexInputInfo& vertexInputInfo,
 void Pipeline::Bind(vk::CommandBuffer commandBuffer) const
 {
 	commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_Pipeline);
-	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_Layout, 0, {m_Shader->m_StaticSet->GetDescriptorSet()}, nullptr);
+	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_Layout, 0, {m_Shader->m_GlobalDescriptorSet->GetDescriptorSet()}, nullptr);
 }
 
 void Pipeline::BindDescriptorSets(vk::CommandBuffer commandBuffer,
@@ -138,9 +138,4 @@ void Pipeline::BindDescriptorSets(vk::CommandBuffer commandBuffer,
 void Pipeline::SetShaderBufferData(uint32_t binding, const void* data) const
 {
 	m_Shader->SetBufferData(binding, data);
-}
-
-void Pipeline::AttachTextureToShader(const Texture* texture, uint32_t binding) const
-{
-	m_Shader->AttachTexture(texture, binding);
 }

@@ -30,11 +30,11 @@ void DescriptorSetBuilder::SetLayout(uint32_t layoutID, const vk::ArrayProxy<vk:
     m_DescriptorSetLayouts[layoutID] = device.createDescriptorSetLayout(layoutInfo);
 }
 
-std::shared_ptr<DescriptorSet> DescriptorSetBuilder::CreateDescriptorSet(uint32_t layoutID)
+std::unique_ptr<DescriptorSet> DescriptorSetBuilder::CreateDescriptorSet(uint32_t layoutID)
 {
     const auto& context = Context::Instance();
     
-    return std::make_shared<DescriptorSet>(context.GetDescriptorPool(), m_DescriptorSetLayouts[layoutID]);
+    return std::make_unique<DescriptorSet>(context.GetDescriptorPool(), m_DescriptorSetLayouts[layoutID]);
 }
 
 std::vector<vk::DescriptorSetLayout> DescriptorSetBuilder::GetDescriptorSetLayouts()

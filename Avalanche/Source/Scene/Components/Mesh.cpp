@@ -86,7 +86,7 @@ void Mesh::SetTexture(const std::string& path)
 	{
 		m_DescriptorSet = Context::Instance().GetDescriptorSetBuilder()->CreateDescriptorSet(1);
 	}
-	m_DescriptorSet->AttachTexture(m_Texture.get(), 0);
+	m_DescriptorSet->UpdateDescriptor(m_Texture.get(), 0);
 }
 
 void Mesh::LoadObjFromFile(const std::string& path)

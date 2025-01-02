@@ -39,7 +39,7 @@ Renderer::Renderer(Window* window, const vk::Extent2D& viewportExtent)
 	m_ViewportRenderTarget = std::make_unique<RenderTarget>(window->GetSwapchain()->GetFormat(),
 		window->GetExtent(), true);
 
-	const ShaderDataLayout staticSetLayout[] = {
+	const ShaderDataLayout globalSetLayout[] = {
 		{0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex, sizeof(CameraDataVert)},
 		{1, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eFragment, sizeof(PointLightData)},
 		{2, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eFragment, sizeof(CameraDataFrag)}
@@ -48,7 +48,7 @@ Renderer::Renderer(Window* window, const vk::Extent2D& viewportExtent)
 	PipelineCreateInfo pipelineInfo;
 	pipelineInfo.setVertexShader("Shaders/Phong.vert.hlsl.spv")
 				.setFragmentShader("Shaders/Phong.frag.hlsl.spv")
-				.setStaticSetLayout(staticSetLayout)
+				.setGlobalSetLayout(globalSetLayout)
 				.setRenderPass(m_ViewportRenderTarget->GetRenderPass())
 				.setPushConstantSize(sizeof(PushConstant))
 				.setVertexInputInfo(Vertex::Layout().GetVertexInputInfo());

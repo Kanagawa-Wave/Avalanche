@@ -26,7 +26,7 @@ struct PipelineCreateInfo
         return *this;
     }
 
-	PipelineCreateInfo& setStaticSetLayout(const vk::ArrayProxy<ShaderDataLayout>& layout)
+	PipelineCreateInfo& setGlobalSetLayout(const vk::ArrayProxy<ShaderDataLayout>& layout)
     {
 	    ShaderInfo.setStaticSetLayout(layout);
         return *this;
@@ -74,7 +74,6 @@ public:
 
 
 	void SetShaderBufferData(uint32_t binding, const void* data) const;
-    void AttachTextureToShader(const Texture* texture, uint32_t binding) const;
 
 private:
     void CreateLayout(uint32_t pushConstantSize, const std::vector<vk::DescriptorSetLayout>& layouts);

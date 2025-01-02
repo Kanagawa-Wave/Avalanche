@@ -20,7 +20,7 @@ struct ShaderDataLayout
 struct ShaderCreateInfo
 {
 	std::string VertPath, FragPath;
-    vk::ArrayProxy<ShaderDataLayout> StaticLayout;
+    vk::ArrayProxy<ShaderDataLayout> GlobalSetLayout;
 
     ShaderCreateInfo& setShaderPaths(const std::string& vertPath, const std::string& fragPath)
     {
@@ -30,7 +30,7 @@ struct ShaderCreateInfo
 
     ShaderCreateInfo& setStaticSetLayout(const vk::ArrayProxy<ShaderDataLayout>& layout)
     {
-	    StaticLayout = layout;
+	    GlobalSetLayout = layout;
         return *this;
     }
 };
@@ -44,10 +44,9 @@ public:
     const std::vector<vk::PipelineShaderStageCreateInfo>& GetStageInfo() { return m_Stages; }
 
     void SetBufferData(uint32_t binding, const void* data) const;
-    void AttachTexture(const Texture* texture, uint32_t binding) const;
 
 private:
-	void SetStaticDescriptorLayout(const vk::ArrayProxy<ShaderDataLayout>& layout);
+	void SetGlobalDescriptorLayout(const vk::ArrayProxy<ShaderDataLayout>& layout);
 
     static std::vector<char> LoadSPVFromFile(const std::string& path);
     void InitPipelineShaderStageCreateInfo();
@@ -55,7 +54,7 @@ private:
 private:
     vk::ShaderModule m_VertexShader, m_FragmentShader;
     std::vector<vk::PipelineShaderStageCreateInfo> m_Stages;
-    std::shared_ptr<DescriptorSet> m_StaticSet, m_DynamicSet;
+    std::unique_ptr<DescriptorSet> m_GlobalDescriptorSet;
     std::vector<std::unique_ptr<Buffer>> m_UniformBuffers;
 
     friend class Pipeline;

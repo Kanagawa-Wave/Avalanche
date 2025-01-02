@@ -19,7 +19,7 @@ Shader::Shader(const ShaderCreateInfo& info)
 
     InitPipelineShaderStageCreateInfo();
 
-    SetStaticDescriptorLayout(info.StaticLayout);
+    SetGlobalDescriptorLayout(info.GlobalSetLayout);
 }
 
 Shader::~Shader()
@@ -33,14 +33,9 @@ void Shader::SetBufferData(uint32_t binding, const void* data) const
     m_UniformBuffers[binding]->SetData(data);
 }
 
-void Shader::SetStaticDescriptorLayout(const vk::ArrayProxy<ShaderDataLayout>& layout)
+void Shader::SetGlobalDescriptorLayout(const vk::ArrayProxy<ShaderDataLayout>& layout)
 {
-    std::vector<vk::DescriptorSetLayoutBinding> descriptorLayout;
-    for (const auto& element : layout)
-    {
-        descriptorLayout.emplace_back(element.Binding, element.Type, element.Count, element.Stage);
-    }
-    m_StaticSet = Context::Instance().GetDescriptorSetBuilder()->CreateDescriptorSet(0);
+    m_GlobalDescriptorSet = Context::Instance().GetDescriptorSetBuilder()->CreateDescriptorSet(0);
 
     for (const auto& element : layout)
     {
@@ -49,13 +44,8 @@ void Shader::SetStaticDescriptorLayout(const vk::ArrayProxy<ShaderDataLayout>& l
 
     for (int binding = 0; binding < m_UniformBuffers.size(); binding++)
     {
-	    m_StaticSet->AttachUniformBuffer(m_UniformBuffers[binding].get(), binding);
+	    m_GlobalDescriptorSet->UpdateDescriptor(m_UniformBuffers[binding].get(), binding);
     }
-}
-
-void Shader::AttachTexture(const Texture* texture, uint32_t binding) const
-{
-    m_DynamicSet->AttachTexture(texture, binding);
 }
 
 std::vector<char> Shader::LoadSPVFromFile(const std::string& path)

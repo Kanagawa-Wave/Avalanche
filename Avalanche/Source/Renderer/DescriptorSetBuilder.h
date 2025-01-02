@@ -9,7 +9,7 @@ public:
     ~DescriptorSetBuilder();
 
     void SetLayout(uint32_t layoutID, const vk::ArrayProxy<vk::DescriptorSetLayoutBinding>& bindings);
-    std::shared_ptr<DescriptorSet> CreateDescriptorSet(uint32_t layoutID);
+    std::unique_ptr<DescriptorSet> CreateDescriptorSet(uint32_t layoutID);
     std::vector<vk::DescriptorSetLayout> GetDescriptorSetLayouts();
 
 private:

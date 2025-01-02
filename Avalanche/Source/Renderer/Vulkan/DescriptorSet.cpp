@@ -18,7 +18,7 @@ DescriptorSet::DescriptorSet(vk::DescriptorPool pool, vk::DescriptorSetLayout la
 
 DescriptorSet::~DescriptorSet() = default;
 
-void DescriptorSet::AttachUniformBuffer(const Buffer* buffer, uint32_t binding) const
+void DescriptorSet::UpdateDescriptor(const Buffer* buffer, uint32_t binding) const
 {
 	const auto& device = Context::Instance().GetDevice();
 
@@ -37,7 +37,7 @@ void DescriptorSet::AttachUniformBuffer(const Buffer* buffer, uint32_t binding) 
 	device.updateDescriptorSets(writeInfo, nullptr);
 }
 
-void DescriptorSet::AttachTexture(const Texture* texture, uint32_t binding) const
+void DescriptorSet::UpdateDescriptor(const Texture* texture, uint32_t binding) const
 {
 	const auto& device = Context::Instance().GetDevice();
 

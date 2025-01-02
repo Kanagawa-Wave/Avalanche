@@ -63,7 +63,7 @@ private:
     std::string m_TexturePath;
 
     std::unique_ptr<Texture> m_Texture;
-    std::shared_ptr<DescriptorSet> m_DescriptorSet;
+    std::unique_ptr<DescriptorSet> m_DescriptorSet;
     
     std::vector<Vertex> m_Vertices{};
     std::vector<uint32_t> m_Indices{};
