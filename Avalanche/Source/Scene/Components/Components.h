@@ -6,6 +6,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
 
+#include "Billboard.h"
 #include "Camera.h"
 #include "Model.h"
 #include "Mesh.h"
@@ -146,6 +147,19 @@ struct PointLightComponent
     PointLightComponent(const PointLightComponent&) = default;
 };
 
+struct BillboardComponent
+{
+    std::shared_ptr<Billboard> BillboardObject = nullptr;
+
+    BillboardComponent() = default;
+    BillboardComponent(const BillboardComponent&) = default;
+
+    BillboardComponent(const std::string& path)
+    {
+        BillboardObject = std::make_shared<Billboard>(1.f, path);
+    }
+};
+
 struct ShadowMapComponent
 {
 	uint32_t ShadowMapWidth = 1024;
@@ -178,5 +192,7 @@ struct ComponentGroup
 {
 };
 
-using AllComponents = ComponentGroup<IDComponent, TagComponent, TransformComponent, CameraComponent, StaticMeshComponent, PointLightComponent
-                                     >;
+using AllComponents =
+    ComponentGroup<IDComponent, TagComponent, TransformComponent,
+                   CameraComponent, StaticMeshComponent, PointLightComponent,
+                   BillboardComponent>;

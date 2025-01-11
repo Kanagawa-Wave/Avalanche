@@ -18,26 +18,31 @@ DescriptorSetBuilder::~DescriptorSetBuilder()
     }
 };
 
-void DescriptorSetBuilder::SetLayout(uint32_t layoutID, const vk::ArrayProxy<vk::DescriptorSetLayoutBinding>& bindings)
+void DescriptorSetBuilder::SetLayout(EDescriptorSetLayoutType layoutID, const vk::ArrayProxy<vk::DescriptorSetLayoutBinding>& bindings)
 {
     const auto& device = Context::Instance().GetDevice();
 
-    ASSERT(layoutID < m_NumLayouts, "Layout ID out of range")
+    ASSERT((int)layoutID < m_NumLayouts, "Layout ID out of range")
     
     vk::DescriptorSetLayoutCreateInfo layoutInfo;
     layoutInfo.setBindings(bindings);
 
-    m_DescriptorSetLayouts[layoutID] = device.createDescriptorSetLayout(layoutInfo);
+    m_DescriptorSetLayouts[(int)layoutID] = device.createDescriptorSetLayout(layoutInfo);
 }
 
-std::unique_ptr<DescriptorSet> DescriptorSetBuilder::CreateDescriptorSet(uint32_t layoutID)
+std::unique_ptr<DescriptorSet> DescriptorSetBuilder::CreateDescriptorSet(EDescriptorSetLayoutType layoutID)
 {
     const auto& context = Context::Instance();
     
-    return std::make_unique<DescriptorSet>(context.GetDescriptorPool(), m_DescriptorSetLayouts[layoutID]);
+    return std::make_unique<DescriptorSet>(context.GetDescriptorPool(), m_DescriptorSetLayouts[(int)layoutID]);
 }
 
-std::vector<vk::DescriptorSetLayout> DescriptorSetBuilder::GetDescriptorSetLayouts()
+std::vector<vk::DescriptorSetLayout> DescriptorSetBuilder::GetDescriptorSetLayouts(std::vector<EDescriptorSetLayoutType> layoutIDs)
 {
-    return m_DescriptorSetLayouts;
+    std::vector<vk::DescriptorSetLayout> layouts;
+    for (const auto& layoutID : layoutIDs)
+    {
+        layouts.push_back(m_DescriptorSetLayouts[(int)layoutID]);
+    }
+    return layouts;
 }

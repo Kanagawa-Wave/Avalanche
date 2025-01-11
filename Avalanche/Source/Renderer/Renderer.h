@@ -26,7 +26,6 @@ public:
     ~Renderer();
 
     void Begin(const Camera& camera, const Scene& scene);
-    void DrawModel(const TransformComponent& transform, const StaticMeshComponent& mesh) const;
     void End();
     void Render(const Camera& camera, const Scene& scene);
 
@@ -34,6 +33,8 @@ public:
     void* GetViewportTextureID() const;
 
 private:
+    void DrawModel(const TransformComponent& transform, const StaticMeshComponent& mesh) const;
+    void DrawBillboard(const TransformComponent& transform, const BillboardComponent& billboard) const;
     void AllocateCommandBuffer();
     void CreateSemaphores();
     void CreateFence();
@@ -46,9 +47,9 @@ private:
     uint32_t m_ImageIndex = 0;
 
     std::unique_ptr<RenderPass> m_PresnetRenderPass = nullptr;
-    std::unique_ptr<Pipeline> m_Pipeline = nullptr;
+    std::unique_ptr<Pipeline> m_UIPipeline = nullptr;
 
-    std::unique_ptr<Pipeline> m_ViewportPipeline = nullptr;
+    std::unique_ptr<Pipeline> m_MainPipeline = nullptr, m_BillboardPipeline = nullptr;
     std::unique_ptr<RenderTarget> m_ViewportRenderTarget = nullptr;
 
     vk::DescriptorPool m_ImGuiPool = VK_NULL_HANDLE;
@@ -57,7 +58,7 @@ private:
     vk::Fence m_Fence = VK_NULL_HANDLE;
 
     std::vector<vk::DescriptorSetLayout> m_DescriptorSetLayouts = {};
-    static constexpr int GLOBAL = 0, PER_MODEL = 1;
+    static constexpr int MAIN_GLOBAL = 0, BILLBOARD_GLOBAL = 1, PER_MODEL = 2;
     
     struct CameraDataVert
     {

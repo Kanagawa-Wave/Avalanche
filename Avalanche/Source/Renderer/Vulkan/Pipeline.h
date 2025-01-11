@@ -12,7 +12,6 @@ struct PipelineCreateInfo
     uint32_t PushConstantSize = 0;
     VertexInputInfo VertexInput;
     vk::RenderPass RenderPass;
-    std::vector<vk::DescriptorSetLayout> DescriptorSetLayouts;
 
     PipelineCreateInfo& setVertexShader(const std::string& vertexShader)
     {
@@ -26,9 +25,10 @@ struct PipelineCreateInfo
         return *this;
     }
 
-	PipelineCreateInfo& setGlobalSetLayout(const vk::ArrayProxy<ShaderDataLayout>& layout)
+	PipelineCreateInfo& setGlobalSetLayout(const vk::ArrayProxy<ShaderDataLayout>& layout, EDescriptorSetLayoutType type)
     {
-	    ShaderInfo.setStaticSetLayout(layout);
+	    ShaderInfo.setGlobalSetLayout(layout);
+        ShaderInfo.setGlobalSetLayoutType(type);
         return *this;
     }
 
@@ -47,12 +47,6 @@ struct PipelineCreateInfo
     PipelineCreateInfo& setRenderPass(vk::RenderPass renderPass)
     {
         RenderPass = renderPass;
-        return *this;
-    }
-
-    PipelineCreateInfo& setDescriptorSetLayouts(const std::vector<vk::DescriptorSetLayout>& layouts)
-    {
-        DescriptorSetLayouts = layouts;
         return *this;
     }
 };

@@ -3,6 +3,7 @@
 #include <vulkan/vulkan.hpp>
 
 #include "DescriptorSet.h"
+#include "Renderer/DescriptorSetBuilder.h"
 
 struct ShaderDataLayout
 {
@@ -21,6 +22,7 @@ struct ShaderCreateInfo
 {
 	std::string VertPath, FragPath;
     vk::ArrayProxy<ShaderDataLayout> GlobalSetLayout;
+    EDescriptorSetLayoutType GlobalSetLayoutType;
 
     ShaderCreateInfo& setShaderPaths(const std::string& vertPath, const std::string& fragPath)
     {
@@ -28,9 +30,15 @@ struct ShaderCreateInfo
         return *this;
     }
 
-    ShaderCreateInfo& setStaticSetLayout(const vk::ArrayProxy<ShaderDataLayout>& layout)
+    ShaderCreateInfo& setGlobalSetLayout(const vk::ArrayProxy<ShaderDataLayout>& layout)
     {
 	    GlobalSetLayout = layout;
+        return *this;
+    }
+
+    ShaderCreateInfo& setGlobalSetLayoutType(EDescriptorSetLayoutType layoutType)
+    {
+        GlobalSetLayoutType = layoutType;
         return *this;
     }
 };
@@ -46,7 +54,7 @@ public:
     void SetBufferData(uint32_t binding, const void* data) const;
 
 private:
-	void SetGlobalDescriptorLayout(const vk::ArrayProxy<ShaderDataLayout>& layout);
+	void SetGlobalDescriptorLayout(const vk::ArrayProxy<ShaderDataLayout>& layout, EDescriptorSetLayoutType layoutType);
 
     static std::vector<char> LoadSPVFromFile(const std::string& path);
     void InitPipelineShaderStageCreateInfo();

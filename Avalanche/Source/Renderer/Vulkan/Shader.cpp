@@ -19,7 +19,7 @@ Shader::Shader(const ShaderCreateInfo& info)
 
     InitPipelineShaderStageCreateInfo();
 
-    SetGlobalDescriptorLayout(info.GlobalSetLayout);
+    SetGlobalDescriptorLayout(info.GlobalSetLayout, info.GlobalSetLayoutType);
 }
 
 Shader::~Shader()
@@ -33,9 +33,9 @@ void Shader::SetBufferData(uint32_t binding, const void* data) const
     m_UniformBuffers[binding]->SetData(data);
 }
 
-void Shader::SetGlobalDescriptorLayout(const vk::ArrayProxy<ShaderDataLayout>& layout)
+void Shader::SetGlobalDescriptorLayout(const vk::ArrayProxy<ShaderDataLayout>& layout, EDescriptorSetLayoutType layoutType)
 {
-    m_GlobalDescriptorSet = Context::Instance().GetDescriptorSetBuilder()->CreateDescriptorSet(0);
+    m_GlobalDescriptorSet = Context::Instance().GetDescriptorSetBuilder()->CreateDescriptorSet(layoutType);
 
     for (const auto& element : layout)
     {

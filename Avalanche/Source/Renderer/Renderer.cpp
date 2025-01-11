@@ -15,6 +15,7 @@
 #include "ImGui/imgui_impl_glfw.h"
 #include "ImGui/imgui_impl_vulkan.h"
 #include "Scene/Entity.h"
+#include "Scene/Components/Billboard.h"
 #include "Scene/Components/Components.h"
 
 Renderer::Renderer(Window* window, const vk::Extent2D& viewportExtent)
@@ -39,21 +40,30 @@ Renderer::Renderer(Window* window, const vk::Extent2D& viewportExtent)
 	m_ViewportRenderTarget = std::make_unique<RenderTarget>(window->GetSwapchain()->GetFormat(),
 		window->GetExtent(), true);
 
-	const ShaderDataLayout globalSetLayout[] = {
+	const ShaderDataLayout mainGlobalSetLayout[] = {
 		{0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex, sizeof(CameraDataVert)},
 		{1, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eFragment, sizeof(PointLightData)},
 		{2, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eFragment, sizeof(CameraDataFrag)}
 	};
-
 	PipelineCreateInfo pipelineInfo;
 	pipelineInfo.setVertexShader("Shaders/Phong.vert.hlsl.spv")
 				.setFragmentShader("Shaders/Phong.frag.hlsl.spv")
-				.setGlobalSetLayout(globalSetLayout)
+				.setGlobalSetLayout(mainGlobalSetLayout, EDescriptorSetLayoutType::MainGlobalSet)
 				.setRenderPass(m_ViewportRenderTarget->GetRenderPass())
 				.setPushConstantSize(sizeof(PushConstant))
-				.setVertexInputInfo(Vertex::Layout().GetVertexInputInfo());
+				.setVertexInputInfo(ModelVertex::Layout().GetVertexInputInfo());
+	m_MainPipeline = std::make_unique<Pipeline>(pipelineInfo);
 
-	m_ViewportPipeline = std::make_unique<Pipeline>(pipelineInfo);
+	const ShaderDataLayout billboardGlobalSetLayout[] = {
+		{0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex, sizeof(CameraDataVert)},
+	};
+	pipelineInfo.setVertexShader("Shaders/Billboard.vert.hlsl.spv")
+			.setFragmentShader("Shaders/Billboard.frag.hlsl.spv")
+			.setGlobalSetLayout(billboardGlobalSetLayout, EDescriptorSetLayoutType::BillboardGlobalSet)
+			.setRenderPass(m_ViewportRenderTarget->GetRenderPass())
+			.setPushConstantSize(sizeof(PushConstant))
+			.setVertexInputInfo(Billboard::Layout().GetVertexInputInfo());
+	m_BillboardPipeline = std::make_unique<Pipeline>(pipelineInfo);
 
 	AllocateCommandBuffer();
 	CreateFence();
@@ -79,7 +89,8 @@ void Renderer::Begin(const Camera& camera, const Scene& scene)
 	//m_CameraBufferVert->SetData(&m_CameraDataVert);
 
 	m_CameraDataVert.SetData(camera.GetProjection(), camera.GetView());
-	m_ViewportPipeline->SetShaderBufferData(0, &m_CameraDataVert);
+	m_MainPipeline->SetShaderBufferData(0, &m_CameraDataVert);
+	m_BillboardPipeline->SetShaderBufferData(0, &m_CameraDataVert);
 
 	const auto view = scene.GetAllEntitiesWith<PointLightComponent, TransformComponent>();
 	m_PointLightData.m_PointLightCount = 0;
@@ -88,10 +99,10 @@ void Renderer::Begin(const Camera& camera, const Scene& scene)
 		auto [pointLight, transform] = view.get<PointLightComponent, TransformComponent>(entity);
 		m_PointLightData.SetData(transform.Translation, pointLight.Color);
 	}
-	m_ViewportPipeline->SetShaderBufferData(1, &m_PointLightData);
+	m_MainPipeline->SetShaderBufferData(1, &m_PointLightData);
 
 	m_CameraDataFrag.SetData(camera.GetPosition());
-	m_ViewportPipeline->SetShaderBufferData(2, &m_CameraDataFrag);
+	m_MainPipeline->SetShaderBufferData(2, &m_CameraDataFrag);
 
 	const auto& device = Context::Instance().GetDevice();
 
@@ -122,7 +133,7 @@ void Renderer::Begin(const Camera& camera, const Scene& scene)
 
 	// Pass #1: Render to viewport
 	m_ViewportRenderTarget->Begin(m_CommandBuffer);
-	m_ViewportPipeline->Bind(m_CommandBuffer);
+	m_MainPipeline->Bind(m_CommandBuffer);
 
 	vk::Viewport viewport;
 	vk::Rect2D scissor;
@@ -144,11 +155,24 @@ void Renderer::DrawModel(const TransformComponent& transform, const StaticMeshCo
 
 	pushConstant.model = transform.GetModelMat();
 	pushConstant.normalMat = glm::transpose(glm::inverse(pushConstant.model));
-	m_CommandBuffer.pushConstants(m_ViewportPipeline->GetLayout(), vk::ShaderStageFlagBits::eVertex, 0,
+	m_CommandBuffer.pushConstants(m_MainPipeline->GetLayout(), vk::ShaderStageFlagBits::eVertex, 0,
 		sizeof(PushConstant),
 		&pushConstant);
-	mesh.StaticMesh->Bind(m_CommandBuffer, m_ViewportPipeline->GetLayout());
+	mesh.StaticMesh->Bind(m_CommandBuffer, m_MainPipeline->GetLayout());
 	mesh.StaticMesh->Draw(m_CommandBuffer);
+}
+
+void Renderer::DrawBillboard(const TransformComponent& transform, const BillboardComponent& billboard) const
+{
+	PushConstant pushConstant;
+
+	pushConstant.model = transform.GetModelMat();
+	pushConstant.normalMat = glm::transpose(glm::inverse(pushConstant.model));
+	m_CommandBuffer.pushConstants(m_MainPipeline->GetLayout(), vk::ShaderStageFlagBits::eVertex, 0,
+		sizeof(PushConstant),
+		&pushConstant);
+	billboard.BillboardObject->Bind(m_CommandBuffer, m_MainPipeline->GetLayout());
+	billboard.BillboardObject->Draw(m_CommandBuffer);
 }
 
 void Renderer::End()
@@ -204,14 +228,22 @@ void Renderer::End()
 void Renderer::Render(const Camera& camera, const Scene& scene)
 {
 	Begin(camera, scene);
-	auto view = scene.m_Registry.view<TransformComponent, StaticMeshComponent>();
-	for (auto entity : view)
+	auto meshView = scene.m_Registry.view<TransformComponent, StaticMeshComponent>();
+	for (auto entity : meshView)
 	{
-		auto [transform, model] = view.get<TransformComponent, StaticMeshComponent>(entity);
+		auto [transform, model] = meshView.get<TransformComponent, StaticMeshComponent>(entity);
 		if (model.Visible)
 		{
 			DrawModel(transform, model);
 		}
+	}
+
+	m_BillboardPipeline->Bind(m_CommandBuffer);
+	auto billboardView = scene.m_Registry.view<TransformComponent, BillboardComponent>();
+	for (auto entity : billboardView)
+	{
+		auto [transform, billboard] = billboardView.get<TransformComponent, BillboardComponent>(entity);
+		DrawBillboard(transform, billboard);
 	}
 	End();
 }
@@ -250,19 +282,24 @@ void Renderer::CreateLayout()
 {
 	Context& instance = Context::Instance();
 	
-	constexpr vk::DescriptorSetLayoutBinding globalBinding[] = {
+	constexpr vk::DescriptorSetLayoutBinding mainGlobalBinding[] = {
 		{0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex},
 		{1, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eFragment},
 		{2, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eFragment}
+	};
+
+	constexpr vk::DescriptorSetLayoutBinding billboardGlobalBinding[] = {
+		{0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex},
 	};
 
 	constexpr vk::DescriptorSetLayoutBinding perModelBinding[] = {
 		{0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}
 	};
 	
-	instance.InitDescriptorSetBuilder(2);
-	instance.GetDescriptorSetBuilder()->SetLayout(GLOBAL, globalBinding);
-	instance.GetDescriptorSetBuilder()->SetLayout(PER_MODEL, perModelBinding);
+	instance.InitDescriptorSetBuilder(3);
+	instance.GetDescriptorSetBuilder()->SetLayout(EDescriptorSetLayoutType::MainGlobalSet, mainGlobalBinding);
+	instance.GetDescriptorSetBuilder()->SetLayout(EDescriptorSetLayoutType::BillboardGlobalSet, billboardGlobalBinding);
+	instance.GetDescriptorSetBuilder()->SetLayout(EDescriptorSetLayoutType::PerModelSet, perModelBinding);
 }
 
 void Renderer::InitImGui()

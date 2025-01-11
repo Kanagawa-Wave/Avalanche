@@ -49,9 +49,13 @@ void Outliner::OnImGuiUpdate()
 			{
 				m_SelectedEntity.AddOrReplaceComponent<PointLightComponent>();
 			}
-			if (ImGui::MenuItem("Static Mesh Component"))
+			if (ImGui::MenuItem("StaticMesh Component"))
 			{
 				m_SelectedEntity.AddOrReplaceComponent<StaticMeshComponent>();
+			}
+			if (ImGui::MenuItem("Billboard Component"))
+			{
+				m_SelectedEntity.AddOrReplaceComponent<BillboardComponent>();
 			}
 			ImGui::EndPopup();
 		}

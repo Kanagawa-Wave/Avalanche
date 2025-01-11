@@ -31,6 +31,7 @@ Entity Scene::CreatePointLight(const std::string& name)
 {
     Entity entity = CreateEntity(name.empty() ? "PointLight" : name);
     entity.AddComponent<PointLightComponent>();
+    entity.AddComponent<BillboardComponent>("Content/PointLight.png");
     return entity;
 }
 

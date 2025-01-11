@@ -11,14 +11,14 @@
 
 #include "Renderer/Vulkan/DescriptorSet.h"
 
-struct Vertex
+struct ModelVertex
 {
     glm::vec3 position{};
     glm::vec3 color{};
     glm::vec3 normal{};
     glm::vec2 uv{};
 
-    bool operator ==(const Vertex& other) const
+    bool operator ==(const ModelVertex& other) const
     {
         return
             position == other.position &&
@@ -65,7 +65,7 @@ private:
     std::unique_ptr<Texture> m_Texture;
     std::unique_ptr<DescriptorSet> m_DescriptorSet;
     
-    std::vector<Vertex> m_Vertices{};
+    std::vector<ModelVertex> m_Vertices{};
     std::vector<uint32_t> m_Indices{};
     
     std::unique_ptr<VertexBuffer> m_VertexBuffer = nullptr;

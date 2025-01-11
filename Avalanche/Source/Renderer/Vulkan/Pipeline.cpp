@@ -8,8 +8,13 @@ Pipeline::Pipeline(const PipelineCreateInfo& pipelineCreateInfo)
 	const Context& context = Context::Instance();
 	m_Shader.reset(new Shader(pipelineCreateInfo.ShaderInfo));
 
-	// const std::vector layouts = {m_Shader->m_StaticSet->GetLayout(), m_Shader->m_DynamicSet->GetLayout()};
-	CreateLayout(pipelineCreateInfo.PushConstantSize, context.GetDescriptorSetBuilder()->GetDescriptorSetLayouts());
+	// TODO: Remove hard coded layout IDs
+	auto layouts = context.GetDescriptorSetBuilder()->GetDescriptorSetLayouts(
+	{
+		pipelineCreateInfo.ShaderInfo.GlobalSetLayoutType,
+		EDescriptorSetLayoutType::PerModelSet
+	});
+	CreateLayout(pipelineCreateInfo.PushConstantSize,layouts);
 	CreatePipeline(pipelineCreateInfo.VertexInput, pipelineCreateInfo.RenderPass);
 }
 

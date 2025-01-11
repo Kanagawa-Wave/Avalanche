@@ -16,9 +16,9 @@ void hashCombine(std::size_t& seed, const T& v, const Rest&... rest)
 namespace std
 {
 	template <>
-	struct hash<Vertex>
+	struct hash<ModelVertex>
 	{
-		size_t operator()(Vertex const& vertex) const noexcept
+		size_t operator()(ModelVertex const& vertex) const noexcept
 		{
 			size_t seed = 0;
 			hashCombine(seed, vertex.position, vertex.color, vertex.normal, vertex.uv);
@@ -32,8 +32,8 @@ Mesh::Mesh(const std::string& meshPath)
 {
 	LoadObjFromFile(meshPath);
 
-	m_VertexBuffer = std::make_unique<VertexBuffer>(m_Vertices.data(), m_Vertices.size() * sizeof(Vertex));
-	m_VertexBuffer->SetLayout(Vertex::Layout());
+	m_VertexBuffer = std::make_unique<VertexBuffer>(m_Vertices.data(), m_Vertices.size() * sizeof(ModelVertex));
+	m_VertexBuffer->SetLayout(ModelVertex::Layout());
 
 	m_IndexBuffer = std::make_unique<IndexBuffer>(m_Indices.data(), m_Indices.size());
 }
@@ -42,7 +42,7 @@ Mesh::Mesh(const aiMesh* mesh)
 {
 	for (uint32_t i = 0; i < mesh->mNumVertices; i++)
 	{
-		Vertex vertex;
+		ModelVertex vertex;
 		vertex.position = { mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z };
 		vertex.normal = { mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z };
 		if (mesh->mTextureCoords[0])
@@ -59,8 +59,8 @@ Mesh::Mesh(const aiMesh* mesh)
 		}
 	}
 
-	m_VertexBuffer = std::make_unique<VertexBuffer>(m_Vertices.data(), m_Vertices.size() * sizeof(Vertex));
-	m_VertexBuffer->SetLayout(Vertex::Layout());
+	m_VertexBuffer = std::make_unique<VertexBuffer>(m_Vertices.data(), m_Vertices.size() * sizeof(ModelVertex));
+	m_VertexBuffer->SetLayout(ModelVertex::Layout());
 
 	m_IndexBuffer = std::make_unique<IndexBuffer>(m_Indices.data(), m_Indices.size());
 }
@@ -84,7 +84,7 @@ void Mesh::SetTexture(const std::string& path)
 
 	if (!m_DescriptorSet)
 	{
-		m_DescriptorSet = Context::Instance().GetDescriptorSetBuilder()->CreateDescriptorSet(1);
+		m_DescriptorSet = Context::Instance().GetDescriptorSetBuilder()->CreateDescriptorSet(EDescriptorSetLayoutType::PerModelSet);
 	}
 	m_DescriptorSet->UpdateDescriptor(m_Texture.get(), 0);
 }
@@ -107,13 +107,13 @@ void Mesh::LoadObjFromFile(const std::string& path)
 		LOG_E("{0}", warn + error)
 	}
 
-	std::unordered_map<Vertex, uint32_t> uniqueVertices{};
+	std::unordered_map<ModelVertex, uint32_t> uniqueVertices{};
 
 	for (const auto& shape : shapes)
 	{
 		for (const auto& index : shape.mesh.indices)
 		{
-			Vertex vertex{};
+			ModelVertex vertex{};
 			if (index.vertex_index >= 0)
 			{
 				vertex.position = {
