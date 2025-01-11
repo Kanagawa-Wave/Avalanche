@@ -168,10 +168,10 @@ void Renderer::DrawBillboard(const TransformComponent& transform, const Billboar
 
 	pushConstant.model = transform.GetModelMat();
 	pushConstant.normalMat = glm::transpose(glm::inverse(pushConstant.model));
-	m_CommandBuffer.pushConstants(m_MainPipeline->GetLayout(), vk::ShaderStageFlagBits::eVertex, 0,
+	m_CommandBuffer.pushConstants(m_BillboardPipeline->GetLayout(), vk::ShaderStageFlagBits::eVertex, 0,
 		sizeof(PushConstant),
 		&pushConstant);
-	billboard.BillboardObject->Bind(m_CommandBuffer, m_MainPipeline->GetLayout());
+	billboard.BillboardObject->Bind(m_CommandBuffer, m_BillboardPipeline->GetLayout());
 	billboard.BillboardObject->Draw(m_CommandBuffer);
 }
 
