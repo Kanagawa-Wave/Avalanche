@@ -50,6 +50,7 @@ Renderer::Renderer(Window* window, const vk::Extent2D& viewportExtent)
 				.setFragmentShader("Shaders/Phong.frag.hlsl.spv")
 				.setGlobalSetLayout(mainGlobalSetLayout, EDescriptorSetLayoutType::MainGlobalSet)
 				.setRenderPass(m_ViewportRenderTarget->GetRenderPass())
+				.setCullMode(vk::CullModeFlagBits::eBack)
 				.setPushConstantSize(sizeof(PushConstant))
 				.setVertexInputInfo(ModelVertex::Layout().GetVertexInputInfo());
 	m_MainPipeline = std::make_unique<Pipeline>(pipelineInfo);
@@ -61,6 +62,7 @@ Renderer::Renderer(Window* window, const vk::Extent2D& viewportExtent)
 			.setFragmentShader("Shaders/Billboard.frag.hlsl.spv")
 			.setGlobalSetLayout(billboardGlobalSetLayout, EDescriptorSetLayoutType::BillboardGlobalSet)
 			.setRenderPass(m_ViewportRenderTarget->GetRenderPass())
+			.setCullMode(vk::CullModeFlagBits::eNone)
 			.setPushConstantSize(sizeof(PushConstant))
 			.setVertexInputInfo(Billboard::Layout().GetVertexInputInfo());
 	m_BillboardPipeline = std::make_unique<Pipeline>(pipelineInfo);

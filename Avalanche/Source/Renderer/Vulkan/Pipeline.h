@@ -12,6 +12,7 @@ struct PipelineCreateInfo
     uint32_t PushConstantSize = 0;
     VertexInputInfo VertexInput;
     vk::RenderPass RenderPass;
+    vk::CullModeFlags CullMode;
 
     PipelineCreateInfo& setVertexShader(const std::string& vertexShader)
     {
@@ -49,6 +50,12 @@ struct PipelineCreateInfo
         RenderPass = renderPass;
         return *this;
     }
+
+    PipelineCreateInfo& setCullMode(vk::CullModeFlags cullMode)
+    {
+        CullMode = cullMode;
+        return *this;
+    }
 };
 
 class Pipeline
@@ -71,8 +78,7 @@ public:
 
 private:
     void CreateLayout(uint32_t pushConstantSize, const std::vector<vk::DescriptorSetLayout>& layouts);
-    void CreatePipeline(const VertexInputInfo& vertexInputInfo,
-                        vk::RenderPass renderPass);
+    void CreatePipeline(const PipelineCreateInfo& pipelineCreateInfo);
 
     std::unique_ptr<Shader> m_Shader;
     vk::Pipeline m_Pipeline;

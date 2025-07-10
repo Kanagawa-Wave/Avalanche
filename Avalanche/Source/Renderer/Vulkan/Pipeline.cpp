@@ -15,7 +15,7 @@ Pipeline::Pipeline(const PipelineCreateInfo& pipelineCreateInfo)
 		EDescriptorSetLayoutType::PerModelSet
 	});
 	CreateLayout(pipelineCreateInfo.PushConstantSize,layouts);
-	CreatePipeline(pipelineCreateInfo.VertexInput, pipelineCreateInfo.RenderPass);
+	CreatePipeline(pipelineCreateInfo);
 }
 
 Pipeline::~Pipeline()
@@ -47,16 +47,15 @@ void Pipeline::CreateLayout(uint32_t pushConstantSize, const std::vector<vk::Des
 	m_Layout = Context::Instance().GetDevice().createPipelineLayout(layoutInfo);
 }
 
-void Pipeline::CreatePipeline(const VertexInputInfo& vertexInputInfo,
-	vk::RenderPass renderPass)
+void Pipeline::CreatePipeline(const PipelineCreateInfo& pipelineCreateInfo)
 {
 	vk::GraphicsPipelineCreateInfo pipelineInfo;
 
 	vk::PipelineVertexInputStateCreateInfo vertexInput{};
-	if (!vertexInputInfo.AttributeDescriptions.empty())
+	if (!pipelineCreateInfo.VertexInput.AttributeDescriptions.empty())
 	{
-		vertexInput.setVertexBindingDescriptions(vertexInputInfo.BindingDescription)
-			.setVertexAttributeDescriptions(vertexInputInfo.AttributeDescriptions);
+		vertexInput.setVertexBindingDescriptions(pipelineCreateInfo.VertexInput.BindingDescription)
+			.setVertexAttributeDescriptions(pipelineCreateInfo.VertexInput.AttributeDescriptions);
 	}
 	pipelineInfo.setPVertexInputState(&vertexInput);
 
@@ -79,7 +78,7 @@ void Pipeline::CreatePipeline(const VertexInputInfo& vertexInputInfo,
 
 	vk::PipelineRasterizationStateCreateInfo rasterizationState;
 	rasterizationState.setRasterizerDiscardEnable(false)
-		.setCullMode(vk::CullModeFlagBits::eBack)
+		.setCullMode(pipelineCreateInfo.CullMode)
 		.setFrontFace(vk::FrontFace::eCounterClockwise)
 		.setPolygonMode(vk::PolygonMode::eFill)
 		.setLineWidth(1.f);
@@ -112,7 +111,7 @@ void Pipeline::CreatePipeline(const VertexInputInfo& vertexInputInfo,
 		.setStencilTestEnable(false);
 	pipelineInfo.setPDepthStencilState(&depthStencil);
 
-	pipelineInfo.setRenderPass(renderPass)
+	pipelineInfo.setRenderPass(pipelineCreateInfo.RenderPass)
 		.setLayout(m_Layout);
 
 	auto result = Context::Instance().GetDevice().createGraphicsPipeline(nullptr, pipelineInfo);
