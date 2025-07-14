@@ -12,7 +12,7 @@ Application::Application()
     Timer::Init();
     Log::Init();
 
-    m_Window = std::make_unique<Window>(1920, 1080, "Avalanche");
+    m_Window = std::make_unique<Window>(800, 600, "Avalanche");
 
     Context::Init(m_Window->GetGLFWWindow());
     m_Window->CreateSwapchain();

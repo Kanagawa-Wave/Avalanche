@@ -12,10 +12,15 @@
 struct TransformComponent;
 class Window;
 
-struct PushConstant
+struct MainPushConstant
 {
     glm::mat4 model{};
     glm::mat4 normalMat{};
+};
+
+struct BillboardPushConstant
+{
+    glm::vec3 position{};
 };
 
 class Renderer

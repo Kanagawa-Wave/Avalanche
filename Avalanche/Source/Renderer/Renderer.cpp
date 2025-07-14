@@ -51,7 +51,7 @@ Renderer::Renderer(Window* window, const vk::Extent2D& viewportExtent)
 				.setGlobalSetLayout(mainGlobalSetLayout, EDescriptorSetLayoutType::MainGlobalSet)
 				.setRenderPass(m_ViewportRenderTarget->GetRenderPass())
 				.setCullMode(vk::CullModeFlagBits::eBack)
-				.setPushConstantSize(sizeof(PushConstant))
+				.setPushConstantSize(sizeof(MainPushConstant))
 				.setVertexInputInfo(ModelVertex::Layout().GetVertexInputInfo());
 	m_MainPipeline = std::make_unique<Pipeline>(pipelineInfo);
 
@@ -63,7 +63,7 @@ Renderer::Renderer(Window* window, const vk::Extent2D& viewportExtent)
 			.setGlobalSetLayout(billboardGlobalSetLayout, EDescriptorSetLayoutType::BillboardGlobalSet)
 			.setRenderPass(m_ViewportRenderTarget->GetRenderPass())
 			.setCullMode(vk::CullModeFlagBits::eNone)
-			.setPushConstantSize(sizeof(PushConstant))
+			.setPushConstantSize(sizeof(BillboardPushConstant))
 			.setVertexInputInfo(Billboard::Layout().GetVertexInputInfo());
 	m_BillboardPipeline = std::make_unique<Pipeline>(pipelineInfo);
 
@@ -153,12 +153,12 @@ void Renderer::Begin(const Camera& camera, const Scene& scene)
 
 void Renderer::DrawModel(const TransformComponent& transform, const StaticMeshComponent& mesh) const
 {
-	PushConstant pushConstant;
+	MainPushConstant pushConstant;
 
 	pushConstant.model = transform.GetModelMat();
 	pushConstant.normalMat = glm::transpose(glm::inverse(pushConstant.model));
 	m_CommandBuffer.pushConstants(m_MainPipeline->GetLayout(), vk::ShaderStageFlagBits::eVertex, 0,
-		sizeof(PushConstant),
+		sizeof(MainPushConstant),
 		&pushConstant);
 	mesh.StaticMesh->Bind(m_CommandBuffer, m_MainPipeline->GetLayout());
 	mesh.StaticMesh->Draw(m_CommandBuffer);
@@ -166,12 +166,11 @@ void Renderer::DrawModel(const TransformComponent& transform, const StaticMeshCo
 
 void Renderer::DrawBillboard(const TransformComponent& transform, const BillboardComponent& billboard) const
 {
-	PushConstant pushConstant;
+	BillboardPushConstant pushConstant;
 
-	pushConstant.model = transform.GetModelMat();
-	pushConstant.normalMat = glm::transpose(glm::inverse(pushConstant.model));
+	pushConstant.position = transform.Translation;
 	m_CommandBuffer.pushConstants(m_BillboardPipeline->GetLayout(), vk::ShaderStageFlagBits::eVertex, 0,
-		sizeof(PushConstant),
+		sizeof(BillboardPushConstant),
 		&pushConstant);
 	billboard.BillboardObject->Bind(m_CommandBuffer, m_BillboardPipeline->GetLayout());
 	billboard.BillboardObject->Draw(m_CommandBuffer);

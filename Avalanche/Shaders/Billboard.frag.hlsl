@@ -1,13 +1,13 @@
 #include "Layouts.hlsli"
 
-[[vk::combinedImageSampler]]
-Texture2D<float4> baseColor : register(t0, space1);
-[[vk::combinedImageSampler]]
-SamplerState baseColorSampler : register(s0, space1);
-
-float4 main(VSOutput_Tex input) : SV_TARGET
+float4 main(VSOutput_Offset input) : SV_TARGET
 {
-    const float4 texColor = baseColor.Sample(baseColorSampler, input.Texcoord);
-
-    return texColor;
+    float dst = sqrt(dot(input.Offset, input.Offset));
+    
+    if (dst >= 1.0)
+    {
+        discard;
+    }
+    
+    return float4(1.0, 1.0, 1.0, 1.0);
 }

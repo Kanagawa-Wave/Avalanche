@@ -20,8 +20,8 @@ struct VSInput_Pos
     [[vk::location(0)]] float2 Position : POSITION;
 };
 
-struct VSOutput_Tex
+struct VSOutput_Offset
 {
     float4 Position : SV_POSITION;
-    [[vk::location(0)]] float2 Texcoord : TEXCOORD;
+    [[vk::location(0)]] float2 Offset : TEXCOORD;
 };
