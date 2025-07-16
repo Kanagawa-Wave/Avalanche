@@ -12,8 +12,8 @@ rule "CompileGLSLShaders"
         ".comp"
     }
     
-    buildmessage "Compiling %(Filename) with GLSL-SPV"
-    buildcommands "glslangValidator -V -o $(OutDir)%(Identity).spv %(Identity)"
+    buildmessage "Compiling %(Filename) (GLSL->SPIRV)"
+    buildcommands "%{VULKAN_SDK}/Bin/glslangValidator.exe -V -o $(OutDir)%(Identity).spv %(Identity)"
     buildoutputs "$(OutDir)/%(Identity).spv"
     
 rule "CompileHLSLShaders"
@@ -24,7 +24,7 @@ rule "CompileHLSLShaders"
         ".hlsl",
     }
     
-    buildmessage "Compiling %(Filename) with HLSL-SPV"
+    buildmessage "Compiling %(Filename) (HLSL-SPIRV)"
     buildcommands "%{VULKAN_SDK}/Bin/dxc.exe -spirv -T [ShaderType] -E main %(Identity) -Fo $(OutDir)%(Identity).spv"
     buildoutputs "$(OutDir)/%(Identity).spv"
     
@@ -160,6 +160,7 @@ project "Avalanche"
         "%{prj.name}/Shaders/**.frag",
         "%{prj.name}/Shaders/**.comp",
         "%{prj.name}/Shaders/**.hlsl",
+        "%{prj.name}/Shaders/**.hlsli",
         
         "%{prj.name}/Source/**.h",
         "%{prj.name}/Source/**.cpp",
