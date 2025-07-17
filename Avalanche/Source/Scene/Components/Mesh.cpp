@@ -4,6 +4,10 @@
 #include <glm/gtx/hash.hpp>
 #include <tiny_obj_loader.h>
 
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+
 #include "Renderer/Context.h"
 
 template <typename T, typename... Rest>
@@ -30,7 +34,7 @@ namespace std
 Mesh::Mesh(const std::string& meshPath)
 	: m_MeshPath(meshPath)
 {
-	LoadObjFromFile(meshPath);
+	LoadMeshFromFile(meshPath);
 
 	m_VertexBuffer = std::make_unique<VertexBuffer>(m_Vertices.data(), m_Vertices.size() * sizeof(ModelVertex));
 	m_VertexBuffer->SetLayout(ModelVertex::Layout());
@@ -79,7 +83,7 @@ void Mesh::Draw(vk::CommandBuffer commandBuffer) const
 
 void Mesh::SetTexture(const std::string& path)
 {
-	m_Texture = std::make_unique<Texture>(path);
+	m_Texture = std::make_unique<Texture>(path, vk::Format::eR8G8B8A8Unorm);
 	m_TexturePath = path;
 
 	if (!m_DescriptorSet)
@@ -151,5 +155,47 @@ void Mesh::LoadObjFromFile(const std::string& path)
 			}
 			m_Indices.push_back(uniqueVertices[vertex]);
 		}
+	}
+}
+
+void Mesh::LoadMeshFromFile(const std::string& path)
+{
+	Assimp::Importer importer;
+	const aiScene *scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_JoinIdenticalVertices | aiProcess_OptimizeMeshes);
+
+	uint32_t vertexOffset = 0;
+
+	for (unsigned int m = 0; m < scene->mNumMeshes; ++m) {
+		aiMesh* mesh = scene->mMeshes[m];
+		
+		// Copy vertices
+		for (unsigned int v = 0; v < mesh->mNumVertices; ++v) {
+			ModelVertex vertex{};
+			vertex.position = { mesh->mVertices[v].x,
+								  mesh->mVertices[v].y,
+								  mesh->mVertices[v].z };
+			if (mesh->HasNormals())
+			{
+				vertex.normal = { mesh->mNormals[v].x,
+									mesh->mNormals[v].y,
+									mesh->mNormals[v].z };
+			}
+			if (mesh->mTextureCoords[0])
+			{
+				vertex.uv = { mesh->mTextureCoords[0][v].x,
+								mesh->mTextureCoords[0][v].y };
+			}
+			m_Vertices.push_back(vertex);
+		}
+		
+		// Copy faces (indices), with offset
+		for (unsigned int f = 0; f < mesh->mNumFaces; ++f) {
+			const aiFace& face = mesh->mFaces[f];
+			for (unsigned int i = 0; i < face.mNumIndices; ++i) {
+				m_Indices.push_back(face.mIndices[i] + vertexOffset);
+			}
+		}
+
+		vertexOffset += mesh->mNumVertices;
 	}
 }

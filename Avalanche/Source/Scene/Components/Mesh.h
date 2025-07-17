@@ -58,6 +58,7 @@ public:
 
 private:
     void LoadObjFromFile(const std::string& path);
+    void LoadMeshFromFile(const std::string& path);
 
     std::string m_MeshPath;
     std::string m_TexturePath;

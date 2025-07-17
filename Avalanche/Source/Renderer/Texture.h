@@ -7,7 +7,7 @@ class Texture
 public:
     Texture() = default;
     Texture(vk::Format format, vk::Extent2D extent, vk::ImageUsageFlags usage);
-    Texture(const std::string& path);
+    Texture(const std::string& path, vk::Format format);
     ~Texture();
 
     void RegisterForImGui();
