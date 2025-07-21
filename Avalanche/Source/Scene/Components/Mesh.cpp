@@ -83,7 +83,7 @@ void Mesh::Draw(vk::CommandBuffer commandBuffer) const
 
 void Mesh::SetTexture(const std::string& path)
 {
-	m_Texture = std::make_unique<Texture>(path, vk::Format::eR8G8B8A8Unorm);
+	m_Texture = std::make_unique<Texture>(path, ETextureFormat::Linear);
 	m_TexturePath = path;
 
 	if (!m_DescriptorSet)

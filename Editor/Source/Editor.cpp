@@ -18,15 +18,17 @@ Editor::Editor()
 
 	m_Scene = std::make_unique<Scene>();
 
-	auto bunny = m_Scene->CreateEntity("bunny");
-	bunny.AddComponent<StaticMeshComponent>("Content/bunny.obj").StaticMesh->SetTexture("Content/bunny.png");
-	bunny.GetComponent<TransformComponent>().Scale = { 10.f, 10.f, 10.f };
+	auto erato = m_Scene->CreateEntity("erato");
+	erato.AddComponent<StaticMeshComponent>("Content/erato.obj").StaticMesh->SetTexture("Content/erato.png");
+	erato.GetComponent<TransformComponent>().Translation = {0.0, 0.1, 0.0};
+	erato.GetComponent<TransformComponent>().Rotation = {0.0, 49.0, 0.0};
+	erato.GetComponent<TransformComponent>().Scale = { 0.1, 0.1, 0.1 };
 
 	auto floor = m_Scene->CreateEntity("floor");
 	floor.AddComponent<StaticMeshComponent>("Content/floor.obj").StaticMesh->SetTexture("Content/white.png");
 
 	auto light1 = m_Scene->CreatePointLight();
-	light1.GetComponent<TransformComponent>().Translation = {24.f, 3.f, 30.f};
+	light1.GetComponent<TransformComponent>().Translation = {3.8, 2.8, 0.0};
 
 	m_Outliner = std::make_unique<Outliner>(m_Scene.get());
 }

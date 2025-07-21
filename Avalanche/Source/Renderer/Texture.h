@@ -2,12 +2,18 @@
 
 #include "Vulkan/Image.h"
 
+enum class ETextureFormat
+{
+    Linear,
+    SRGB,
+};
+
 class Texture
 {
 public:
     Texture() = default;
     Texture(vk::Format format, vk::Extent2D extent, vk::ImageUsageFlags usage);
-    Texture(const std::string& path, vk::Format format);
+    Texture(const std::string& path, ETextureFormat format);
     ~Texture();
 
     void RegisterForImGui();
@@ -19,6 +25,8 @@ public:
     vk::Sampler GetSampler() const { return m_Sampler; }
     vk::ImageView GetView() const { return m_Image->GetView(); }
     void* GetTextureID() const { return m_DescriptorSet; }
+
+
     
 private:
     int m_Width = 0, m_Height = 0, m_Channels = 0;

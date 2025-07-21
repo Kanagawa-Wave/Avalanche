@@ -47,6 +47,6 @@ void Billboard::SetRadius(float radius)
 
 void Billboard::SetTexture(const std::string& texturePath)
 {
-    m_Texture.reset(new Texture(texturePath, vk::Format::eR8G8B8A8Unorm));
+    m_Texture.reset(new Texture(texturePath, ETextureFormat::Linear));
     m_DescriptorSet->UpdateDescriptor(m_Texture.get(), 0);
 }

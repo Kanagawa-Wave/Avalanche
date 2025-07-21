@@ -23,17 +23,24 @@ Texture::Texture(vk::Format format, vk::Extent2D extent, vk::ImageUsageFlags usa
     m_Sampler = device.createSampler(samplerInfo);
 }
 
-Texture::Texture(const std::string& path, vk::Format format)
+Texture::Texture(const std::string& path, ETextureFormat format)
 {
     // Read pixel data using stbi_image
     const auto& allocator = Context::Instance().GetAllocator();
     const auto& device = Context::Instance().GetDevice();
 
+    // Note: channels_in_file != desired_channels 
     stbi_uc* pixelData = stbi_load(path.c_str(), &m_Width, &m_Height, &m_Channels, STBI_rgb_alpha);
 
     ASSERT(pixelData, "Failed to load texture")
 
-    vk::DeviceSize imageSize = (vk::DeviceSize)m_Width * m_Height * m_Channels;
+    vk::DeviceSize imageSize = (vk::DeviceSize)m_Width * m_Height * 4;
+
+    vk::Format vulkanFormat;
+    if (format == ETextureFormat::Linear)
+        vulkanFormat = vk::Format::eR8G8B8A8Unorm;
+    else if (format == ETextureFormat::SRGB)
+        vulkanFormat = vk::Format::eR8G8B8A8Srgb;
 
     // Upload pixel data to the staging buffer
     std::unique_ptr<Buffer> stagingBuffer = std::make_unique<Buffer>(vk::BufferUsageFlagBits::eTransferSrc,
@@ -46,7 +53,7 @@ Texture::Texture(const std::string& path, vk::Format format)
 
     stbi_image_free(pixelData);
 
-    m_Image = std::make_unique<Image>(format, vk::Extent2D((uint32_t)m_Width, (uint32_t)m_Height),
+    m_Image = std::make_unique<Image>(vulkanFormat, vk::Extent2D((uint32_t)m_Width, (uint32_t)m_Height),
                                       vk::ImageUsageFlagBits::eSampled |
                                       vk::ImageUsageFlagBits::eTransferDst);
 
