@@ -69,6 +69,7 @@ IncludeDir["ENTT"] = "Avalanche/ThirdParty/entt/single_include"
 IncludeDir["VKBOOTSTRAP"] = "Avalanche/ThirdParty/vk-bootstrap/src"
 IncludeDir["VMA"] = "Avalanche/ThirdParty/VulkanMemoryAllocator/include"
 IncludeDir["Assimp"] = "Avalanche/ThirdParty/Assimp/include"
+IncludeDir["YAML"] = "Avalanche/ThirdParty/yaml-cpp/include"
 
 LibraryDir = {}
 LibraryDir["VulkanSDK"] = "%{VULKAN_SDK}/Lib"
@@ -183,6 +184,7 @@ project "Avalanche"
         "%{IncludeDir.STB}",
         "%{IncludeDir.ENTT}",
         "%{IncludeDir.Assimp}",
+        "%{IncludeDir.YAML}",
     }
     
     links
@@ -194,6 +196,7 @@ project "Avalanche"
         "GLFW",
         "ImGui",
         "VkBootstrap",
+        "yaml-cpp"
     }
 
     ignoredefaultlibraries
@@ -254,3 +257,4 @@ project "Avalanche"
 include "Avalanche/ThirdParty/imgui"
 include "Avalanche/ThirdParty/glfw"
 include "Avalanche/ThirdParty/vk-bootstrap"
+include "Avalanche/ThirdParty/yaml-cpp"

@@ -25,3 +25,6 @@
 [submodule "Avalanche/ThirdParty/entt"]
 	path = Avalanche/ThirdParty/entt
 	url = https://github.com/skypjack/entt.git
+[submodule "Avalanche/ThirdParty/yaml-cpp"]
+	path = Avalanche/ThirdParty/yaml-cpp
+	url = https://github.com/Kanagawa-Wave/yaml-cpp.git
