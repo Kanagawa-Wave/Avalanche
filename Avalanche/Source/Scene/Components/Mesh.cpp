@@ -42,33 +42,6 @@ Mesh::Mesh(const std::string& meshPath)
 	m_IndexBuffer = std::make_unique<IndexBuffer>(m_Indices.data(), m_Indices.size());
 }
 
-Mesh::Mesh(const aiMesh* mesh)
-{
-	for (uint32_t i = 0; i < mesh->mNumVertices; i++)
-	{
-		ModelVertex vertex;
-		vertex.position = { mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z };
-		vertex.normal = { mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z };
-		if (mesh->mTextureCoords[0])
-			vertex.uv = { mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y };
-		m_Vertices.push_back(vertex);
-	}
-
-	for (uint32_t i = 0; i < mesh->mNumFaces; i++)
-	{
-		aiFace face = mesh->mFaces[i];
-		for (uint32_t j = 0; j < face.mNumIndices; j++)
-		{
-			m_Indices.push_back(face.mIndices[j]);
-		}
-	}
-
-	m_VertexBuffer = std::make_unique<VertexBuffer>(m_Vertices.data(), m_Vertices.size() * sizeof(ModelVertex));
-	m_VertexBuffer->SetLayout(ModelVertex::Layout());
-
-	m_IndexBuffer = std::make_unique<IndexBuffer>(m_Indices.data(), m_Indices.size());
-}
-
 void Mesh::Bind(vk::CommandBuffer commandBuffer, const vk::PipelineLayout& layout) const
 {
 	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, layout, 1, {m_DescriptorSet->GetDescriptorSet()}, nullptr);

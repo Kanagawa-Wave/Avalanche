@@ -27,7 +27,8 @@ void Outliner::OnImGuiUpdate()
 		m_SelectedEntity = Entity();
 	}
 	ImGui::EndTabBar();
-	m_Context->m_Registry.each([&](auto enttHandle)
+
+		m_Context->m_Registry.each([&](auto enttHandle)
 		{
 			Entity entity(enttHandle, m_Context);
 			DrawEntityNode(entity);

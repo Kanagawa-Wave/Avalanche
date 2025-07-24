@@ -5,7 +5,7 @@
 #include "Renderer/Context.h"
 
 Billboard::Billboard(float radius, const std::string& texturePath)
-    : m_Radius(radius)
+    : m_Radius(radius), m_TexturePath(texturePath)
 {
     const Context& context = Context::Instance();
     

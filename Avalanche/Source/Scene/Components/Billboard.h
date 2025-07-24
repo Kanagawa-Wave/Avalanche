@@ -14,11 +14,14 @@ public:
 
     void SetRadius(float radius);
     void SetTexture(const std::string& texturePath);
+    float GetRadius() const { return m_Radius; }
+    std::string GetTexturePath() const { return m_TexturePath; }
 
     static BufferLayout Layout() { return  {{ShaderDataType::Float2, "position"}}; }
 
 private:
     float m_Radius;
+    std::string m_TexturePath;
     std::unique_ptr<IndexBuffer> m_IndexBuffer;
     std::unique_ptr<VertexBuffer> m_VertexBuffer;
     std::unique_ptr<Texture> m_Texture;

@@ -49,7 +49,7 @@ Context::Context(GLFWwindow* window)
 void Context::CreateInstance(GLFWwindow* window)
 {
     #ifdef _DEBUG
-        std::vector<const char*> layers = {"VK_LAYER_KHRONOS_validation"};
+        std::vector<const char*> layers = {"VK_LAYER_KHRONOS_validation", "VK_LAYER_LUNARG_api_dump"};
     #else
         std::vector<const char*> layers;
     #endif
@@ -111,9 +111,16 @@ void Context::CreateDevice()
                  .setQueueFamilyIndex(m_QueueFamilyIndices.PresentQueue.value());
         queueInfos.push_back(queueInfo);
     }
-    deviceInfo.setQueueCreateInfos(queueInfos)
-              .setPEnabledExtensionNames(extensions);
 
+    #ifdef _DEBUG
+        std::vector<const char*> layers = {"VK_LAYER_KHRONOS_validation", "VK_LAYER_LUNARG_api_dump"};
+    #else
+        std::vector<const char*> layers;
+    #endif
+    
+    deviceInfo.setQueueCreateInfos(queueInfos)
+              .setPEnabledExtensionNames(extensions)
+              .setPEnabledLayerNames(layers);
     m_Device = m_PhysicalDevice.createDevice(deviceInfo);
 }
 

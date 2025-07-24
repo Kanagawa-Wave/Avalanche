@@ -8,7 +8,6 @@
 
 #include "Billboard.h"
 #include "Camera.h"
-#include "Model.h"
 #include "Mesh.h"
 
 struct TagComponent

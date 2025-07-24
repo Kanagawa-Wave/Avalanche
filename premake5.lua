@@ -46,6 +46,11 @@ workspace "Avalanche"
         "Dist",
     }
 
+    defines
+	{
+		"YAML_CPP_STATIC_DEFINE"
+	}
+
     flags
     {
         "MultiProcessorCompile"
@@ -254,7 +259,8 @@ project "Avalanche"
         runtime "Release"
         optimize "on"
 
-include "Avalanche/ThirdParty/imgui"
-include "Avalanche/ThirdParty/glfw"
-include "Avalanche/ThirdParty/vk-bootstrap"
-include "Avalanche/ThirdParty/yaml-cpp"
+group "Dependencies"
+    include "Avalanche/ThirdParty/imgui"
+    include "Avalanche/ThirdParty/glfw"
+    include "Avalanche/ThirdParty/vk-bootstrap"
+    include "Avalanche/ThirdParty/yaml-cpp"

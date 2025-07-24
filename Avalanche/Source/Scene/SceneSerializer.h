@@ -4,12 +4,12 @@
 class SceneSerializer
 {
 public:
-    SceneSerializer(const Scene* scene);
+    SceneSerializer(Scene* scene);
     ~SceneSerializer() = default;
 
     void Serialize(const std::string& filePath);
-    void Deserialize(const std::string& filePath);
+    bool Deserialize(const std::string& filePath);
 
 private:
-    const Scene* m_Scene;
+    Scene* m_Scene;
 };

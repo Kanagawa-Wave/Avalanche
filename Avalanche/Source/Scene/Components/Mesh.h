@@ -42,7 +42,6 @@ class Mesh
 {
 public:
     Mesh(const std::string& meshPath);
-    Mesh(const aiMesh* mesh);
 
     void Bind(vk::CommandBuffer commandBuffer, const vk::PipelineLayout& layout) const;
     void Draw(vk::CommandBuffer commandBuffer) const;
