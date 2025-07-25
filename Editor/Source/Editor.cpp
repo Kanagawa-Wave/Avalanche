@@ -126,6 +126,7 @@ void Editor::LoadScene()
 		{
 			m_Scene = std::move(newScene);
 			m_ScenePath = filePath;
+			m_Outliner.reset(new Outliner(m_Scene.get()));
 		}
 	}
 }

@@ -49,7 +49,7 @@ Context::Context(GLFWwindow* window)
 void Context::CreateInstance(GLFWwindow* window)
 {
     #ifdef _DEBUG
-        std::vector<const char*> layers = {"VK_LAYER_KHRONOS_validation", "VK_LAYER_LUNARG_api_dump"};
+        std::vector<const char*> layers = {"VK_LAYER_KHRONOS_validation"};
     #else
         std::vector<const char*> layers;
     #endif
@@ -113,7 +113,7 @@ void Context::CreateDevice()
     }
 
     #ifdef _DEBUG
-        std::vector<const char*> layers = {"VK_LAYER_KHRONOS_validation", "VK_LAYER_LUNARG_api_dump"};
+        std::vector<const char*> layers = {"VK_LAYER_KHRONOS_validation"};
     #else
         std::vector<const char*> layers;
     #endif
