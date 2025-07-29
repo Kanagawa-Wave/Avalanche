@@ -56,7 +56,7 @@ void Outliner::OnImGuiUpdate()
 			}
 			if (ImGui::MenuItem("Billboard Component"))
 			{
-				m_SelectedEntity.AddOrReplaceComponent<BillboardComponent>();
+				m_SelectedEntity.AddOrReplaceComponent<BillboardComponent>("Content/white.png");
 			}
 			ImGui::EndPopup();
 		}
@@ -142,7 +142,7 @@ void Outliner::DrawComponents(Entity entity)
 	if (entity.HasComponent<PointLightComponent>())
 	{
 		if (ImGui::TreeNodeEx((void*)typeid(PointLightComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen,
-			"Billboard"))
+			"Point Light"))
 		{
 			ImGui::SameLine();
 			if (ImGui::SmallButton("Remove"))
@@ -162,7 +162,7 @@ void Outliner::DrawComponents(Entity entity)
 	if (entity.HasComponent<BillboardComponent>())
 	{
 		if (ImGui::TreeNodeEx((void*)typeid(BillboardComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen,
-			"Point Light"))
+			"Billboard"))
 		{
 			ImGui::SameLine();
 			if (ImGui::SmallButton("Remove"))

@@ -1,7 +1,5 @@
 ﻿#include "Editor.h"
 
-#include <imgui.h>
-
 #include "Panels/Outliner.h"
 #include "Scene/SceneSerializer.h"
 
@@ -21,24 +19,6 @@ Editor::Editor()
 	m_ScenePath = "";
 
 	m_Outliner = std::make_unique<Outliner>(m_Scene.get());
-	
-	// m_SceneSerializer = std::make_unique<SceneSerializer>(m_Scene.get());
-	//
-	// auto erato = m_Scene->CreateEntity("erato");
-	// erato.AddComponent<StaticMeshComponent>("Content/erato.obj").StaticMesh->SetTexture("Content/erato.png");
-	// erato.GetComponent<TransformComponent>().Translation = {0.0, 0.1, 0.0};
-	// erato.GetComponent<TransformComponent>().Rotation = {0.0, 49.0, 0.0};
-	// erato.GetComponent<TransformComponent>().Scale = { 0.1, 0.1, 0.1 };
-	//
-	// auto floor = m_Scene->CreateEntity("floor");
-	// floor.AddComponent<StaticMeshComponent>("Content/floor.obj").StaticMesh->SetTexture("Content/white.png");
-	//
-	// auto light1 = m_Scene->CreatePointLight();
-	// light1.GetComponent<TransformComponent>().Translation = {3.8, 2.8, 0.0};
-	//
-
-	//
-	// m_SceneSerializer->Serialize("Content/main.scene");
 }
 
 void Editor::Update()
