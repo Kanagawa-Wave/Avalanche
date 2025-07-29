@@ -80,9 +80,16 @@ Renderer::~Renderer()
 	ImGui_ImplVulkan_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 
+	LOG_T("Destroying VkDescriptorPool {}", fmt::ptr((VkDescriptorPool)m_ImGuiPool))
 	device.destroyDescriptorPool(m_ImGuiPool);
+
+	LOG_T("Destroying VkSemaphore {}", fmt::ptr((VkSemaphore)m_RenderSemaphore))
 	device.destroySemaphore(m_RenderSemaphore);
+
+	LOG_T("Destroying VkSemaphore {}", fmt::ptr((VkSemaphore)m_PresentSemaphore))
 	device.destroySemaphore(m_PresentSemaphore);
+
+	LOG_T("Destroying VkFence {}", fmt::ptr((VkFence)m_Fence))
 	device.destroyFence(m_Fence);
 }
 
@@ -269,7 +276,9 @@ void Renderer::CreateSemaphores()
 	const auto& device = Context::Instance().GetDevice();
 	const vk::SemaphoreCreateInfo semaphoreInfo;
 	m_RenderSemaphore = device.createSemaphore(semaphoreInfo);
+	LOG_T("VkSemaphore {0} created successfully", fmt::ptr((VkSemaphore)m_RenderSemaphore))
 	m_PresentSemaphore = device.createSemaphore(semaphoreInfo);
+	LOG_T("VkSemaphore {0} created successfully", fmt::ptr((VkSemaphore)m_PresentSemaphore))
 }
 
 void Renderer::CreateFence()
@@ -277,6 +286,7 @@ void Renderer::CreateFence()
 	vk::FenceCreateInfo fenceInfo;
 	fenceInfo.setFlags(vk::FenceCreateFlagBits::eSignaled);
 	m_Fence = Context::Instance().GetDevice().createFence(fenceInfo);
+	LOG_T("VkFence {0} created successfully", fmt::ptr((VkFence)m_Fence))
 }
 
 void Renderer::CreateLayout()
@@ -327,6 +337,7 @@ void Renderer::InitImGui()
 		.setPoolSizes(poolSizes);
 
 	m_ImGuiPool = ctx.GetDevice().createDescriptorPool(poolInfo);
+	LOG_T("VkDescriptorPool {} created successfully", fmt::ptr((VkDescriptorPool)m_ImGuiPool))
 
 
 	// Setup Dear ImGui context
@@ -403,7 +414,7 @@ void Renderer::InitImGui()
 
 	ImGui_ImplVulkan_Init(&imguiInfo, m_PresnetRenderPass->GetRenderPass());
 
-	ImmediateContext::Submit([&](vk::CommandBuffer commandBuffer)
+	ImmediateContext::Instance().Submit([&](vk::CommandBuffer commandBuffer)
 		{
 			ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
 		});

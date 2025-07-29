@@ -10,6 +10,7 @@ CommandManager::CommandManager()
 CommandManager::~CommandManager()
 {
     const auto& ctx = Context::Instance();
+    LOG_T("Destroying VkCommandPool {}", fmt::ptr((VkCommandPool)m_CommandPool))
     ctx.GetDevice().destroyCommandPool(m_CommandPool);
 }
 
@@ -45,4 +46,5 @@ void CommandManager::CreateCommandPool()
     commandPool.setQueueFamilyIndex(ctx.GetGraphicsQueueFamilyIndex())
                .setFlags(vk::CommandPoolCreateFlagBits::eResetCommandBuffer);
     m_CommandPool = ctx.GetDevice().createCommandPool(commandPool);
+    LOG_T("VkCommandPool {0} created successfully", fmt::ptr((VkCommandPool)m_CommandPool))
 }

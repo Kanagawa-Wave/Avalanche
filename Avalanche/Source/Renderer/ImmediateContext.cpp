@@ -2,24 +2,22 @@
 
 #include "Context.h"
 #include "CommandManager.h"
+#include "Core/Input.h"
 #include "Core/Log.h"
 
-vk::Fence ImmediateContext::m_Fence;
-vk::CommandBuffer ImmediateContext::m_CommandBuffer;
-std::unique_ptr<CommandManager> ImmediateContext::m_CommandManager = nullptr;
+std::unique_ptr<ImmediateContext> ImmediateContext::s_Instance = nullptr;
 
 void ImmediateContext::Init()
 {
-    const auto& device = Context::Instance().GetDevice();
-    vk::FenceCreateInfo fenceInfo;
-    fenceInfo.setFlags(vk::FenceCreateFlagBits::eSignaled);
-    m_Fence = device.createFence(fenceInfo);
-
-    m_CommandManager = std::make_unique<CommandManager>();
-    m_CommandBuffer = m_CommandManager->AllocateCommandBuffer();
+    s_Instance.reset(new ImmediateContext());
 }
 
-void ImmediateContext::Submit(std::function<void(vk::CommandBuffer commandBuffer)>&& function)
+ImmediateContext& ImmediateContext::Instance()
+{
+    return *s_Instance;
+}
+
+void ImmediateContext::Submit(std::function<void(vk::CommandBuffer commandBuffer)>&& function) const
 {
     const auto& ctx = Context::Instance();
     const auto& device = Context::Instance().GetDevice();
@@ -46,15 +44,17 @@ void ImmediateContext::Submit(std::function<void(vk::CommandBuffer commandBuffer
     }
 }
 
-void ImmediateContext::Shutdown()
+void ImmediateContext::Destroy()
 {
     const auto& device = Context::Instance().GetDevice();
 
+    LOG_T("Destroying VkFence {}", fmt::ptr((VkFence)m_Fence))
     device.destroyFence(m_Fence);
+ 
     m_CommandManager.reset();
 }
 
-void ImmediateContext::Begin()
+void ImmediateContext::Begin() const
 {
     const auto& device = Context::Instance().GetDevice();
 
@@ -82,4 +82,16 @@ void ImmediateContext::End()
     {
         ASSERT(0, "Failed to wait for fence")
     }
+}
+
+ImmediateContext::ImmediateContext()
+{
+    const auto& device = Context::Instance().GetDevice();
+    vk::FenceCreateInfo fenceInfo;
+    fenceInfo.setFlags(vk::FenceCreateFlagBits::eSignaled);
+    m_Fence = device.createFence(fenceInfo);
+    LOG_T("VkFence {0} created successfully", fmt::ptr((VkFence)m_Fence))
+
+    m_CommandManager = std::make_unique<CommandManager>();
+    m_CommandBuffer = m_CommandManager->AllocateCommandBuffer();
 }

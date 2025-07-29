@@ -18,14 +18,24 @@ void Context::Init(GLFWwindow* window)
 void Context::Destroy()
 {
     m_Device.waitIdle();
-    ImmediateContext::Shutdown();
+    ImmediateContext::Instance().Destroy();
     m_CommandManager.reset();
     m_DescriptorSetBuilder.reset();
+    
+    LOG_T("Destroying VkDescriptorPool {}", fmt::ptr((VkDescriptorPool)m_DescriptorPool))
     m_Device.destroyDescriptorPool(m_DescriptorPool);
+
+    LOG_T("Destroying VkSurface {}", fmt::ptr((VkSurfaceKHR)m_Surface))
     m_Instance.destroySurfaceKHR(m_Surface);
+    
     vmaDestroyAllocator(m_Allocator);
+
+    LOG_T("Destroying VkDevice {}", fmt::ptr((VkDevice)m_Device))
     m_Device.destroy();
+
+    LOG_T("Destroying VkInstance {}", fmt::ptr((VkInstance)m_Instance))
     m_Instance.destroy();
+    
     s_Instance.reset();
 }
 
@@ -67,6 +77,7 @@ void Context::CreateInstance(GLFWwindow* window)
                 .setPEnabledLayerNames(layers);
 
     m_Instance = vk::createInstance(instanceInfo);
+    LOG_T("VkInstance {0} created successfully", fmt::ptr((VkInstance)m_Instance))
 }
 
 void Context::ChoosePhysicalDevice()
@@ -122,6 +133,7 @@ void Context::CreateDevice()
               .setPEnabledExtensionNames(extensions)
               .setPEnabledLayerNames(layers);
     m_Device = m_PhysicalDevice.createDevice(deviceInfo);
+    LOG_T("VkDevice {0} created successfully", fmt::ptr((VkDevice)m_Device))
 }
 
 void Context::QueryQueueFamilyIndices()
@@ -153,6 +165,7 @@ void Context::GetQueue()
 void Context::CreateSurface(GLFWwindow* window)
 {
     glfwCreateWindowSurface(m_Instance, window, nullptr, (VkSurfaceKHR*)&m_Surface);
+    LOG_T("VkSurface {0} created successfully", fmt::ptr((VkSurfaceKHR)m_Surface))
 }
 
 void Context::CreateDescriptorPool()
@@ -167,6 +180,7 @@ void Context::CreateDescriptorPool()
             .setMaxSets(1000);
 
     m_DescriptorPool = m_Device.createDescriptorPool(poolInfo);
+    LOG_T("VkDescriptorPool {0} created successfully", fmt::ptr((VkDescriptorPool)m_DescriptorPool))
 }
 
 void Context::InitAllocator()

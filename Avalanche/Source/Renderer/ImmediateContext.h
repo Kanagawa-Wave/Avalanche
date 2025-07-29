@@ -9,16 +9,20 @@ class ImmediateContext
 {
 public:
     static void Init();
-    static void Submit(std::function<void(vk::CommandBuffer commandBuffer)>&& function);
-    static void Shutdown();
+    static ImmediateContext& Instance();
+    void Submit(std::function<void(vk::CommandBuffer commandBuffer)>&& function) const;
+    void Destroy();
 
-    static void Begin();
-    static void End();
+    void Begin() const;
+    void End();
 
-    static vk::CommandBuffer GetCommandBuffer() { return m_CommandBuffer; }
+    vk::CommandBuffer GetCommandBuffer() const { return m_CommandBuffer; }
 
 private:
-    static vk::Fence m_Fence;
-    static vk::CommandBuffer m_CommandBuffer;
-    static std::unique_ptr<CommandManager> m_CommandManager;
+    ImmediateContext();
+    static std::unique_ptr<ImmediateContext> s_Instance;
+    
+    vk::Fence m_Fence;
+    vk::CommandBuffer m_CommandBuffer;
+    std::unique_ptr<CommandManager> m_CommandManager;
 };

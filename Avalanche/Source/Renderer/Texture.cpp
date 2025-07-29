@@ -57,7 +57,7 @@ Texture::Texture(const std::string& path, ETextureFormat format)
                                       vk::ImageUsageFlagBits::eSampled |
                                       vk::ImageUsageFlagBits::eTransferDst);
 
-    ImmediateContext::Submit([&](vk::CommandBuffer commandBuffer)
+    ImmediateContext::Instance().Submit([&](vk::CommandBuffer commandBuffer)
     {
         vk::ImageSubresourceRange range;
         range.setAspectMask(vk::ImageAspectFlagBits::eColor)
