@@ -34,6 +34,7 @@ VSOutput_Offset main(VSInput_Pos input)
 
     output.Position = mul(camera.ViewProjection, float4(worldPosition, 1.0));
     output.Offset = input.Position;
+    output.Texcoord = 1 - (input.Position * 0.5 + 0.5);
 
     return output;
 }

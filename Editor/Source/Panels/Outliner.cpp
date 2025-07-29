@@ -142,7 +142,7 @@ void Outliner::DrawComponents(Entity entity)
 	if (entity.HasComponent<PointLightComponent>())
 	{
 		if (ImGui::TreeNodeEx((void*)typeid(PointLightComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen,
-			"Point Light"))
+			"Billboard"))
 		{
 			ImGui::SameLine();
 			if (ImGui::SmallButton("Remove"))
@@ -153,6 +153,40 @@ void Outliner::DrawComponents(Entity entity)
 			{
 				auto& pointLight = entity.GetComponent<PointLightComponent>();
 				ImGui::ColorPicker3("Color", glm::value_ptr(pointLight.Color));
+			}
+			ImGui::TreePop();
+			ImGui::Separator();
+		}
+	}
+
+	if (entity.HasComponent<BillboardComponent>())
+	{
+		if (ImGui::TreeNodeEx((void*)typeid(BillboardComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen,
+			"Point Light"))
+		{
+			ImGui::SameLine();
+			if (ImGui::SmallButton("Remove"))
+			{
+				entity.RemoveComponent<BillboardComponent>();
+			}
+			if (entity.HasComponent<BillboardComponent>())
+			{
+				auto& billboard = entity.GetComponent<BillboardComponent>();
+
+				std::string texturePath = "NULL";
+				if (billboard.BillboardObject)
+				{
+					texturePath = billboard.BillboardObject->GetTexturePath();
+				}
+				ImGui::TextWrapped("Texture: %s", texturePath.c_str());
+				if (ImGui::Button("Load Texture"))
+				{
+					const std::string path = FileHelper::OpenFile("Image File (*.png)\0*.png\0");
+					if (!path.empty())
+					{
+						billboard.BillboardObject.reset(new Billboard(1.f, path.c_str()));
+					}
+				}
 			}
 			ImGui::TreePop();
 			ImGui::Separator();

@@ -23,5 +23,6 @@ struct VSInput_Pos
 struct VSOutput_Offset
 {
     float4 Position : SV_POSITION;
-    [[vk::location(0)]] float2 Offset : TEXCOORD;
+    [[vk::location(0)]] float2 Offset : TEXCOORD0;
+    [[vk::location(1)]] float2 Texcoord : TEXCOORD1;
 };
