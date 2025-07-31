@@ -130,7 +130,7 @@ project "Editor"
         {
             "{COPYDIR} %{wks.location}Avalanche/Content %{wks.location}Binaries/" .. outputdir .. "/%{prj.name}/Content",
             "{COPYDIR} %{wks.location}Binaries/" .. outputdir .. "/Avalanche/Shaders %{wks.location}Binaries/" .. outputdir .. "/%{prj.name}/Shaders",
-            --"{COPY} %{wks.location}Avalanche/ThirdParty/Assimp/bin/assimp-vc143-mt.dll %{wks.location}Binaries/" .. outputdir .. "/%{prj.name}",
+            "{COPY} %{wks.location}Avalanche/ThirdParty/Assimp/bin/x64/assimp-vc143-mt.dll %{wks.location}Binaries/" .. outputdir .. "/%{prj.name}",
         }
     
     filter "configurations:Debug"
