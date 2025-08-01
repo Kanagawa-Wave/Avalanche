@@ -2,44 +2,51 @@
 
 #include "Context.h"
 
-RenderTarget::RenderTarget(vk::Format format, vk::Extent2D extent, vk::Bool32 renderDepth)
-    : m_Format(format), m_Extent(extent), m_RenderDepth(renderDepth)
+RenderTarget::RenderTarget(const RenderTargetCreateInfo& info)
+    : m_Format(info.ColorFormat), m_Extent(info.Extent), m_RenderDepth(info.RenderDepth), m_RenderColor(info.RenderColor), m_ImGuiReadable(info.ImGuiReadable)
 {
     const auto& device = Context::Instance().GetDevice();
 
-    m_RenderTexture = std::make_unique<Texture>(format, extent, vk::ImageUsageFlagBits::eColorAttachment |
-                                                vk::ImageUsageFlagBits::eSampled);
-
-    if (renderDepth)
-    {
-        m_DepthTexture = std::make_unique<Texture>(vk::Format::eD32Sfloat, extent,
-                                                   vk::ImageUsageFlagBits::eDepthStencilAttachment);
-    }
-
     RenderPassCreateInfo renderPassInfo;
+   
+    std::vector<vk::ImageView> attachments;
+    
     renderPassInfo.setLoadOp(vk::AttachmentLoadOp::eClear)
                   .setStoreOp(vk::AttachmentStoreOp::eStore)
-                  .setColorAttachmentFormat(format)
-                  .setEnableDepthAttachment(renderDepth)
+                  .setEnableDepthAttachment(info.RenderDepth)
                   .setDepthAttachmentFormat(vk::Format::eD32Sfloat)
                   .setInitialLayout(vk::ImageLayout::eUndefined)
                   .setFinalLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
+
+    if (info.RenderColor)
+    {
+        m_ColorTexture = std::make_unique<Texture>(info.ColorFormat, info.Extent, vk::ImageUsageFlagBits::eColorAttachment |
+                                                    vk::ImageUsageFlagBits::eSampled);
+        renderPassInfo.setColorAttachmentFormat(info.ColorFormat);
+        attachments.emplace_back(m_ColorTexture->GetView());
+    }
+
+    if (info.RenderDepth)
+    {
+        m_DepthTexture = std::make_unique<Texture>(vk::Format::eD32Sfloat, info.Extent,
+                                                   vk::ImageUsageFlagBits::eDepthStencilAttachment);
+        attachments.emplace_back(m_DepthTexture->GetView());
+    }
+
     m_RenderPass = std::make_unique<RenderPass>(renderPassInfo);
 
     vk::FramebufferCreateInfo framebufferInfo;
-    std::vector attachments = {m_RenderTexture->GetView()};
-
-    if (renderDepth)
-        attachments.emplace_back(m_DepthTexture->GetView());
-
     framebufferInfo.setAttachments(attachments)
-                   .setWidth(extent.width)
-                   .setHeight(extent.height)
+                   .setWidth(info.Extent.width)
+                   .setHeight(info.Extent.height)
                    .setRenderPass(m_RenderPass->GetRenderPass())
                    .setLayers(1);
     m_Framebuffer = device.createFramebuffer(framebufferInfo);
 
-    m_RenderTexture->RegisterForImGui();
+    if (info.ImGuiReadable)
+    {
+        m_ColorTexture->RegisterForImGui();
+    }
 }
 
 RenderTarget::~RenderTarget()
@@ -86,24 +93,26 @@ void RenderTarget::Resize(vk::Extent2D extent)
     const auto& device = Context::Instance().GetDevice();
     
     m_Extent = extent;
-    m_RenderTexture.reset();
+    m_ColorTexture.reset();
     m_DepthTexture.reset();
     device.destroyFramebuffer(m_Framebuffer);
 
-    m_RenderTexture = std::make_unique<Texture>(m_Format, m_Extent, vk::ImageUsageFlagBits::eColorAttachment |
-                                                vk::ImageUsageFlagBits::eSampled);
+    std::vector<vk::ImageView> attachments;
+    if (m_RenderColor)
+    {
+        m_ColorTexture = std::make_unique<Texture>(m_Format, extent, vk::ImageUsageFlagBits::eColorAttachment |
+                                                    vk::ImageUsageFlagBits::eSampled);
+        attachments.emplace_back(m_ColorTexture->GetView());
+    }
 
     if (m_RenderDepth)
     {
         m_DepthTexture = std::make_unique<Texture>(vk::Format::eD32Sfloat, extent,
                                                    vk::ImageUsageFlagBits::eDepthStencilAttachment);
+        attachments.emplace_back(m_DepthTexture->GetView());
     }
 
     vk::FramebufferCreateInfo framebufferInfo;
-    std::vector attachments = {m_RenderTexture->GetView()};
-
-    if (m_RenderDepth)
-        attachments.emplace_back(m_DepthTexture->GetView());
 
     framebufferInfo.setAttachments(attachments)
                    .setWidth(extent.width)
@@ -112,5 +121,8 @@ void RenderTarget::Resize(vk::Extent2D extent)
                    .setLayers(1);
     m_Framebuffer = device.createFramebuffer(framebufferInfo);
 
-    m_RenderTexture->RegisterForImGui();
+    if (m_ImGuiReadable)
+    {
+        m_ColorTexture->RegisterForImGui();
+    }
 }

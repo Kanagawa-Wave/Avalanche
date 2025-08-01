@@ -25,11 +25,11 @@ Renderer::Renderer(Window* window, const vk::Extent2D& viewportExtent)
 
 	RenderPassCreateInfo renderPassInfo;
 	renderPassInfo.setEnableDepthAttachment(false)
-		.setColorAttachmentFormat(window->GetSwapchain()->GetFormat())
-		.setLoadOp(vk::AttachmentLoadOp::eClear)
-		.setStoreOp(vk::AttachmentStoreOp::eStore)
-		.setInitialLayout(vk::ImageLayout::eUndefined)
-		.setFinalLayout(vk::ImageLayout::ePresentSrcKHR);
+					.setColorAttachmentFormat(window->GetSwapchain()->GetFormat())
+					.setLoadOp(vk::AttachmentLoadOp::eClear)
+					.setStoreOp(vk::AttachmentStoreOp::eStore)
+					.setInitialLayout(vk::ImageLayout::eUndefined)
+					.setFinalLayout(vk::ImageLayout::ePresentSrcKHR);
 	m_PresnetRenderPass = std::make_unique<RenderPass>(renderPassInfo);
 
 	InitImGui();
@@ -37,8 +37,13 @@ Renderer::Renderer(Window* window, const vk::Extent2D& viewportExtent)
 	window->GetSwapchain()->CreateFramebuffers(window->GetWidth(), window->GetHeight(),
 		m_PresnetRenderPass->GetRenderPass());
 
-	m_ViewportRenderTarget = std::make_unique<RenderTarget>(window->GetSwapchain()->GetFormat(),
-		window->GetExtent(), true);
+	RenderTargetCreateInfo renderTargetInfo;
+	renderTargetInfo.setColorFormat(window->GetSwapchain()->GetFormat())
+					.setExtent(window->GetExtent())
+					.setRenderColor(true)
+					.setRenderDepth(true)
+					.setImGuiReadable(true);
+	m_ViewportRenderTarget = std::make_unique<RenderTarget>(renderTargetInfo);
 
 	const ShaderDataLayout mainGlobalSetLayout[] = {
 		{0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex, sizeof(CameraDataVert)},
