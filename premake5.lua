@@ -75,6 +75,7 @@ IncludeDir["VKBOOTSTRAP"] = "Avalanche/ThirdParty/vk-bootstrap/src"
 IncludeDir["VMA"] = "Avalanche/ThirdParty/VulkanMemoryAllocator/include"
 IncludeDir["Assimp"] = "Avalanche/ThirdParty/Assimp/include"
 IncludeDir["YAML"] = "Avalanche/ThirdParty/yaml-cpp/include"
+IncludeDir["SPIRVCross"] = "Avalanche/ThirdParty/SPIRV-Cross"
 
 LibraryDir = {}
 LibraryDir["VulkanSDK"] = "%{VULKAN_SDK}/Lib"
@@ -190,6 +191,7 @@ project "Avalanche"
         "%{IncludeDir.ENTT}",
         "%{IncludeDir.Assimp}",
         "%{IncludeDir.YAML}",
+        "%{IncludeDir.SPIRVCross}"
     }
     
     links
@@ -201,7 +203,8 @@ project "Avalanche"
         "GLFW",
         "ImGui",
         "VkBootstrap",
-        "yaml-cpp"
+        "yaml-cpp",
+        "SPIRV-Cross"
     }
 
     ignoredefaultlibraries
@@ -264,3 +267,4 @@ group "Dependencies"
     include "Avalanche/ThirdParty/glfw"
     include "Avalanche/ThirdParty/vk-bootstrap"
     include "Avalanche/ThirdParty/yaml-cpp"
+    include "Avalanche/ThirdParty/SPIRV-Cross"
