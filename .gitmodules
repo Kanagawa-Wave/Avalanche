@@ -28,3 +28,6 @@
 [submodule "Avalanche/ThirdParty/yaml-cpp"]
 	path = Avalanche/ThirdParty/yaml-cpp
 	url = https://github.com/Kanagawa-Wave/yaml-cpp.git
+[submodule "Avalanche/ThirdParty/SPIRV-Cross"]
+	path = Avalanche/ThirdParty/SPIRV-Cross
+	url = https://github.com/Kanagawa-Wave/SPIRV-Cross.git
