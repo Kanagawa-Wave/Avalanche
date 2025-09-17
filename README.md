@@ -26,25 +26,13 @@ If the repository was cloned non-recursively previously, use `git submodule upda
 
 ## Feature List
 ### Implemented
-- Model loading
+- Model loading using Assimp
 - Editor interface based on ImGui
 - Blinn-Phong shading
 - Point Lights
+- Billboard Icons
 - Entity-Component System based on entt
 - Abstraction layer for Vulkan API
-### Short-term goals (Before Fall 2024)
-- Shadow Maps
-- More types of lights (area lights / spot lights)
-- PBR support
-- Cubemaps
-- Post-processing
-- Assimp model loading
-- Deferred Rendering
-### Long-term goals
-- Reflections (SSR, Planar)
-- Ambient Occulsion (SSAO, GTAO)
-- Mesh shading pipeline
-- Vulkan Ray tracing
 
 ***
 
