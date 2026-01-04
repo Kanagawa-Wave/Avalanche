@@ -5,7 +5,7 @@
 #include <optional>
 
 #include "CommandManager.h"
-#include "DescriptorSetBuilder.h"
+#include "DescriptorArena.h"
 
 struct GLFWwindow;
 
@@ -20,7 +20,6 @@ public:
 
 public:
     void InitCommandManager();
-    void InitDescriptorSetBuilder(uint32_t numLayouts);
 
     vk::Instance GetInstance() const { return m_Instance; }
     vk::SurfaceKHR GetSurface() const { return m_Surface; }
@@ -28,12 +27,14 @@ public:
     vk::Device GetDevice() const { return m_Device; }
     vk::Queue GetGraphicsQueue() const { return m_GraphicsQueue; }
     vk::Queue GetPresentQueue() const { return m_PresentQueue; }
-    vk::DescriptorPool GetDescriptorPool() const { return m_DescriptorPool; }
+    DescriptorArena* GetDescriptorArena() const { return m_DescriptorArena.get(); }
     VmaAllocator GetAllocator() const { return m_Allocator; }
     CommandManager* GetCommandManager() const { return m_CommandManager.get(); }
-    DescriptorSetBuilder* GetDescriptorSetBuilder() const { return m_DescriptorSetBuilder.get(); }
     uint32_t GetGraphicsQueueFamilyIndex() const { return m_QueueFamilyIndices.GraphicsQueue.value(); }
     uint32_t GetPresentQueueFamilyIndex() const { return m_QueueFamilyIndices.PresentQueue.value(); }
+    vk::PipelineLayout GetCurrentPipelineLayout() const { return m_CurrentPipelineLayout; }
+    
+    void SetCurrentPipelineLayout(vk::PipelineLayout pipelineLayout) {m_CurrentPipelineLayout = pipelineLayout; }
         
 private:
     Context(GLFWwindow* window);
@@ -46,7 +47,7 @@ private:
     void QueryQueueFamilyIndices();
     void GetQueue();
     void CreateSurface(GLFWwindow* window);
-    void CreateDescriptorPool();
+    void CreateDescriptorArena();
     void InitAllocator();
 
 private:
@@ -66,11 +67,13 @@ private:
     vk::Device m_Device;
     vk::Queue m_GraphicsQueue, m_PresentQueue;
     vk::SurfaceKHR m_Surface;
-    vk::DescriptorPool m_DescriptorPool;
+    // vk::DescriptorPool m_DescriptorPool;
     VmaAllocator m_Allocator = VK_NULL_HANDLE;
     
     std::unique_ptr<CommandManager> m_CommandManager;
-    std::unique_ptr<DescriptorSetBuilder> m_DescriptorSetBuilder;
+    std::unique_ptr<DescriptorArena> m_DescriptorArena;
+    
+    vk::PipelineLayout m_CurrentPipelineLayout;
     
     QueueFamilyIndices m_QueueFamilyIndices;
 };

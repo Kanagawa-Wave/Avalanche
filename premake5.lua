@@ -191,7 +191,7 @@ project "Avalanche"
         "%{IncludeDir.ENTT}",
         "%{IncludeDir.Assimp}",
         "%{IncludeDir.YAML}",
-        "%{IncludeDir.SPIRVCross}"
+        "%{IncludeDir.SPIRVCross}",
     }
     
     links

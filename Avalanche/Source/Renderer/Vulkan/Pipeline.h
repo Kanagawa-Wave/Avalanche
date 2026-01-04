@@ -3,8 +3,9 @@
 #include <vulkan/vulkan.hpp>
 
 #include "Buffers.h"
-#include "DescriptorSet.h"
 #include "Shader.h"
+#include "DescriptorSetWriter.h"
+#include "Renderer/ShaderResourceLayout.h"
 
 struct PipelineCreateInfo
 {
@@ -23,13 +24,6 @@ struct PipelineCreateInfo
     PipelineCreateInfo& setFragmentShader(const std::string& fragmentShader)
     {
         ShaderInfo.FragPath = fragmentShader;
-        return *this;
-    }
-
-	PipelineCreateInfo& setGlobalSetLayout(const vk::ArrayProxy<ShaderDataLayout>& layout, EDescriptorSetLayoutType type)
-    {
-	    ShaderInfo.setGlobalSetLayout(layout);
-        ShaderInfo.setGlobalSetLayoutType(type);
         return *this;
     }
 
@@ -69,12 +63,6 @@ public:
     Shader* GetShader() const { return m_Shader.get(); }
 
     void Bind(vk::CommandBuffer commandBuffer) const;
-    void BindDescriptorSets(vk::CommandBuffer commandBuffer,
-                            const vk::ArrayProxy<vk::DescriptorSet>& descriptorSets,
-                            uint32_t firstSet = 0) const;
-
-
-	void SetShaderBufferData(uint32_t binding, const void* data) const;
 
 private:
     void CreateLayout(uint32_t pushConstantSize, const std::vector<vk::DescriptorSetLayout>& layouts);

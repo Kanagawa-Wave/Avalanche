@@ -3,7 +3,7 @@
 #include <vulkan/vulkan.hpp>
 
 #include "DescriptorSet.h"
-#include "Renderer/DescriptorSetBuilder.h"
+#include "Renderer/ShaderResourceLayout.h"
 
 struct ShaderDataLayout
 {
@@ -21,24 +21,11 @@ struct ShaderDataLayout
 struct ShaderCreateInfo
 {
 	std::string VertPath, FragPath;
-    vk::ArrayProxy<ShaderDataLayout> GlobalSetLayout;
-    EDescriptorSetLayoutType GlobalSetLayoutType;
 
     ShaderCreateInfo& setShaderPaths(const std::string& vertPath, const std::string& fragPath)
     {
-	    VertPath = vertPath, FragPath = fragPath;
-        return *this;
-    }
-
-    ShaderCreateInfo& setGlobalSetLayout(const vk::ArrayProxy<ShaderDataLayout>& layout)
-    {
-	    GlobalSetLayout = layout;
-        return *this;
-    }
-
-    ShaderCreateInfo& setGlobalSetLayoutType(EDescriptorSetLayoutType layoutType)
-    {
-        GlobalSetLayoutType = layoutType;
+	    VertPath = vertPath;
+        FragPath = fragPath;
         return *this;
     }
 };
@@ -49,21 +36,18 @@ public:
     Shader(const ShaderCreateInfo& info);
     ~Shader();
 
+    const ShaderResourceLayout* GetShaderResourceLayout() const { return m_ResourceLayout.get(); }
     const std::vector<vk::PipelineShaderStageCreateInfo>& GetStageInfo() { return m_Stages; }
 
-    void SetBufferData(uint32_t binding, const void* data) const;
-
 private:
-	void SetGlobalDescriptorLayout(const vk::ArrayProxy<ShaderDataLayout>& layout, EDescriptorSetLayoutType layoutType);
-
-    static std::vector<char> LoadSPVFromFile(const std::string& path);
+    static std::vector<uint32_t> LoadSPVFromFile(const std::string& path);
     void InitPipelineShaderStageCreateInfo();
+    void GetShaderResourcesLayout(const std::vector<uint32_t>& source, vk::ShaderStageFlagBits stage, std::vector<BindingInfo>& outBindings);
     
-private:
     vk::ShaderModule m_VertexShader, m_FragmentShader;
     std::vector<vk::PipelineShaderStageCreateInfo> m_Stages;
-    std::unique_ptr<DescriptorSet> m_GlobalDescriptorSet;
-    std::vector<std::unique_ptr<Buffer>> m_UniformBuffers;
+    bool m_HasPixelShader = false;
+    uint32_t m_MaxSet = 0;
 
-    friend class Pipeline;
+    std::unique_ptr<ShaderResourceLayout> m_ResourceLayout;
 };

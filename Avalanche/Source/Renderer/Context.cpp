@@ -12,6 +12,7 @@ void Context::Init(GLFWwindow* window)
 {
     s_Instance.reset(new Context(window));
     s_Instance->InitCommandManager();
+    s_Instance->CreateDescriptorArena();
     ImmediateContext::Init();
 }
 
@@ -19,12 +20,9 @@ void Context::Destroy()
 {
     m_Device.waitIdle();
     ImmediateContext::Instance().Destroy();
+    m_DescriptorArena.reset();
     m_CommandManager.reset();
-    m_DescriptorSetBuilder.reset();
     
-    LOG_T("Destroying VkDescriptorPool {}", fmt::ptr((VkDescriptorPool)m_DescriptorPool))
-    m_Device.destroyDescriptorPool(m_DescriptorPool);
-
     LOG_T("Destroying VkSurface {}", fmt::ptr((VkSurfaceKHR)m_Surface))
     m_Instance.destroySurfaceKHR(m_Surface);
     
@@ -52,7 +50,6 @@ Context::Context(GLFWwindow* window)
     QueryQueueFamilyIndices();
     CreateDevice();
     GetQueue();
-    CreateDescriptorPool();
     InitAllocator();
 }
 
@@ -141,7 +138,7 @@ void Context::QueryQueueFamilyIndices()
     const auto properties = m_PhysicalDevice.getQueueFamilyProperties();
     for (uint32_t i = 0; i < properties.size(); i++)
     {
-        if (properties[i].queueFlags | vk::QueueFlagBits::eGraphics)
+        if (properties[i].queueFlags & vk::QueueFlagBits::eGraphics)
         {
             m_QueueFamilyIndices.GraphicsQueue = i;
         }
@@ -168,19 +165,21 @@ void Context::CreateSurface(GLFWwindow* window)
     LOG_T("VkSurface {0} created successfully", fmt::ptr((VkSurfaceKHR)m_Surface))
 }
 
-void Context::CreateDescriptorPool()
+void Context::CreateDescriptorArena()
 {
-    vk::DescriptorPoolCreateInfo poolInfo;
-    std::vector<vk::DescriptorPoolSize> poolSizes = {
-        {vk::DescriptorType::eUniformBuffer, 1000},
-        {vk::DescriptorType::eCombinedImageSampler, 1000}
-    };
+    m_DescriptorArena = std::make_unique<DescriptorArena>(1, 1000);
     
-    poolInfo.setPoolSizes(poolSizes)
-            .setMaxSets(1000);
-
-    m_DescriptorPool = m_Device.createDescriptorPool(poolInfo);
-    LOG_T("VkDescriptorPool {0} created successfully", fmt::ptr((VkDescriptorPool)m_DescriptorPool))
+    // vk::DescriptorPoolCreateInfo poolInfo;
+    // std::vector<vk::DescriptorPoolSize> poolSizes = {
+    //     {vk::DescriptorType::eUniformBuffer, 1000},
+    //     {vk::DescriptorType::eCombinedImageSampler, 1000}
+    // };
+    //
+    // poolInfo.setPoolSizes(poolSizes)
+    //         .setMaxSets(1000);
+    //
+    // m_DescriptorPool = m_Device.createDescriptorPool(poolInfo);
+    // LOG_T("VkDescriptorPool {0} created successfully", fmt::ptr((VkDescriptorPool)m_DescriptorPool))
 }
 
 void Context::InitAllocator()
@@ -195,11 +194,6 @@ void Context::InitAllocator()
 void Context::InitCommandManager()
 {
     m_CommandManager = std::make_unique<CommandManager>();
-}
-
-void Context::InitDescriptorSetBuilder(uint32_t numLayouts)
-{
-    m_DescriptorSetBuilder = std::make_unique<DescriptorSetBuilder>(numLayouts);
 }
 
 Context::~Context()

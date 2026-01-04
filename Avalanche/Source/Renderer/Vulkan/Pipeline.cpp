@@ -5,16 +5,9 @@
 
 Pipeline::Pipeline(const PipelineCreateInfo& pipelineCreateInfo)
 {
-	const Context& context = Context::Instance();
 	m_Shader.reset(new Shader(pipelineCreateInfo.ShaderInfo));
-
-	// TODO: Remove hard coded layout IDs
-	auto layouts = context.GetDescriptorSetBuilder()->GetDescriptorSetLayouts(
-	{
-		pipelineCreateInfo.ShaderInfo.GlobalSetLayoutType,
-		EDescriptorSetLayoutType::PerModelSet
-	});
-	CreateLayout(pipelineCreateInfo.PushConstantSize,layouts);
+	
+	CreateLayout(pipelineCreateInfo.PushConstantSize, m_Shader->GetShaderResourceLayout()->GetLayouts());
 	CreatePipeline(pipelineCreateInfo);
 }
 
@@ -30,7 +23,6 @@ Pipeline::~Pipeline()
 
 void Pipeline::CreateLayout(uint32_t pushConstantSize, const std::vector<vk::DescriptorSetLayout>& layouts)
 {
-
 	vk::PipelineLayoutCreateInfo layoutInfo{};
 
 	if (pushConstantSize != 0)
@@ -127,19 +119,5 @@ void Pipeline::CreatePipeline(const PipelineCreateInfo& pipelineCreateInfo)
 void Pipeline::Bind(vk::CommandBuffer commandBuffer) const
 {
 	commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_Pipeline);
-	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_Layout, 0, {m_Shader->m_GlobalDescriptorSet->GetDescriptorSet()}, nullptr);
-}
-
-void Pipeline::BindDescriptorSets(vk::CommandBuffer commandBuffer,
-	const vk::ArrayProxy<vk::DescriptorSet>& descriptorSets,
-	uint32_t firstSet) const
-{
-	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_Layout, firstSet,
-		descriptorSets,
-		nullptr);
-}
-
-void Pipeline::SetShaderBufferData(uint32_t binding, const void* data) const
-{
-	m_Shader->SetBufferData(binding, data);
+	Context::Instance().SetCurrentPipelineLayout(m_Layout);
 }

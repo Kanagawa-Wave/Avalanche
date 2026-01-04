@@ -57,6 +57,7 @@ private:
 	friend class SceneSerializer;
 	friend class Outliner;
 	friend class Renderer;
+	friend class ShadowMapRenderSystem;
 };
 
 

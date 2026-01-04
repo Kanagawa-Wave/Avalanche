@@ -7,6 +7,7 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+#include <entt/entt.hpp>
 
 #include "Renderer/Context.h"
 
@@ -31,10 +32,15 @@ namespace std
 	};
 }
 
+vk::DescriptorSetLayout Mesh::s_DescriptorSetLayout{};
+
 Mesh::Mesh(const std::string& meshPath)
 	: m_MeshPath(meshPath)
 {
 	LoadMeshFromFile(meshPath);
+	
+	ASSERT(s_DescriptorSetLayout, "Mesh has invalid DescriptorSetLayout, call SetDescriptorSetLayout() to set layout")
+	m_Material = std::make_unique<Material>(s_DescriptorSetLayout);
 
 	m_VertexBuffer = std::make_unique<VertexBuffer>(m_Vertices.data(), m_Vertices.size() * sizeof(ModelVertex));
 	m_VertexBuffer->SetLayout(ModelVertex::Layout());
@@ -42,9 +48,9 @@ Mesh::Mesh(const std::string& meshPath)
 	m_IndexBuffer = std::make_unique<IndexBuffer>(m_Indices.data(), m_Indices.size());
 }
 
-void Mesh::Bind(vk::CommandBuffer commandBuffer, const vk::PipelineLayout& layout) const
+void Mesh::Bind(vk::CommandBuffer commandBuffer) const
 {
-	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, layout, 1, {m_DescriptorSet->GetDescriptorSet()}, nullptr);
+	m_Material->Bind(commandBuffer);
 	m_VertexBuffer->Bind(commandBuffer);
 	m_IndexBuffer->Bind(commandBuffer);
 }
@@ -52,18 +58,6 @@ void Mesh::Bind(vk::CommandBuffer commandBuffer, const vk::PipelineLayout& layou
 void Mesh::Draw(vk::CommandBuffer commandBuffer) const
 {
 	commandBuffer.drawIndexed(m_IndexBuffer->GetCount(), 1, 0, 0, 0);
-}
-
-void Mesh::SetTexture(const std::string& path)
-{
-	m_Texture = std::make_unique<Texture>(path, ETextureFormat::Linear);
-	m_TexturePath = path;
-
-	if (!m_DescriptorSet)
-	{
-		m_DescriptorSet = Context::Instance().GetDescriptorSetBuilder()->CreateDescriptorSet(EDescriptorSetLayoutType::PerModelSet);
-	}
-	m_DescriptorSet->UpdateDescriptor(m_Texture.get(), 0);
 }
 
 void Mesh::LoadObjFromFile(const std::string& path)

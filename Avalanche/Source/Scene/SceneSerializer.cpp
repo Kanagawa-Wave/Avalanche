@@ -165,7 +165,10 @@ static void SerializeEntity(YAML::Emitter& out, Entity entity)
         auto& smc = entity.GetComponent<StaticMeshComponent>();
         out << YAML::Key << "Visible" << YAML::Value << smc.Visible;
         out << YAML::Key << "MeshPath" << YAML::Value << smc.StaticMesh->GetMeshPath();
-        out << YAML::Key << "TexturePath" << YAML::Value << smc.StaticMesh->GetTexturePath();
+        if (const auto* material = smc.StaticMesh->GetMaterial())
+        {
+            out << YAML::Key << "TexturePath" << YAML::Value << material->GetAlbedoPath();
+        }
 
         out << YAML::EndMap; // StaticMesh Component
     }
@@ -250,7 +253,12 @@ bool SceneSerializer::Deserialize(const std::string& filePath)
             {
                 auto& smc = deserializedEntity.AddComponent<StaticMeshComponent>(staticMeshComponent["MeshPath"].as<std::string>());
                 smc.Visible = staticMeshComponent["Visible"].as<bool>();
-                smc.StaticMesh->SetTexture(staticMeshComponent["TexturePath"].as<std::string>());
+                const std::string texturePath = staticMeshComponent["TexturePath"].as<std::string>();
+                if (!texturePath.empty())
+                {
+                    if (auto* material = smc.StaticMesh->GetMaterial())
+                        material->SetAlbedo(texturePath);
+                }
             }
         }
     }

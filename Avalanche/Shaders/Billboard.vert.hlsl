@@ -20,11 +20,11 @@ cbuffer camera : register(b0, space0)
     Camera camera;
 }
 
-VSOutput_Offset main(VSInput_Pos input)
+VSOutput_OffsetTex main(VSInput_Pos input)
 {
     const float BILLBOARD_SIZE = 0.1;
     
-    VSOutput_Offset output;
+    VSOutput_OffsetTex output;
 
     float3 cameraRightWorld = normalize(float3(camera.View[0][0], camera.View[0][1], camera.View[0][2]));
     float3 cameraUpWorld = normalize(float3(camera.View[1][0], camera.View[1][1], camera.View[1][2]));

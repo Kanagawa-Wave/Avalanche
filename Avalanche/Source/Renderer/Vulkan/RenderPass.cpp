@@ -9,15 +9,18 @@ RenderPass::RenderPass(const RenderPassCreateInfo& info)
     vk::RenderPassCreateInfo renderPassInfo;
     vk::AttachmentDescription colorAttachment, depthAttachment;
     std::vector<vk::AttachmentDescription> attachments;
-    colorAttachment.setFormat(info.ColorFormat)
-                   .setInitialLayout(info.InitialLayout)
-                   .setFinalLayout(info.FinalLayout)
-                   .setLoadOp(info.LoadOp)
-                   .setStoreOp(info.StoreOp)
-                   .setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)
-                   .setStencilStoreOp(vk::AttachmentStoreOp::eDontCare)
-                   .setSamples(vk::SampleCountFlagBits::e1);
-    attachments.push_back(colorAttachment);
+    if (info.ColorFormat != vk::Format::eUndefined)
+    {
+        colorAttachment.setFormat(info.ColorFormat)
+                       .setInitialLayout(info.InitialLayout)
+                       .setFinalLayout(info.FinalLayout)
+                       .setLoadOp(info.LoadOp)
+                       .setStoreOp(info.StoreOp)
+                       .setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)
+                       .setStencilStoreOp(vk::AttachmentStoreOp::eDontCare)
+                       .setSamples(vk::SampleCountFlagBits::e1);
+        attachments.push_back(colorAttachment);
+    }
 
     if (info.EnableDepthAttachment)
     {
@@ -36,26 +39,35 @@ RenderPass::RenderPass(const RenderPassCreateInfo& info)
 
     vk::SubpassDescription subpass;
     vk::AttachmentReference colorRef, depthRef;
-    colorRef.setLayout(vk::ImageLayout::eColorAttachmentOptimal)
-            .setAttachment(0);
-    subpass.setPipelineBindPoint(vk::PipelineBindPoint::eGraphics)
-           .setColorAttachments(colorRef);
+    uint32_t attachmentIndex = 0;
+    if (info.ColorFormat != vk::Format::eUndefined)
+    {
+        colorRef.setLayout(vk::ImageLayout::eColorAttachmentOptimal)
+                .setAttachment(attachmentIndex);
+        subpass.setPipelineBindPoint(vk::PipelineBindPoint::eGraphics)
+               .setColorAttachments(colorRef);
+        attachmentIndex++;
+    }
     if (info.EnableDepthAttachment)
     {
         depthRef.setLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal)
-                .setAttachment(1);
+                .setAttachment(attachmentIndex);
         subpass.setPDepthStencilAttachment(&depthRef);
+        attachmentIndex++;
     }
     renderPassInfo.setSubpasses(subpass);
 
     vk::SubpassDependency colorDependency;
     std::vector<vk::SubpassDependency> dependencies;
-    colorDependency.setSrcSubpass(VK_SUBPASS_EXTERNAL)
-                   .setDstSubpass(0)
-                   .setDstAccessMask(vk::AccessFlagBits::eColorAttachmentWrite)
-                   .setSrcStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput)
-                   .setDstStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
-    dependencies.push_back(colorDependency);
+    if (info.ColorFormat != vk::Format::eUndefined)
+    {
+        colorDependency.setSrcSubpass(VK_SUBPASS_EXTERNAL)
+                       .setDstSubpass(0)
+                       .setDstAccessMask(vk::AccessFlagBits::eColorAttachmentWrite)
+                       .setSrcStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput)
+                       .setDstStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
+        dependencies.push_back(colorDependency);
+    }
 
     if (info.EnableDepthAttachment)
     {

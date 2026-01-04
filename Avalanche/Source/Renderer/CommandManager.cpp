@@ -1,6 +1,7 @@
 ﻿#include "CommandManager.h"
 
 #include "Context.h"
+#include "Core/Log.h"
 
 CommandManager::CommandManager()
 {

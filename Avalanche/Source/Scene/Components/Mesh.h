@@ -9,6 +9,7 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
+#include "Renderer/Material.h"
 #include "Renderer/Vulkan/DescriptorSet.h"
 
 struct ModelVertex
@@ -43,31 +44,29 @@ class Mesh
 public:
     Mesh(const std::string& meshPath);
 
-    void Bind(vk::CommandBuffer commandBuffer, const vk::PipelineLayout& layout) const;
+    void Bind(vk::CommandBuffer commandBuffer) const;
     void Draw(vk::CommandBuffer commandBuffer) const;
-
-    void SetTexture(const std::string& path);
     
-    Texture* GetTexture() const { return m_Texture.get(); }
+    Material* GetMaterial() const { return m_Material.get(); }
     VertexBuffer* GetVertexBuffer() const { return m_VertexBuffer.get(); }
     IndexBuffer* GetIndexBuffer() const { return m_IndexBuffer.get(); }
 
     const std::string& GetMeshPath() const { return m_MeshPath; }
-    const std::string& GetTexturePath() const { return m_TexturePath; }
+    
+    static void SetDescriptorSetLayout(const vk::DescriptorSetLayout& layout) { s_DescriptorSetLayout = layout; }
 
 private:
     void LoadObjFromFile(const std::string& path);
     void LoadMeshFromFile(const std::string& path);
 
     std::string m_MeshPath;
-    std::string m_TexturePath;
-
-    std::unique_ptr<Texture> m_Texture;
-    std::unique_ptr<DescriptorSet> m_DescriptorSet;
+    std::unique_ptr<Material> m_Material;
     
     std::vector<ModelVertex> m_Vertices{};
     std::vector<uint32_t> m_Indices{};
     
     std::unique_ptr<VertexBuffer> m_VertexBuffer = nullptr;
     std::unique_ptr<IndexBuffer> m_IndexBuffer = nullptr;
+    
+    static vk::DescriptorSetLayout s_DescriptorSetLayout;
 };

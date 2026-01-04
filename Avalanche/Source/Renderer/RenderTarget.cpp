@@ -13,6 +13,7 @@ RenderTarget::RenderTarget(const RenderTargetCreateInfo& info)
     
     renderPassInfo.setLoadOp(vk::AttachmentLoadOp::eClear)
                   .setStoreOp(vk::AttachmentStoreOp::eStore)
+                  .setColorAttachmentFormat(info.ColorFormat)
                   .setEnableDepthAttachment(info.RenderDepth)
                   .setDepthAttachmentFormat(vk::Format::eD32Sfloat)
                   .setInitialLayout(vk::ImageLayout::eUndefined)
@@ -22,7 +23,6 @@ RenderTarget::RenderTarget(const RenderTargetCreateInfo& info)
     {
         m_ColorTexture = std::make_unique<Texture>(info.ColorFormat, info.Extent, vk::ImageUsageFlagBits::eColorAttachment |
                                                     vk::ImageUsageFlagBits::eSampled);
-        renderPassInfo.setColorAttachmentFormat(info.ColorFormat);
         attachments.emplace_back(m_ColorTexture->GetView());
     }
 

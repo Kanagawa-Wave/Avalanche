@@ -215,7 +215,7 @@ void Outliner::DrawComponents(Entity entity)
 	    		if (mesh.StaticMesh)
 	    		{
 	    			meshPath = entity.GetComponent<StaticMeshComponent>().StaticMesh->GetMeshPath();
-	    			texturePath = entity.GetComponent<StaticMeshComponent>().StaticMesh->GetTexturePath();
+	    			texturePath = entity.GetComponent<StaticMeshComponent>().StaticMesh->GetMaterial()->GetAlbedoPath();
 	    		}
 	    		ImGui::TextWrapped("Mesh: %s", meshPath.c_str());
 	    		if (ImGui::Button("Load Mesh"))
@@ -225,16 +225,16 @@ void Outliner::DrawComponents(Entity entity)
 	    			{
 	    				mesh.StaticMesh = std::make_shared<Mesh>(path);
 	    				mesh.Visible = true;
-	    				mesh.StaticMesh->SetTexture("Content/white.png");
+	    				mesh.StaticMesh->GetMaterial()->SetAlbedo("Content/white.png");
 	    			}
 	    		}
-	    		ImGui::TextWrapped("Texture: %s", texturePath.c_str());
+	    		ImGui::TextWrapped("Albedo: %s", texturePath.c_str());
 	    		if (ImGui::Button("Load Texture"))
 	    		{
 	    			const std::string path = FileHelper::OpenFile("Image File (*.png)\0*.png\0");
 	    			if (!path.empty() && mesh.StaticMesh)
 	    			{
-	    				mesh.StaticMesh->SetTexture(path);
+	    				mesh.StaticMesh->GetMaterial()->SetAlbedo(path);
 	    			}
 	    		}
 	    	}

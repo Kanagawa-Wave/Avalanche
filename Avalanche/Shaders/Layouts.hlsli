@@ -15,12 +15,17 @@ struct VSOutput_ColorTexWNomralWPos
     [[vk::location(3)]] float3 WorldPosition : POSITION;
 };
 
+struct VSOutput
+{
+    float4 Position : SV_POSITION;
+};
+
 struct VSInput_Pos
 {
     [[vk::location(0)]] float2 Position : POSITION;
 };
 
-struct VSOutput_Offset
+struct VSOutput_OffsetTex
 {
     float4 Position : SV_POSITION;
     [[vk::location(0)]] float2 Offset : TEXCOORD0;

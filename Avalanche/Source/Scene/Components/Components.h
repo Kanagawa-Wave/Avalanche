@@ -146,6 +146,14 @@ struct PointLightComponent
     PointLightComponent(const PointLightComponent&) = default;
 };
 
+struct DirectionalLightComponent
+{
+    glm::vec3 Color{1.f};
+
+    DirectionalLightComponent() = default;
+    DirectionalLightComponent(const DirectionalLightComponent&) = default;
+};
+
 struct BillboardComponent
 {
     std::shared_ptr<Billboard> BillboardObject = nullptr;
