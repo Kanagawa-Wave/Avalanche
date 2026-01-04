@@ -4,8 +4,8 @@
 
 #include "Renderer/Context.h"
 
-Billboard::Billboard(float radius, const std::string& texturePath)
-    : m_Radius(radius), m_TexturePath(texturePath)
+Billboard::Billboard(const std::string& texturePath)
+    : m_TexturePath(texturePath)
 {
     const Context& context = Context::Instance();
     
@@ -21,6 +21,10 @@ Billboard::Billboard(float radius, const std::string& texturePath)
     m_VertexBuffer = std::make_unique<VertexBuffer>(vertices, sizeof(glm::vec2) * 6);
     m_VertexBuffer->SetLayout(Layout());
     m_IndexBuffer = std::make_unique<IndexBuffer>(indices, 6);
+    
+    ASSERT(context.GetBillboardDescriptorSetLayout(), "Invalid MaterialDescriptorSetLayout, please set layout in context")
+    m_DescriptorSet = std::make_unique<DescriptorSet>(context.GetBillboardDescriptorSetLayout());
+    
     SetTexture(texturePath);
 }
 
@@ -29,8 +33,11 @@ Billboard::~Billboard()
 
 void Billboard::Bind(vk::CommandBuffer commandBuffer) const
 {
+    const auto& context = Context::Instance();
+    
     m_VertexBuffer->Bind(commandBuffer);
     m_IndexBuffer->Bind(commandBuffer);
+    m_DescriptorSet->Bind(commandBuffer, context.GetCurrentPipelineLayout(), Context::PER_MATERIAL_SET);
 }
 
 void Billboard::Draw(vk::CommandBuffer commandBuffer) const
@@ -38,12 +45,11 @@ void Billboard::Draw(vk::CommandBuffer commandBuffer) const
     commandBuffer.drawIndexed(m_IndexBuffer->GetCount(), 1, 0, 0, 0);
 }
 
-void Billboard::SetRadius(float radius)
-{
-    
-}
-
 void Billboard::SetTexture(const std::string& texturePath)
 {
+    const Context& context = Context::Instance();
     m_Texture.reset(new Texture(texturePath, ETextureFormat::Linear));
+    m_DescriptorSet->SetTexture(0, m_Texture.get());
+    context.GetDevice().waitIdle();
+    m_DescriptorSet->WriteAndClear();
 }

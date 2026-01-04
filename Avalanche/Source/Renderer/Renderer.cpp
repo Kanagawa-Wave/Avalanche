@@ -25,7 +25,7 @@
 Renderer::Renderer(Window* window, const vk::Extent2D& viewportExtent)
 	: m_Window(window), m_pExtent(&viewportExtent)
 {
-	const auto& context = Context::Instance();
+	auto& context = Context::Instance();
 	
 	RenderPassCreateInfo renderPassInfo;
 	renderPassInfo.setEnableDepthAttachment(false)
@@ -89,12 +89,13 @@ Renderer::Renderer(Window* window, const vk::Extent2D& viewportExtent)
 	);
 	
 	m_MainGlobalSet = context.GetDescriptorArena()->Allocate(
-		m_MainPipeline->GetShader()->GetShaderResourceLayout()->GetLayout(GLOBAL));
+		m_MainPipeline->GetShader()->GetShaderResourceLayout()->GetLayout(Context::GLOBAL_SET));
 	m_BillboardGlobalSet = context.GetDescriptorArena()->Allocate(
-		m_BillboardPipeline->GetShader()->GetShaderResourceLayout()->GetLayout(GLOBAL));
+		m_BillboardPipeline->GetShader()->GetShaderResourceLayout()->GetLayout(Context::GLOBAL_SET));
 	m_DescriptorSetWriter = std::make_unique<DescriptorSetWriter>();
 	
-	Mesh::SetDescriptorSetLayout(m_MainPipeline->GetShader()->GetShaderResourceLayout()->GetLayout(PER_MATERIAL));
+	context.SetMaterialDescriptorSetLayout(m_MainPipeline->GetShader()->GetShaderResourceLayout()->GetLayout(Context::PER_MATERIAL_SET));
+	context.SetBillboardDescriptorSetLayout(m_BillboardPipeline->GetShader()->GetShaderResourceLayout()->GetLayout(Context::PER_MATERIAL_SET));
 }
 
 Renderer::~Renderer()

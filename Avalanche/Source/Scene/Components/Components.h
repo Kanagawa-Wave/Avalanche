@@ -163,7 +163,7 @@ struct BillboardComponent
 
     BillboardComponent(const std::string& path)
     {
-        BillboardObject = std::make_shared<Billboard>(1.f, path);
+        BillboardObject = std::make_shared<Billboard>(path);
     }
 };
 

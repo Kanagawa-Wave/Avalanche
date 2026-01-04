@@ -32,15 +32,15 @@ namespace std
 	};
 }
 
-vk::DescriptorSetLayout Mesh::s_DescriptorSetLayout{};
-
 Mesh::Mesh(const std::string& meshPath)
 	: m_MeshPath(meshPath)
 {
+	const auto& context = Context::Instance();
+	
 	LoadMeshFromFile(meshPath);
 	
-	ASSERT(s_DescriptorSetLayout, "Mesh has invalid DescriptorSetLayout, call SetDescriptorSetLayout() to set layout")
-	m_Material = std::make_unique<Material>(s_DescriptorSetLayout);
+	ASSERT(context.GetMaterialDescriptorSetLayout(), "Invalid MaterialDescriptorSetLayout, please set layout in context")
+	m_Material = std::make_unique<Material>(context.GetMaterialDescriptorSetLayout());
 
 	m_VertexBuffer = std::make_unique<VertexBuffer>(m_Vertices.data(), m_Vertices.size() * sizeof(ModelVertex));
 	m_VertexBuffer->SetLayout(ModelVertex::Layout());

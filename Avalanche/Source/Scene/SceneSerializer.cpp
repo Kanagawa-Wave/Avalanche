@@ -152,7 +152,6 @@ static void SerializeEntity(YAML::Emitter& out, Entity entity)
         out << YAML::BeginMap; // Billboard Component
 
         auto& bc = entity.GetComponent<BillboardComponent>().BillboardObject;
-        out << YAML::Key << "Radius" << YAML::Value << bc->GetRadius();
         out << YAML::Key << "TexturePath" << YAML::Value << bc->GetTexturePath();
 
         out << YAML::EndMap; // Billboard Component

@@ -1,23 +1,19 @@
 ﻿#pragma once
-
-#include <vulkan/vulkan.hpp>
-
-#include "Buffers.h"
-#include "Renderer/Texture.h"
+#include "DescriptorSetWriter.h"
 
 class DescriptorSet
 {
 public:
-    DescriptorSet(vk::DescriptorPool pool, vk::DescriptorSetLayout layout);
-    ~DescriptorSet();
-
-    void UpdateDescriptor(const Buffer* buffer, uint32_t binding) const;
-    void UpdateDescriptor(const Texture* texture, uint32_t binding) const;
-
-    vk::DescriptorSet GetDescriptorSet() const { return m_DescriptorSet; }
-    vk::DescriptorSetLayout GetLayout() const { return m_DescriptorSetLayout; }
-
+    DescriptorSet(vk::DescriptorSetLayout layout);
+    
+    void SetTexture(uint32_t binding, const Texture* texture);
+    void SetUniformBuffer(uint32_t binding, const Buffer* buffer);
+    void WriteAndClear();
+    
+    void Bind(vk::CommandBuffer commandBuffer, vk::PipelineLayout pipelineLayout, uint32_t firstSet);
+    
 private:
     vk::DescriptorSet m_DescriptorSet;
-    vk::DescriptorSetLayout m_DescriptorSetLayout;
+    vk::DescriptorSetLayout m_Layout; 
+    DescriptorSetWriter m_Writer;
 };

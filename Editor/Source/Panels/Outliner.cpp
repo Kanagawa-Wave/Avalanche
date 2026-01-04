@@ -184,7 +184,7 @@ void Outliner::DrawComponents(Entity entity)
 					const std::string path = FileHelper::OpenFile("Image File (*.png)\0*.png\0");
 					if (!path.empty())
 					{
-						billboard.BillboardObject.reset(new Billboard(1.f, path.c_str()));
+						billboard.BillboardObject.reset(new Billboard(path.c_str()));
 					}
 				}
 			}

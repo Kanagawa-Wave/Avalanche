@@ -2,56 +2,29 @@
 
 #include "Renderer/Context.h"
 
-DescriptorSet::DescriptorSet(vk::DescriptorPool pool, vk::DescriptorSetLayout layout)
+DescriptorSet::DescriptorSet(vk::DescriptorSetLayout layout)
+    : m_Layout(layout)
 {
-	const auto& device = Context::Instance().GetDevice();
-
-	m_DescriptorSetLayout = layout;
-
-	vk::DescriptorSetAllocateInfo allocateInfo;
-	allocateInfo.setDescriptorPool(pool)
-		.setSetLayouts(m_DescriptorSetLayout)
-		.setDescriptorSetCount(1);
-
-	m_DescriptorSet = device.allocateDescriptorSets(allocateInfo).front();
+    m_DescriptorSet = Context::Instance().GetDescriptorArena()->Allocate(layout);
 }
 
-DescriptorSet::~DescriptorSet() = default;
-
-void DescriptorSet::UpdateDescriptor(const Buffer* buffer, uint32_t binding) const
+void DescriptorSet::SetTexture(uint32_t binding, const Texture* texture)
 {
-	const auto& device = Context::Instance().GetDevice();
-
-	vk::DescriptorBufferInfo bufferInfo;
-	bufferInfo.setBuffer(buffer->GetBuffer())
-		.setOffset(0)
-		.setRange(buffer->GetSize());
-
-	vk::WriteDescriptorSet writeInfo;
-	writeInfo.setDescriptorCount(1)
-		.setDescriptorType(vk::DescriptorType::eUniformBuffer)
-		.setBufferInfo(bufferInfo)
-		.setDstBinding(binding)
-		.setDstSet(m_DescriptorSet);
-
-	device.updateDescriptorSets(writeInfo, nullptr);
+    m_Writer.SetTexture(binding, texture);
 }
 
-void DescriptorSet::UpdateDescriptor(const Texture* texture, uint32_t binding) const
+void DescriptorSet::SetUniformBuffer(uint32_t binding, const Buffer* buffer)
 {
-	const auto& device = Context::Instance().GetDevice();
+    m_Writer.SetUniformBuffer(binding, buffer);
+}
 
-	vk::DescriptorImageInfo imageInfo;
-	imageInfo.setSampler(texture->GetSampler())
-		.setImageView(texture->GetView())
-		.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
+void DescriptorSet::WriteAndClear()
+{
+    m_Writer.Write(m_DescriptorSet);
+    m_Writer.Clear();
+}
 
-	vk::WriteDescriptorSet writeInfo;
-	writeInfo.setDescriptorCount(1)
-		.setDescriptorType(vk::DescriptorType::eCombinedImageSampler)
-		.setImageInfo(imageInfo)
-		.setDstBinding(binding)
-		.setDstSet(m_DescriptorSet);
-
-	device.updateDescriptorSets(writeInfo, nullptr);
+void DescriptorSet::Bind(vk::CommandBuffer commandBuffer, vk::PipelineLayout pipelineLayout, uint32_t firstSet)
+{
+    commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, firstSet, {m_DescriptorSet}, nullptr);
 }

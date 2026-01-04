@@ -52,8 +52,6 @@ public:
     IndexBuffer* GetIndexBuffer() const { return m_IndexBuffer.get(); }
 
     const std::string& GetMeshPath() const { return m_MeshPath; }
-    
-    static void SetDescriptorSetLayout(const vk::DescriptorSetLayout& layout) { s_DescriptorSetLayout = layout; }
 
 private:
     void LoadObjFromFile(const std::string& path);
@@ -67,6 +65,4 @@ private:
     
     std::unique_ptr<VertexBuffer> m_VertexBuffer = nullptr;
     std::unique_ptr<IndexBuffer> m_IndexBuffer = nullptr;
-    
-    static vk::DescriptorSetLayout s_DescriptorSetLayout;
 };

@@ -1,7 +1,6 @@
 ﻿#include "Material.h"
 
 #include "Context.h"
-#include "Renderer.h"
 
 Material::Material(vk::DescriptorSetLayout layout)
 {
@@ -25,7 +24,7 @@ void Material::Bind(vk::CommandBuffer commandBuffer)
     commandBuffer.bindDescriptorSets(
         vk::PipelineBindPoint::eGraphics, 
         Context::Instance().GetCurrentPipelineLayout(), 
-        Renderer::PER_MATERIAL, 
+        Context::PER_MATERIAL_SET, 
         {m_DescriptorSet}, 
         nullptr);
 }

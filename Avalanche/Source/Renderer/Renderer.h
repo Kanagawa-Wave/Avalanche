@@ -45,9 +45,6 @@ private:
     void CreateSemaphores();
     void CreateFence();
     void InitImGui();
-
-public:
-    static constexpr int GLOBAL = 0, PER_MATERIAL = 1;
     
 private:
     Window* m_Window = nullptr;

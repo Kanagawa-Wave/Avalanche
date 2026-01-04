@@ -33,8 +33,12 @@ public:
     uint32_t GetGraphicsQueueFamilyIndex() const { return m_QueueFamilyIndices.GraphicsQueue.value(); }
     uint32_t GetPresentQueueFamilyIndex() const { return m_QueueFamilyIndices.PresentQueue.value(); }
     vk::PipelineLayout GetCurrentPipelineLayout() const { return m_CurrentPipelineLayout; }
+    vk::DescriptorSetLayout GetMaterialDescriptorSetLayout() const { return m_MaterialDescriptorSetLayout; }
+    vk::DescriptorSetLayout GetBillboardDescriptorSetLayout() const { return m_BillboardDescriptorSetLayout; }
     
     void SetCurrentPipelineLayout(vk::PipelineLayout pipelineLayout) {m_CurrentPipelineLayout = pipelineLayout; }
+    void SetMaterialDescriptorSetLayout(vk::DescriptorSetLayout descriptorSetLayout) {m_MaterialDescriptorSetLayout = descriptorSetLayout; }
+    void SetBillboardDescriptorSetLayout(vk::DescriptorSetLayout descriptorSetLayout) {m_BillboardDescriptorSetLayout = descriptorSetLayout; }
         
 private:
     Context(GLFWwindow* window);
@@ -49,6 +53,9 @@ private:
     void CreateSurface(GLFWwindow* window);
     void CreateDescriptorArena();
     void InitAllocator();
+    
+public:
+    static constexpr int GLOBAL_SET = 0, PER_MATERIAL_SET = 1;
 
 private:
     struct QueueFamilyIndices final
@@ -62,6 +69,7 @@ private:
         }
     };
 
+    vk::DescriptorSetLayout m_MaterialDescriptorSetLayout, m_BillboardDescriptorSetLayout;
     vk::Instance m_Instance;
     vk::PhysicalDevice m_PhysicalDevice;
     vk::Device m_Device;
