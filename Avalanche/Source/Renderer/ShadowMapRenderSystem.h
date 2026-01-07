@@ -25,8 +25,10 @@ private:
     struct ShadowMapUniformBuffer
     {
         glm::mat4 ViewProjection;
-    } m_UniformBuffer{};
+    } m_UniformBufferData{};
+    std::unique_ptr<Buffer> m_UniformBuffer;
     
+    std::unique_ptr<DescriptorSet> m_ShadowMapGlobalSet;
     std::unique_ptr<Pipeline> m_Pipeline;
     std::unique_ptr<RenderTarget> m_RenderTarget;
     uint32_t m_Resolution;

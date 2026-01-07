@@ -149,9 +149,16 @@ struct PointLightComponent
 struct DirectionalLightComponent
 {
     glm::vec3 Color{1.f};
+    glm::mat4 Projection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 7.5f);
 
     DirectionalLightComponent() = default;
     DirectionalLightComponent(const DirectionalLightComponent&) = default;
+    
+    glm::mat4 CalcLightSpaceMatrix(const glm::vec3& position) const
+    {
+        glm::mat4 View = glm::lookAt(position, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f,  0.0f));
+        return Projection * View;
+    }
 };
 
 struct BillboardComponent

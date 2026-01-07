@@ -58,6 +58,10 @@ void Outliner::OnImGuiUpdate()
 			{
 				m_SelectedEntity.AddOrReplaceComponent<BillboardComponent>("Content/white.png");
 			}
+			if (ImGui::MenuItem("DirectionalLight Component"))
+			{
+				m_SelectedEntity.AddOrReplaceComponent<DirectionalLightComponent>();
+			}
 			ImGui::EndPopup();
 		}
 		ImGui::EndTabBar();
@@ -241,5 +245,17 @@ void Outliner::DrawComponents(Entity entity)
 	        ImGui::TreePop();
 	        ImGui::Separator();
 	    }
+	}
+	
+	if (entity.HasComponent<DirectionalLightComponent>())
+	{
+		if (ImGui::TreeNodeEx((void*)typeid(DirectionalLightComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen,
+			"Directional Light"))
+		{
+			
+			
+			ImGui::TreePop();
+			ImGui::Separator();
+		}
 	}
 }

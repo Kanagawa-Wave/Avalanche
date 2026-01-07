@@ -172,6 +172,9 @@ bool Renderer::Begin(const Camera& camera, const Scene& scene)
 	vk::CommandBufferBeginInfo commandBufferBegin;
 	commandBufferBegin.setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
 	m_CommandBuffer.begin(commandBufferBegin);
+	
+	// ShadowPass
+	m_ShadowMapRenderSystem->Render(scene, m_CommandBuffer);
 
 	// Pass #1: Render to viewport
 	m_ViewportRenderTarget->Begin(m_CommandBuffer);
@@ -210,6 +213,7 @@ void Renderer::DrawModel(const TransformComponent& transform, const StaticMeshCo
 		&pushConstant);
 	
 	mesh.StaticMesh->Bind(m_CommandBuffer);
+	mesh.StaticMesh->GetMaterial()->Bind(m_CommandBuffer);
 	mesh.StaticMesh->Draw(m_CommandBuffer);
 }
 

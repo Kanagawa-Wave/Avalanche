@@ -50,7 +50,6 @@ Mesh::Mesh(const std::string& meshPath)
 
 void Mesh::Bind(vk::CommandBuffer commandBuffer) const
 {
-	m_Material->Bind(commandBuffer);
 	m_VertexBuffer->Bind(commandBuffer);
 	m_IndexBuffer->Bind(commandBuffer);
 }

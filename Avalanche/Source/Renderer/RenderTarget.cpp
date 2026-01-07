@@ -67,7 +67,11 @@ void RenderTarget::Begin(vk::CommandBuffer commandBuffer) const
         .setExtent(m_Extent);
     color.setColor({0.1f, 0.1f, 0.1f, 1.0f});
     depth.setDepthStencil(1.0f);
-    std::array clearValues = {color, depth};
+    std::vector<vk::ClearValue> clearValues = {};
+    if (m_RenderColor)
+        clearValues.emplace_back(color);
+    if (m_RenderDepth)
+        clearValues.emplace_back(depth);
 
     renderPassBegin.setRenderPass(m_RenderPass->GetRenderPass())
                    .setFramebuffer(m_Framebuffer)

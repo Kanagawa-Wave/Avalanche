@@ -12,8 +12,6 @@ struct RenderTargetCreateInfo
     RenderTargetCreateInfo& setColorFormat(vk::Format format)
     {
         ColorFormat = format;
-        if (format == vk::Format::eUndefined)
-            RenderDepth = false;
         return *this;
     }
 
